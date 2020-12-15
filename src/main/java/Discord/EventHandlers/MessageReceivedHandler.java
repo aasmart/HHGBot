@@ -104,35 +104,14 @@ public class MessageReceivedHandler extends ListenerAdapter {
 
         // Switches through all possible commands
         switch (type.toLowerCase()) {
-            case "sweardetection" -> {
-                msg.delete().queue();
-                Moderation.toggleSwearDetection(event, args);
-            }
-            case "mute" -> {
-                msg.delete().queue();
-                Moderation.mute(event, args);
-            }
-            case "unmute" -> {
-                msg.delete().queue();
-                Moderation.unMute(event, args);
-            }
-            case "kick" -> {
-                msg.delete().queue();
-                Moderation.kick(event, args);
-            }
-            case "ban" -> {
-                msg.delete().queue();
-                Moderation.ban(event, args);
-            }
-            case "clear" -> {
-                msg.delete().queue();
-                Moderation.clear(event, args);
-            }
-            case "purge" -> msg.delete().queue(after -> Moderation.purge(event, args));
-            case "warn" -> {
-                msg.delete().queue();
-                Moderation.warn(event, args);
-            }
+            case "sweardetection" -> Moderation.toggleSwearDetection(event, args);
+            case "mute" -> Moderation.mute(event, args);
+            case "unmute" -> Moderation.unMute(event, args);
+            case "kick" -> Moderation.kick(event, args);
+            case "ban" -> Moderation.ban(event, args);
+            case "clear" -> Moderation.clear(event, args);
+            case "purge" -> Moderation.purge(event, args);
+            case "warn" -> Moderation.warn(event, args);
             case "dm" -> {
                 if (event.getChannel() == Main.DM_HELP_CHANNEL) {
                     MiscCommand.privateMessage(event, args);
@@ -198,7 +177,10 @@ public class MessageReceivedHandler extends ListenerAdapter {
 
                 }
             }
-            default -> event.getChannel().sendMessage("Sorry, I do not understand that command, try typing `!help`").queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
+            default -> event.getMessage().reply("Sorry, I do not understand that command. Try using `!help`").queue(message -> {
+                message.delete().queueAfter(10, TimeUnit.SECONDS);
+                event.getMessage().delete().queueAfter(10, TimeUnit.SECONDS);
+            });
         }
     }
 

@@ -535,9 +535,9 @@ public class Main extends ListenerAdapter implements EventListener {
         }
 
         if(failState == 1)
-            Command.genericFail(event.getChannel(), command, "Too many members with that name. Consider mentioning the user instead", true);
+            Command.genericFail(event.getChannel(), command, "Too many members with that name. Consider mentioning the user instead", 10);
         else if(failState == 2)
-            Command.genericFail(event.getChannel(), command, "I couldn't find a member called **" + (nameParsed.length() > 200 ? nameParsed.substring(0, 200) : nameParsed) + "**", true);
+            Command.genericFail(event.getChannel(), command, "I couldn't find a member called **" + (nameParsed.length() > 200 ? nameParsed.substring(0, 200) : nameParsed) + "**", 10);
 
         return member;
     }
@@ -605,13 +605,13 @@ public class Main extends ListenerAdapter implements EventListener {
                 channel = Main.guild.getTextChannelById(args[channelPos]);
             else {
                 if(sendErrors) {
-                    Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`", delete);
+                    Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`", delete ? 10 : 0);
                 }
                 return null;
             }
         } catch (Exception e) {
             if(sendErrors) {
-                Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`", delete);
+                Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`", delete ? 10 : 0);
             }
             return null;
         }

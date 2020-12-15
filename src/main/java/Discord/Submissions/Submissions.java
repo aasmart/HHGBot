@@ -46,21 +46,17 @@ public class Submissions extends Command {
         // Make sure command is of a valid length
         if(args.length >= 1) {
             // Make sure the member is on a team
-            if(!Main.isOnTeam(event.getMember())) {
-                genericFail(event, "Submit", "You must be on a team in order to use this command", true);
-                event.getMessage().delete().queue();
-
+            if(!Main.isOnTeam(event.getMember()))
+                genericFail(event, "Submit", "You must be on a team in order to use this command", 5);
             // Make sure the command is being used in a team channel
-            } else if(!GuildTeam.readTeams().stream().map(GuildTeam::getChannelId).collect(Collectors.toList()).contains(event.getChannel().getIdLong())) {
-                genericFail(event, "Submit", "Submit must be used in your team channel", true);
-                event.getMessage().delete().queue();
-
-            } else {
+            else if(!GuildTeam.readTeams().stream().map(GuildTeam::getChannelId).collect(Collectors.toList()).contains(event.getChannel().getIdLong()))
+                genericFail(event, "Submit", "Submit must be used in your team channel", 5);
+            else {
                 // Make sure !submit is used between 7:45Am and 14:30PM
                 Calendar now = Calendar.getInstance();
                 now.setTime(new Date());
                 if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(Main.onTime("07:45:00", "14:30:00") || ((now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)))) {
-                    genericFail(event, "Submit", "You can only submit codes **Mondays and Fridays** from **7:45AM to 2:30PM**", false);
+                    genericFail(event, "Submit", "You can only submit codes **Mondays and Fridays** from **7:45AM to 2:30PM**", 0);
                     return;
                 }
 
@@ -84,7 +80,7 @@ public class Submissions extends Command {
                 validCodes = (JSONArray) validCodesObj.get("codes");
 
                 if(validCodes.size() == 0) {
-                    genericFail(event, "Submit", "There are no codes/images to submit", false);
+                    genericFail(event, "Submit", "There are no codes/images to submit", 0);
                     return;
                 }
 
@@ -116,7 +112,7 @@ public class Submissions extends Command {
                         genericFail(event,
                                 "Submit",
                                 "`" + args[1] + "` is not a valid code. " + (Main.INCORRECT_POINTS_LOST != 0 ? "" +
-                                        "You have received a penalty of -" + Main.INCORRECT_POINTS_LOST + " point(s)." : ""), false);
+                                        "You have received a penalty of -" + Main.INCORRECT_POINTS_LOST + " point(s)." : ""), 0);
 
                         deductPoints(team);
 
@@ -150,19 +146,19 @@ public class Submissions extends Command {
             if (code.get("code").toString().equalsIgnoreCase(stringCode)) {
                 // Check if the team has reached the maximum point value
                 if(((long)teamLeaderboard.get(team.getName()) >= 2147483647L - (long)code.get("points")) || ((long)teamLeaderboard.get(team.getName()) <= -2147483647L + (long)code.get("points"))) {
-                    genericFail(channel, "Submit", "You can't submit this code due to point restraints.", false);
+                    genericFail(channel, "Submit", "You can't submit this code due to point restraints.", 0);
                     return -1;
                 // Check if the code already has been submitted the maximum amount of times
                 } else if (code.get("submits").hashCode() >= code.get("maxsubmits").hashCode()) {
-                    genericFail(channel, "Submit", "Code `" + stringCode + "` has already been submitted the max amount of times", false);
+                    genericFail(channel, "Submit", "Code `" + stringCode + "` has already been submitted the max amount of times", 0);
                     return -1;
                 // Check if the team already submitted the code
                 } else if (((JSONArray) code.get("submitters")).contains(team.getName())) {
-                    genericFail(channel, "Submit", "You already submitted `" + stringCode + "`.", false);
+                    genericFail(channel, "Submit", "You already submitted `" + stringCode + "`.", 0);
                     return -1;
                 // Check if the code is an image code
                 } else if((boolean) code.get("isImage")) {
-                    genericFail(channel, "Submit", "You can't submit this code.", false);
+                    genericFail(channel, "Submit", "You can't submit this code.", 0);
                     return -1;
                 // If none of the previous are true, return the code index
                 } else {
@@ -206,7 +202,7 @@ public class Submissions extends Command {
             else
                 teamChannel.sendMessage(b.build()).queue();
 
-            genericFail(event, "Image Verify", "This code will cause the team to reach point limits. They have been notified.", false);
+            genericFail(event, "Image Verify", "This code will cause the team to reach point limits. They have been notified.", 0);
         // Check if the code already has been submitted the maximum amount of times
         } else if (code.get("submits").hashCode() >= code.get("maxsubmits").hashCode()) {
             b.addField("Reason", "This image was already submitted the maximum amount of times!", false);
@@ -215,7 +211,7 @@ public class Submissions extends Command {
             else
                 teamChannel.sendMessage(b.build()).queue();
 
-            genericFail(event, "Image Verify", "Code `" + code.get("code") + "` has already been submitted the maximum amount of times. The team was notified.", false);
+            genericFail(event, "Image Verify", "Code `" + code.get("code") + "` has already been submitted the maximum amount of times. The team was notified.", 0);
         // Make sure the team hasn't already submitted the image
         } else if (((JSONArray) code.get("submitters")).contains(team)) {
             b.addField("Reason", "You already submitted this type of image!", false);
@@ -224,7 +220,7 @@ public class Submissions extends Command {
             else
                 teamChannel.sendMessage(b.build()).queue();
 
-            genericFail(event, "Image Verify", "The team already has `" + code.get("code") + "` submitted.", false);
+            genericFail(event, "Image Verify", "The team already has `" + code.get("code") + "` submitted.", 0);
         } else {
             return true;
         }
@@ -335,7 +331,7 @@ public class Submissions extends Command {
 
                 return false;
             } else {
-                genericFail(event, "Submit", "You must wait **" + ChronoUnit.SECONDS.between(date.toInstant(), coolDown.toInstant()) + " seconds ** to submit a code", false);
+                genericFail(event, "Submit", "You must wait **" + ChronoUnit.SECONDS.between(date.toInstant(), coolDown.toInstant()) + " seconds ** to submit a code", 0);
                 return true;
             }
 
