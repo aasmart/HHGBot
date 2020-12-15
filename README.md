@@ -1,0 +1,2 @@
+# HaslettHighGuildBot
+Bot
