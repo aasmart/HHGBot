@@ -1,2 +1,2 @@
-# HaslettHighGuildBot
+# HHG Bot
 Bot

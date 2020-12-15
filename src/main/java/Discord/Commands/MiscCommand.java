@@ -90,7 +90,7 @@ public class MiscCommand extends Command {
                 // Switch between various attachment states
                 if(attachments.size() == 1) {
                     if(!attachments.get(0).isImage()) {
-                        genericFail(event, "DM", "You can only send images!", false);
+                        genericFail(event, "DM", "You can only send images!", 0);
                         return;
                     }
 
@@ -101,7 +101,7 @@ public class MiscCommand extends Command {
 
                 } else if(attachments.size() > 1) {
                     if(!attachments.get(0).isImage()) {
-                        genericFail(event, "DM", "You can only send images!", false);
+                        genericFail(event, "DM", "You can only send images!", 0);
                         return;
                     }
 
@@ -145,7 +145,7 @@ public class MiscCommand extends Command {
             if(validSendState(event, new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {}, "Remaining Codes"))
             {
                 if ((args[1].equalsIgnoreCase("on") && Main.numRemainingCodes) || (args[1].equalsIgnoreCase("off") && !Main.numRemainingCodes)) {
-                    genericFail(event.getChannel(), "Remaining Codes", "Remaining Codes is already **" + args[1].toUpperCase() + "**", true);
+                    genericFail(event, "Remaining Codes", "Remaining Codes is already **" + args[1].toUpperCase() + "**", 5);
                 } else {
                     Main.numRemainingCodes = args[1].equalsIgnoreCase("on");
                     genericSuccess(event, "Remaining Codes", "Changed Remaining Codes to **" + args[1].toUpperCase() + "**", false);
@@ -153,7 +153,7 @@ public class MiscCommand extends Command {
                 }
             }
         } catch (Exception e) {
-            genericFail(event.getChannel(), "Remaining Codes", "Unknown Error!", true);
+            genericFail(event, "Remaining Codes", "Unknown Error!", 5);
         }
     }
 
@@ -191,7 +191,7 @@ public class MiscCommand extends Command {
                             channel.sendMessage(message).queue();
                             genericSuccess(event, "Send", "Message has been sent to " + Main.mentionChannel(channel.getIdLong()), false);
                         }
-                        , throwable -> genericFail(event, "Send", "No such message with the ID `" + args[1] + "` exists.", false));
+                        , throwable -> genericFail(event, "Send", "No such message with the ID `" + args[1] + "` exists.", 0));
             }
         } else {
             individualCommandHelp(CommandType.MISC_SEND, event);
@@ -216,7 +216,7 @@ public class MiscCommand extends Command {
             // Get the message from the channel
             Message message = channel.retrieveMessageById(args[messageIndex]).complete();
             if(message == null) {
-                genericFail(event, "Edit", "No such message with the ID `" + args[1] + "` exists.", false);
+                genericFail(event, "Edit", "No such message with the ID `" + args[1] + "` exists.", 0);
                 return;
             }
 
@@ -243,10 +243,10 @@ public class MiscCommand extends Command {
                                 message.editMessage(newMessage).queue();
                                 genericSuccess(event, "Edit", "The message contents have been updated", false);
                             }
-                            , throwable -> genericFail(event, "Edit", "No such message with the ID `" + args[3] + "` exists.", false));
+                            , throwable -> genericFail(event, "Edit", "No such message with the ID `" + args[3] + "` exists.", 0));
                 }
             } catch (Exception e) {
-                genericFail(event, "Edit", "You can only edit messages sent by this bot!", false);
+                genericFail(event, "Edit", "You can only edit messages sent by this bot!", 0);
             }
         } else {
             individualCommandHelp(CommandType.MISC_EDIT, event);
@@ -264,26 +264,26 @@ public class MiscCommand extends Command {
             List<Long> channels = teams.stream().map(GuildTeam::getChannelId).collect(Collectors.toList());
 
             if(!channels.contains(event.getChannel().getIdLong())) {
-                genericFail(event, "Message", "You can only use `!message` in your team channel", true);
+                genericFail(event, "Message", "You can only use `!message` in your team channel", 5);
                 return;
             }
 
 
             if(team != null) {
                 if(team.getName().equals(event.getChannel().getName())) {
-                    genericFail(event, "Message", "You can't message yourself", false);
+                    genericFail(event, "Message", "You can't message yourself", 0);
                     return;
                 }
                 String message = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
                 if(message.length() > 1500) {
-                    genericFail(event, "Message", "**[message]** must be under 1500 characters", false);
+                    genericFail(event, "Message", "**[message]** must be under 1500 characters", 0);
                     return;
                 }
 
                 Objects.requireNonNull(Main.guild.getTextChannelById(team.getChannelId())).sendMessage("Message received from **" + event.getChannel().getName() + "**:\n\n \"" + message + "\"").queue();
                 genericSuccess(event, "Message Sent!", "Sent message to " + team.getName(), false);
             } else {
-                genericFail(event, "Message", "I couldn't find a team with the name **" + args[1] + "**.", false);
+                genericFail(event, "Message", "I couldn't find a team with the name **" + args[1] + "**.", 0);
             }
         } else {
             individualCommandHelp(CommandType.MISC_MESSAGE, event);
@@ -304,7 +304,7 @@ public class MiscCommand extends Command {
             String nickname = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
 
             if(nickname.length() < 2 || nickname.length() > 32) {
-                genericFail(event, "Nick", "Nickname must contain between 2 and 32 characters", true);
+                genericFail(event, "Nick", "Nickname must contain between 2 and 32 characters", 10);
             }
 
             try {
@@ -321,7 +321,7 @@ public class MiscCommand extends Command {
                 GuildTeam.reloadTeams();
                 genericSuccess(event, "Nickname Changed!", "Updated " + Main.mention(m.getIdLong()) + "'s nickname to **" + nickname + "**", false);
             } catch (Exception e) {
-                genericFail(event, "Nick", "Can't modify the nickname of this user", false);
+                genericFail(event, "Nick", "Can't modify the nickname of this user", 0);
             }
         } else {
             individualCommandHelp(CommandType.MISC_NICK, event);
@@ -333,7 +333,7 @@ public class MiscCommand extends Command {
             return;
 
         if(Main.suggestCooldown.contains(Objects.requireNonNull(event.getMember()).getId())) {
-            genericFail(event, "Suggest", "You have already created a suggestion in the past 5 minutes", true);
+            genericFail(event, "Suggest", "You have already created a suggestion in the past 5 minutes", 5);
             return;
         }
 
@@ -342,8 +342,7 @@ public class MiscCommand extends Command {
             String suggestion = Main.compressArray(Arrays.copyOfRange(args, 1, args.length));
 
             if(suggestion.length() >= 500) {
-                event.getMessage().delete().queue();
-                genericFail(event, "Suggest", "Suggestion must be under 500 characters", true);
+                genericFail(event, "Suggest", "Suggestion must be under 500 characters", 10);
                 return;
             }
 
@@ -378,12 +377,11 @@ public class MiscCommand extends Command {
     }
 
     public static void bug(GuildMessageReceivedEvent event, String[] args) {
-        event.getMessage().delete().queue();
         if(!validSendState(event, new Role[]{}, new TextChannel[]{Main.BUG_CHANNEL}, "Bug"))
             return;
 
         if(Main.bugCooldown.contains(Objects.requireNonNull(event.getMember()).getId())) {
-            genericFail(event, "Bug", "You have already used this command in the past 5 minutes", true);
+            genericFail(event, "Bug", "You have already used this command in the past 5 minutes", 4);
             return;
         }
 
@@ -392,7 +390,7 @@ public class MiscCommand extends Command {
             String bug = Main.compressArray(Arrays.copyOfRange(args, 1, args.length));
 
             if(bug.length() >= 500) {
-                genericFail(event, "Bug", "Bug report must be under 500 characters", true);
+                genericFail(event, "Bug", "Bug report must be under 500 characters", 10);
                 return;
             }
 
@@ -430,8 +428,10 @@ public class MiscCommand extends Command {
                     });
             b.setTitle(":white_check_mark: Bug Reported", "https://trello.com/b/ox1OiO1Q/hhg-bot");
             event.getChannel().sendMessage(b.build()).queue();
+            event.getMessage().delete().queue();
 
         } else {
+            event.getMessage().delete().queue();
             individualCommandHelp(CommandType.MISC_BUG, event);
         }
     }
@@ -463,7 +463,7 @@ public class MiscCommand extends Command {
                 clue = Main.compressArray(Arrays.copyOfRange(args, 1, args.length));
 
             if(clue.length() > 1000) {
-                genericFail(event, "Clue", "Clue can't contain more than 1000 characters", true);
+                genericFail(event, "Clue", "Clue can't contain more than 1000 characters", 0);
                 return;
             }
 

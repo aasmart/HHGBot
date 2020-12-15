@@ -137,9 +137,9 @@ public class Command {
      * @param event The event
      * @param cmd The command's name (I.e 'Mute')
      * @param failReason The reason why the command failed
-     * @param delete True if the fail message deletes after 10 seconds
+     * @param deleteTime The amount of time in seconds it takes for the error message to delete. If less than 1, the message won't delete
      */
-    public static void genericFail(GuildMessageReceivedEvent event, String cmd, String failReason, boolean delete) {
+    public static void genericFail(GuildMessageReceivedEvent event, String cmd, String failReason, int deleteTime) {
         EmbedBuilder b = Main.buildEmbed(
             Main.makeEmoji(Main.RED_CROSS_EMOJI) + " Failure",
             cmd,
@@ -151,8 +151,11 @@ public class Command {
             }
         );
 
-        if(delete)
-            event.getMessage().reply(b.build()).queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
+        if(deleteTime > 0)
+            event.getMessage().reply(b.build()).queue(message -> {
+                message.delete().queueAfter(deleteTime, TimeUnit.SECONDS);
+                event.getMessage().delete().queueAfter(deleteTime, TimeUnit.SECONDS);
+            });
         else
             event.getMessage().reply(b.build()).queue();
     }
@@ -162,9 +165,9 @@ public class Command {
      * @param channel The channel to send the fail message to
      * @param cmd The command's name (I.e 'Mute')
      * @param failReason The reason why the command failed
-     * @param delete True if the fail message deletes after 10 seconds
+     * @param deleteTime The amount of time in seconds it takes for the error message to delete. If less than 1, the message won't delete
      */
-    public static void genericFail(TextChannel channel, String cmd, String failReason, boolean delete) {
+    public static void genericFail(TextChannel channel, String cmd, String failReason, int deleteTime) {
         EmbedBuilder b = Main.buildEmbed(
                 Main.makeEmoji(Main.RED_CROSS_EMOJI) + " Failure",
                 cmd,
@@ -176,8 +179,8 @@ public class Command {
                 }
         );
 
-        if(delete)
-            channel.sendMessage(b.build()).queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
+        if(deleteTime > 0)
+            channel.sendMessage(b.build()).queue(message -> message.delete().queueAfter(deleteTime, TimeUnit.SECONDS));
         else
             channel.sendMessage(b.build()).queue();
     }
