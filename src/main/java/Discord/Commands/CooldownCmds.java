@@ -104,7 +104,7 @@ public class CooldownCmds extends Command {
                         throw new Exception();
 
                 } catch (Exception e) {
-                    genericFail(event, "Cooldown Set", "**[duration]** must be an integer between 1 and 2,147,483,647", false);
+                    genericFail(event, "Cooldown Set", "**[duration]** must be an integer between 1 and 2,147,483,647", 0);
                     return;
                 }
 
@@ -137,10 +137,10 @@ public class CooldownCmds extends Command {
                     genericSuccess(event, "Cooldown Set", "Set a **" + duration + " second** cool down for `" + args[2] + "`", false);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    genericFail(event, "Cooldown Set", "Unable to set cooldown", false);
+                    genericFail(event, "Cooldown Set", "Unable to set cooldown", 0);
                 }
             } else {
-                genericFail(event, "Cooldown Set", "Team `" + args[2] + "` does not exist", false);
+                genericFail(event, "Cooldown Set", "Team `" + args[2] + "` does not exist", 0);
             }
         } else {
             // Create the help embed for '!cooldown set'
@@ -170,7 +170,7 @@ public class CooldownCmds extends Command {
 
                     if (coolDowns.remove(args[2]) == null) {
                         if (isAfter)
-                            genericFail(event, "Cooldown Remove", "Team `" + args[2] + "` doesn't have an active cooldown", false);
+                            genericFail(event, "Cooldown Remove", "Team `" + args[2] + "` doesn't have an active cooldown", 0);
                         return;
                     }
 
@@ -184,10 +184,10 @@ public class CooldownCmds extends Command {
                     genericSuccess(event, "Cooldown Remove", "Removed " + args[2] + "'s cooldown", false);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    genericFail(event, "Cooldown Remove", "Unable to remove cooldown", false);
+                    genericFail(event, "Cooldown Remove", "Unable to remove cooldown", 0);
                 }
             } else {
-                genericFail(event, "Cooldown Remove", "Team `" + args[2] + "` does not exist", false);
+                genericFail(event, "Cooldown Remove", "Team `" + args[2] + "` does not exist", 0);
             }
         } else {
             // Create the help embed for '!cooldown remove'
@@ -218,14 +218,14 @@ public class CooldownCmds extends Command {
 
                     if (coolDowns.get(args[2]) == null) {
                         if (isAfter)
-                            genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` doesn't have an active cooldown to modify", false);
+                            genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` doesn't have an active cooldown to modify", 0);
                         return;
 
                     } else {
                         try {
                             value = Integer.parseInt(args[3]);
                         } catch (Exception e) {
-                            genericFail(event, "Cooldown Modify", "**[value]** must be an integer between +/-2,147,483,647", false);
+                            genericFail(event, "Cooldown Modify", "**[value]** must be an integer between +/-2,147,483,647", 0);
                             return;
                         }
 
@@ -239,7 +239,7 @@ public class CooldownCmds extends Command {
                         Date newCoolDown = date.getTime();
 
                         if (newCoolDown.before(new Date())) {
-                            genericFail(event, "Cooldown Modify", "This modification will result in an inactive cooldown, consider `!cooldown remove` to remove the cooldown instead", false);
+                            genericFail(event, "Cooldown Modify", "This modification will result in an inactive cooldown, consider `!cooldown remove` to remove the cooldown instead", 0);
                             return;
                         }
 
@@ -257,10 +257,10 @@ public class CooldownCmds extends Command {
                     genericSuccess(event, "Cooldown Modify", "Modified " + args[2] + "'s cooldown by **" + value + "**", false);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    genericFail(event, "Cooldown Modify", "Unable to modify cooldown", false);
+                    genericFail(event, "Cooldown Modify", "Unable to modify cooldown", 0);
                 }
             } else {
-                genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` does not exist", false);
+                genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` does not exist", 0);
             }
         } else {
             // Create the help embed for '!cooldown modify'
@@ -277,12 +277,12 @@ public class CooldownCmds extends Command {
                     throw new Exception();
 
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Incorrect Code Cooldown", "Cooldown must be an **integer** 0 and 2,147,483,647.", true);
+                genericFail(event, "Incorrect Code Cooldown", "Cooldown must be an **integer** 0 and 2,147,483,647.", 0);
                 return;
             }
 
             if (Quest.isQuestRunning()) {
-                genericFail(event, "Incorrect Code Cooldown", "You can't edit the incorrect code cooldown while a quest is loaded.", false);
+                genericFail(event, "Incorrect Code Cooldown", "You can't edit the incorrect code cooldown while a quest is loaded.", 0);
             }
 
             // Get the old cooldown of the quest and set it to the new one

@@ -1,5 +1,6 @@
 package Discord.Commands;
 
+import Discord.Commands.ImageSubmissions.ResponseCommands;
 import Discord.EventHandlers.GuildStartupHandler;
 import Discord.Main;
 import Discord.Templates.Other.EmbedField;
@@ -74,10 +75,10 @@ public class Moderation extends Command {
 
             if (!senderIsAdmin) {
                 modLogFail(null, "Swear Detection", "Insufficient Permissions", event, event.getChannel());
-            } else if ((args[1].toLowerCase().equals("on") && swearDetection) || (args[1].toLowerCase().equals("off") && !swearDetection)) {
+            } else if ((args[1].equalsIgnoreCase("on") && swearDetection) || (args[1].equalsIgnoreCase("off") && !swearDetection)) {
                 modLogFail("Swear Detection", "Swear detection is already **" + args[1].toUpperCase() + "**", event, event.getChannel());
             } else {
-                swearDetection = args[1].toLowerCase().equals("on");
+                swearDetection = args[1].equalsIgnoreCase("on");
                 try {
                     EmbedBuilder b = Main.buildEmbed("Mod Log",
                         "Action Type: Swear Detection",
@@ -91,6 +92,7 @@ public class Moderation extends Command {
                     GuildStartupHandler.writeProperties();
                     genericSuccess(event, "Swear Detection", "Changed swear detection to **" + (swearDetection ? "ON" : "OFF") + "**", true);
                     Main.MOD_LOG_CHANNEL.sendMessage(b.build()).queue();
+                    event.getMessage().delete().queue();
                 } catch(Exception ignore) {}
             }
 
@@ -114,10 +116,12 @@ public class Moderation extends Command {
             if(m == null)
                 return;
 
+            // Get the reason
             String reason = args.length >= 3 ? Main.compressArray(Arrays.copyOfRange(args, 2, args.length)) : "Not Given";
+            reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event.getChannel(), "Mute", "<reason> must be under 1000 characters", true);
+                genericFail(event, "Mute", "<reason> must be under 1000 characters", 5);
                 return;
             }
 
@@ -132,6 +136,7 @@ public class Moderation extends Command {
                 Main.guild.addRoleToMember(m, mutedRole).queue();
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Mute", null, reason, Main.MOD_LOG_CHANNEL);
                 genericSuccess(event, "Mute", "Muted user " + Main.mention(m.getIdLong()), true);
+                event.getMessage().delete().queue();
             }
         } else {
             individualCommandHelp(CommandType.MOD_MUTE, event);
@@ -153,10 +158,12 @@ public class Moderation extends Command {
             if(m == null)
                 return;
 
+            // Get the reason
             String reason = args.length >= 3 ? Main.compressArray(Arrays.copyOfRange(args, 2, args.length)) : "Not Given";
+            reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event.getChannel(), "Unmute", "<reason> must be under 1000 characters", true);
+                genericFail(event, "Unmute", "<reason> must be under 1000 characters", 5);
                 return;
             }
 
@@ -172,6 +179,7 @@ public class Moderation extends Command {
                 Main.guild.removeRoleFromMember(m, mutedRole).queue();
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Unmute", null, reason, Main.MOD_LOG_CHANNEL);
                 genericSuccess(event, "Unmute", "Un-muted user " + Main.mention(m.getIdLong()), true);
+                event.getMessage().delete().queue();
             }
         } else {
             individualCommandHelp(CommandType.MOD_UNMUTE, event);
@@ -193,10 +201,12 @@ public class Moderation extends Command {
             if(m == null)
                 return;
 
+            // Get the reason
             String reason = args.length >= 3 ? Main.compressArray(Arrays.copyOfRange(args, 2, args.length)) : "Not Given";
+            reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event.getChannel(), "Kick", "<reason> must be under 1000 characters", true);
+                genericFail(event, "Kick", "<reason> must be under 1000 characters", 5);
                 return;
             }
 
@@ -208,6 +218,7 @@ public class Moderation extends Command {
                 Main.guild.kick(m, reason).queue();
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Kick", null, reason, Main.MOD_LOG_CHANNEL);
                 genericSuccess(event, "Kick", "Kicked user " + Main.mention(m.getIdLong()), true);
+                event.getMessage().delete().queue();
             }
         } else {
             individualCommandHelp(CommandType.MOD_KICK, event);
@@ -230,10 +241,13 @@ public class Moderation extends Command {
                 return;
 
             int days = Integer.parseInt(args[2]);
-            String reason = args.length >= 4 ? Arrays.toString(Arrays.copyOfRange(args, 3, args.length)).replaceAll("[\\[\\]\",]", " ").trim() : "Not Given";
+
+            // Get the reason
+            String reason = args.length >= 4 ? Main.compressArray(Arrays.copyOfRange(args, 3, args.length)) : "Not Given";
+            reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event.getChannel(), "Ban", "<reason> must be under 1000 characters", true);
+                genericFail(event, "Ban", "<reason> must be under 1000 characters", 5);
                 return;
             }
 
@@ -256,6 +270,7 @@ public class Moderation extends Command {
                         Main.MOD_LOG_CHANNEL
                 );
                 genericSuccess(event, "Ban", "Banned user " + Main.mention(m.getIdLong()), true);
+                event.getMessage().delete().queue();
             }
         } else {
             individualCommandHelp(CommandType.MOD_BAN, event);
@@ -277,17 +292,21 @@ public class Moderation extends Command {
             if(m == null)
                 return;
 
-            int amount;
+            int amount; // Amount of messages to delete
+
             try {
                 amount = Integer.parseInt(args[2]);
             } catch(Exception e) {
-                genericFail(event, "Clear", "Amount must be an integer", true);
+                genericFail(event, "Clear", "Amount must be an integer", 5);
                 return;
             }
-            String reason = args.length >= 4 ? Arrays.toString(Arrays.copyOfRange(args, 3, args.length)).replaceAll("[\\[\\]\",]", " ").trim() : "Not Given";
+
+            // Get the reason
+            String reason = args.length >= 4 ? Main.compressArray(Arrays.copyOfRange(args, 3, args.length)) : "Not Given";
+            reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event.getChannel(), "Clear", "<reason> must be under 1000 characters", true);
+                genericFail(event, "Clear", "**<reason>** must be under 1000 characters", 5);
                 return;
             }
 
@@ -311,6 +330,7 @@ public class Moderation extends Command {
             } else if (amount > maxAmount || amount <= 0) {
                 modLogFail(m, "Clear", "Your value can only be between 1 & " + maxAmount, event, event.getChannel());
             } else {
+                String finalReason = reason;
                 new Thread(() -> {
                     event.getChannel().getHistory().retrievePast(100).queue(messages -> {
                         ArrayList<Message> goodMessages = new ArrayList<>();
@@ -326,8 +346,9 @@ public class Moderation extends Command {
                         event.getChannel().purgeMessages(goodMessages);
 
                     });
-                    modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Clear", null, reason, Main.MOD_LOG_CHANNEL);
+                    modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Clear", null, finalReason, Main.MOD_LOG_CHANNEL);
                     genericSuccess(event, "Clear", "Cleared messages from user " + Main.mention(m.getIdLong()), true);
+                    event.getMessage().delete().queue();
                 }).start();
             }
             
@@ -345,7 +366,7 @@ public class Moderation extends Command {
         if(!validSendState(event, new Role[] {Main.adminIds[0]}, new TextChannel[] {}, "Purge"))
             return;
 
-        int amount;
+        int amount; // Amount of messages to purge
 
         try {
             amount = Integer.parseInt(args[1]);
@@ -355,15 +376,17 @@ public class Moderation extends Command {
         }
 
         String reason = args.length >= 3 ? Main.compressArray(Arrays.copyOfRange(args, 2, args.length)) : "Not Given";
+        reason = ResponseCommands.response(reason);
 
         if(reason.length() > 1000) {
-            genericFail(event.getChannel(), "Purge", "<reason> must be under 1000 characters", true);
+            genericFail(event, "Purge", "<reason> must be under 1000 characters", 5);
             return;
         }
 
         if (amount > 100|| amount <= 0) {
             modLogFail(null, "Purge", "Amount invalid!", event, event.getChannel());
         } else {
+            String finalReason = reason;
             new Thread(() -> event.getChannel().getHistory().retrievePast(amount).queue(messages -> {
                 int deleted = messages.size();
                 event.getChannel().purgeMessages(messages);
@@ -376,13 +399,14 @@ public class Moderation extends Command {
                             new EmbedField("Moderator", Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()), true),
                             new EmbedField("","",true),
                             new EmbedField("Messages Deleted", Integer.toString(deleted), true),
-                            new EmbedField("Reason", reason, false)
+                            new EmbedField("Reason", finalReason, false)
                     })
                 );
 
                 Main.MOD_LOG_CHANNEL.sendMessage(b.build()).queue();
 
                 genericSuccess(event, "Purge", "Deleted " + deleted + " messages", true);
+                event.getMessage().delete().queue();
             })).start();
         }
     }
@@ -397,10 +421,12 @@ public class Moderation extends Command {
             if(m == null)
                 return;
 
+            // Get the reason
             String reason = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
+            reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event.getChannel(), "Mute", "<warning> must be under 1000 characters", true);
+                genericFail(event, "Mute", "<warning> must be under 1000 characters", 5);
                 return;
             }
 
@@ -421,6 +447,7 @@ public class Moderation extends Command {
                 // Success messages
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Warn", null, reason, Main.MOD_LOG_CHANNEL);
                 genericSuccess(event, "Warn", "Warned " + Main.mention(m.getIdLong()) + " with \"" + reason + "\"", true);
+                event.getMessage().delete().queue();
             }
         } else {
             individualCommandHelp(CommandType.MOD_WARN, event);

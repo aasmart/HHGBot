@@ -321,7 +321,7 @@ public class QuestExtras extends Command {
 
         // Make sure quest isn't null
         if(quest == null) {
-            genericFail(event, "Quest Edit", "Failed to retrieve quest.", true);
+            genericFail(event, "Quest Edit", "Failed to retrieve quest.", 10);
             return;
         }
 
@@ -330,7 +330,7 @@ public class QuestExtras extends Command {
         // If the action is for adding a quest field, try to add it
         if(editAction == Editor.EditAction.QUEST_FIELD_ADD) {
             if(quest.getQuestFields().size() >= QuestCommands.MAX_QUEST_FIELDS) {
-                genericFail(event, "Quest Field Add", "Maximum number of " + QuestCommands.MAX_QUEST_FIELDS + " quest fields reached.", true);
+                genericFail(event, "Quest Field Add", "Maximum number of " + QuestCommands.MAX_QUEST_FIELDS + " quest fields reached.", 10);
                 return;
             }
 
@@ -355,10 +355,10 @@ public class QuestExtras extends Command {
 
                 // Make sure the time is formatted correctly and hasn't already occurred
                 if(time == null) {
-                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", true);
+                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
                     return;
                 } else if(time.before(new Date())) {
-                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** has already occurred, so you can't use it...", true);
+                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** has already occurred, so you can't use it...", 10);
                     return;
                 }
                 textStartIndex++;
@@ -389,10 +389,10 @@ public class QuestExtras extends Command {
 
                 // Make sure the time is formatted correctly and hasn't already occurred
                 if(time == null) {
-                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", true);
+                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
                     return;
                 } else if(time.before(new Date())) {
-                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** has already occurred, so you can't use it...", true);
+                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
                     return;
                 }
                 textStartIndex++;
@@ -400,7 +400,7 @@ public class QuestExtras extends Command {
 
             // Because you can't have just a time and no channel, return with an error message
             if(channel == null && time != null) {
-                genericFail(event, "Quest Field Add", "Quest must contain a channel if it has a time.",true);
+                genericFail(event, "Quest Field Add", "Quest must contain a channel if it has a time.",10);
                 return;
             }
 
@@ -425,7 +425,7 @@ public class QuestExtras extends Command {
                             quest.clearRelatedMessages(event.getChannel(), 1);
 
                             if(message.getContentRaw().trim().length() == 0) {
-                                genericFail(event, "Quest Field Add", "Quest field must contain text contents!", true);
+                                genericFail(event, "Quest Field Add", "Quest field must contain text contents!", 10);
                                 return;
                             }
 
@@ -449,7 +449,7 @@ public class QuestExtras extends Command {
             // If it didn't have a message simply add the quest field
             String text = Main.compressArray(Arrays.copyOfRange(args, textStartIndex, args.length));
             if(text.trim().length() == 0) {
-                genericFail(event, "Quest Field Add", "Quest field must contain text contents!", true);
+                genericFail(event, "Quest Field Add", "Quest field must contain text contents!", 10);
                 return;
             }
 
@@ -472,7 +472,7 @@ public class QuestExtras extends Command {
             })).start();
         } else if(editAction == Editor.EditAction.QUEST_CODE_ADD) {
             if(quest.getCodes().size() >= QuestCommands.MAX_QUEST_CODES) {
-                genericFail(event, "Quest Code Add", "Maximum number of " + QuestCommands.MAX_QUEST_CODES + " codes reached.", true);
+                genericFail(event, "Quest Code Add", "Maximum number of " + QuestCommands.MAX_QUEST_CODES + " codes reached.", 10);
                 return;
             }
 
@@ -495,13 +495,13 @@ public class QuestExtras extends Command {
 
             // Make sure the length is not more than 200, it doesn't contain invalid characters, and the code doesn't exist
             if(name.length() > 200) {
-                 genericFail(event, "Quest Code Add", "The code, " + name.substring(0,200) + "... must be under 200 characters.", true);
+                 genericFail(event, "Quest Code Add", "The code, " + name.substring(0,200) + "... must be under 200 characters.", 10);
                 return;
             } else if(matcher.find()) {
-                genericFail(event, "Quest Code Add", "The code, " + name + " must not contain any special characters, excluding hyphens.", true);
+                genericFail(event, "Quest Code Add", "The code, " + name + " must not contain any special characters, excluding hyphens.", 10);
                 return;
             } else if(quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).contains(name)) {
-                genericFail(event, "Quest Code Add", "The code,`" + name + "` already exists.", true);
+                genericFail(event, "Quest Code Add", "The code,`" + name + "` already exists.", 10);
                 return;
             }
 
@@ -509,7 +509,7 @@ public class QuestExtras extends Command {
             try {
                 points = Integer.parseInt(args[1]);
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Add", "Points value must be an **integer** between +/-2,147,483,647.", true);
+                genericFail(event.getChannel(), "Quest Code Add", "Points value must be an **integer** between +/-2,147,483,647.", 10);
                 return;
             }
 
@@ -520,7 +520,7 @@ public class QuestExtras extends Command {
                 if(maxSubmits < 1)
                     throw new Exception();
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Add", "Max submits must be an **integer** between 1 and 2,147,483,647", true);
+                genericFail(event.getChannel(), "Quest Code Add", "Max submits must be an **integer** between 1 and 2,147,483,647", 10);
                 return;
             }
 
@@ -587,7 +587,7 @@ public class QuestExtras extends Command {
 
         // Make sure quest isn't null
         if(quest == null) {
-            genericFail(event, "Quest Edit", "Failed to retrieve quest.", true);
+            genericFail(event, "Quest Edit", "Failed to retrieve quest.", 10);
             return;
         }
 
@@ -611,7 +611,7 @@ public class QuestExtras extends Command {
             } catch (Exception e) {
                 genericFail(event, "Quest Field Remove",
                         "Index is invalid. It must be a positive integer less than the maximum amount of quest fields, " +
-                                "which is currently " + quest.getQuestFields().size() + ".", true);
+                                "which is currently " + quest.getQuestFields().size() + ".", 10);
                 return;
             }
 
@@ -655,7 +655,7 @@ public class QuestExtras extends Command {
 
             // Return if removing the code was unsuccessful
             if(!quest.removeCode(name)) {
-                genericFail(event, "Remove Quest Code", "Could not find code with the name **" + name + "**", true);
+                genericFail(event, "Remove Quest Code", "Could not find code with the name **" + name + "**", 10);
                 return;
             }
             editor.setEditAction(Editor.EditAction.NONE);
@@ -707,7 +707,7 @@ public class QuestExtras extends Command {
 
         // Make sure quest isn't null
         if(quest == null) {
-            genericFail(event, "Quest Edit", "Failed to retrieve quest.", true);
+            genericFail(event, "Quest Edit", "Failed to retrieve quest.", 10);
             return;
         }
 
@@ -811,13 +811,13 @@ public class QuestExtras extends Command {
 
         // Make sure name doesn't have any invalid characters, doesn't already exist, or have more than MAX_QUEST_NAME_SIZE characters
         if(matcher.find()) {
-            genericFail(event, "Quest Edit Name", "Name contains invalid characters. It can only contain lowercase letters, numbers, and hyphens.", false);
+            genericFail(event, "Quest Edit Name", "Name contains invalid characters. It can only contain lowercase letters, numbers, and hyphens.", 10);
             return;
         } else if(newName.length() > QuestCommands.MAX_QUEST_NAME_SIZE) {
-            genericFail(event, "Quest Edit Name", "Name can not contain more than **" + QuestCommands.MAX_QUEST_NAME_SIZE + "** characters", false);
+            genericFail(event, "Quest Edit Name", "Name can not contain more than **" + QuestCommands.MAX_QUEST_NAME_SIZE + "** characters", 10);
             return;
         } else if(Main.questNames.contains(newName)) {
-            genericFail(event, "Quest Edit Name", "A quest already has the name **" + newName + "**.", false);
+            genericFail(event, "Quest Edit Name", "A quest already has the name **" + newName + "**.", 10);
             return;
         }
 
@@ -861,7 +861,7 @@ public class QuestExtras extends Command {
                 });
             }).start();
         } catch (Exception e) {
-            genericFail(event, "Quest Edit Name", "Encountered error attempting to update the name of **" + oldName + "** to **" + newName + "**", true);
+            genericFail(event, "Quest Edit Name", "Encountered error attempting to update the name of **" + oldName + "** to **" + newName + "**", 10);
         }
     }
 
@@ -880,7 +880,7 @@ public class QuestExtras extends Command {
             genericFail(event, "Quest Submit Method Edit",
                     "**" + (args[0].length() > 200 ? args[0].substring(0,200) : args[0]) + "** does not exist. Please check the submit method embed." +
                             " to view valid submit methods",
-                    true);
+                    10);
             return;
         }
 
@@ -888,7 +888,7 @@ public class QuestExtras extends Command {
         if(quest.getSubmissionMethod() == submissionMethod) {
             genericFail(event, "Quest Submit Method Edit",
                     "Quest's value is already **" + submissionMethod + "**.",
-                    true);
+                    10);
             return;
         }
 
@@ -937,7 +937,7 @@ public class QuestExtras extends Command {
         try {
             questField = quest.getQuestFields().get(Integer.parseInt(args[0]));
         } catch (Exception e) {
-            genericFail(event, "Quest Field Edit", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** is an invalid index. Make sure it is a positive integer less than or equal to 2,147,483,647", true);
+            genericFail(event, "Quest Field Edit", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** is an invalid index. Make sure it is a positive integer less than or equal to 2,147,483,647", 10);
             return;
         }
 
@@ -952,10 +952,10 @@ public class QuestExtras extends Command {
             time = QuestField.getDate(args[1].replace("TIME:", "") + ":00");
 
             if(time == null) {
-                genericFail(event, "Quest Field Edit", "**" + args[1] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", true);
+                genericFail(event, "Quest Field Edit", "**" + args[1] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
                 return;
             } else if(time.before(new Date())) {
-                genericFail(event, "Quest Field Edit", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** has already occurred, so you can't use it...", true);
+                genericFail(event, "Quest Field Edit", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
                 return;
             }
             textStartIndex++;
@@ -983,10 +983,10 @@ public class QuestExtras extends Command {
             time = QuestField.getDate(args[2].replace("TIME:", "") + ":00");
 
             if(time == null) {
-                genericFail(event, "Quest Field Edit", "**" + args[2] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", true);
+                genericFail(event, "Quest Field Edit", "**" + args[2] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
                 return;
             } else if(time.before(new Date())) {
-                genericFail(event, "Quest Field Edit", "**" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "** has already occurred, so you can't use it...", true);
+                genericFail(event, "Quest Field Edit", "**" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "** has already occurred, so you can't use it...", 10);
                 return;
             }
             textStartIndex++;
@@ -994,7 +994,7 @@ public class QuestExtras extends Command {
 
         // If the quest field has a time but not a channel, return
         if(questField.getChannel() == null && channel == null && time != null) {
-            genericFail(event, "Quest Field Edit", "Quest must contain a channel if it has a time.",true);
+            genericFail(event, "Quest Field Edit", "Quest must contain a channel if it has a time.",10);
             return;
         }
 
@@ -1046,7 +1046,7 @@ public class QuestExtras extends Command {
                                     );
 
                             if(message.getContentRaw().trim().length() == 0) {
-                                genericFail(event, "Quest Field Edit", "Quest field must contain text contents!", true);
+                                genericFail(event, "Quest Field Edit", "Quest field must contain text contents!", 10);
                                 return;
                             }
 
@@ -1116,7 +1116,7 @@ public class QuestExtras extends Command {
         try {
             code = quest.getCodes().get(quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).indexOf(args[0]));
         } catch (Exception e) {
-            genericFail(event, "Quest Code Edit", "Code **" + args[0] + "** does not exist.", true);
+            genericFail(event, "Quest Code Edit", "Code **" + args[0] + "** does not exist.", 10);
             return;
         }
 
@@ -1144,13 +1144,13 @@ public class QuestExtras extends Command {
             Matcher matcher = p.matcher(name);
 
             if (name.length() > 200) {
-                genericFail(event, "Quest Code Edit", "The code, " + name.substring(0, 200) + "... must be under 200 characters.", true);
+                genericFail(event, "Quest Code Edit", "The code, " + name.substring(0, 200) + "... must be under 200 characters.", 10);
                 return;
             } else if (matcher.find()) {
-                genericFail(event, "Quest Code Edit", "The code, " + name + " must not contain any special characters, excluding hyphens.", true);
+                genericFail(event, "Quest Code Edit", "The code, " + name + " must not contain any special characters, excluding hyphens.", 10);
                 return;
             } else if (quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).contains(name)) {
-                genericFail(event, "Quest Code Edit", "The code,`" + name + "` already exists.", true);
+                genericFail(event, "Quest Code Edit", "The code,`" + name + "` already exists.", 10);
                 return;
             }
 
@@ -1161,7 +1161,7 @@ public class QuestExtras extends Command {
                 int points = Integer.parseInt(args[pointsIndex]);
                 code.setPoints(points);
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Edit", "Points value must be an **integer** between +/-2,147,483,647.", true);
+                genericFail(event.getChannel(), "Quest Code Edit", "Points value must be an **integer** between +/-2,147,483,647.", 10);
                 return;
             }
         }
@@ -1174,7 +1174,7 @@ public class QuestExtras extends Command {
 
                 code.setMaxSubmits(maxSubmits);
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Edit", "Max submits must be an **integer** between 1 and 2,147,483,647.", true);
+                genericFail(event.getChannel(), "Quest Code Edit", "Max submits must be an **integer** between 1 and 2,147,483,647.", 10);
                 return;
             }
         }
@@ -1183,7 +1183,7 @@ public class QuestExtras extends Command {
                 boolean isImage = Boolean.parseBoolean(args[maxSubmitsIndex]);
                 code.setImage(isImage);
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Edit", "IsImage must be a true or false.", true);
+                genericFail(event.getChannel(), "Quest Code Edit", "IsImage must be a true or false.", 10);
                 return;
             }
         }
@@ -1231,7 +1231,7 @@ public class QuestExtras extends Command {
                 throw new Exception();
 
         } catch (Exception e) {
-            genericFail(event.getChannel(), "Quest Cooldown Edit", "Cooldown must be an **integer** between 0 and 2,147,483,647.", true);
+            genericFail(event.getChannel(), "Quest Cooldown Edit", "Cooldown must be an **integer** between 0 and 2,147,483,647.", 10);
             return;
         }
 
@@ -1282,7 +1282,7 @@ public class QuestExtras extends Command {
                 throw new Exception();
 
         } catch (Exception e) {
-            genericFail(event.getChannel(), "Quest Point Deduction Edit", "Points must be an **integer** between 0 and 2,147,483,647.", true);
+            genericFail(event.getChannel(), "Quest Point Deduction Edit", "Points must be an **integer** between 0 and 2,147,483,647.", 10);
             return;
         }
 
@@ -1333,7 +1333,7 @@ public class QuestExtras extends Command {
         boolean oldValue = quest.isNumRemainingCodes();
 
         if(oldValue == newValue) {
-            genericFail(event, "Edit Number of Remaining Codes", "Current value is " + String.valueOf(newValue).toUpperCase(), true);
+            genericFail(event, "Edit Number of Remaining Codes", "Current value is " + String.valueOf(newValue).toUpperCase(), 10);
             return;
         }
         quest.setNumRemainingCodes(newValue);
@@ -1369,7 +1369,7 @@ public class QuestExtras extends Command {
         String clue = Main.compressArray(Arrays.copyOfRange(args, 0, args.length));
 
         if(clue.length() > 1000) {
-            genericFail(event, "Quest Clue Edit", "Clue can't contain more than 1000 characters", true);
+            genericFail(event, "Quest Clue Edit", "Clue can't contain more than 1000 characters", 10);
             return;
         }
         quest.setClue(clue);

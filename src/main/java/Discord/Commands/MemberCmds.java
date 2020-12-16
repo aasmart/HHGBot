@@ -140,7 +140,7 @@ public class MemberCmds extends Command {
                 return;
 
             if(Main.isAdmin(m) && !Objects.requireNonNull(event.getMember()).isOwner()) {
-                genericFail(event, "Member Edit", "You can't regenerate this member's verification code.", false);
+                genericFail(event, "Member Edit", "You can't regenerate this member's verification code.", 0);
                 return;
             }
 
@@ -150,7 +150,7 @@ public class MemberCmds extends Command {
                 return;
 
             if(guildMember.getVerificationStep() != 1) {
-                genericFail(event, "Member Regenerate", "Member is on a step where you can't regenerate their verification code", false);
+                genericFail(event, "Member Regenerate", "Member is on a step where you can't regenerate their verification code", 0);
                 return;
             }
 
@@ -196,7 +196,7 @@ public class MemberCmds extends Command {
                 return;
 
             if(Main.isAdmin(m) && !Objects.requireNonNull(event.getMember()).isOwner()) {
-                genericFail(event, "Member Edit", "You can't force change this member's email.", false);
+                genericFail(event, "Member Edit", "You can't force change this member's email.", 0);
                 return;
             }
 
@@ -231,7 +231,7 @@ public class MemberCmds extends Command {
                 return;
 
             if(Main.isAdmin(m) && !Objects.requireNonNull(event.getMember()).isOwner()) {
-                genericFail(event, "Member Edit", "You can't edit this member.", false);
+                genericFail(event, "Member Edit", "You can't edit this member.", 0);
                 return;
             }
 
@@ -243,7 +243,7 @@ public class MemberCmds extends Command {
             switch (args[3].toLowerCase()) {
                 case "email" -> {
                     if(args[4].length() > 250) {
-                        genericFail(event, "Member Edit", "Email must be between 0 and 250 characters.", false);
+                        genericFail(event, "Member Edit", "Email must be between 0 and 250 characters.", 0);
                         return;
                     }
                     guildMember.setEmail(args[4]);
@@ -270,10 +270,10 @@ public class MemberCmds extends Command {
                             genericSuccess(event, "Member Edit", "Updated " + m.getAsMention() + "'s verification step to **" + args[4] + "**", false);
                         }).start();
                     } catch (Exception e) {
-                        genericFail(event, "Member Edit", "Step must be between 0 and 5.", false);
+                        genericFail(event, "Member Edit", "Step must be between 0 and 5.", 0);
                     }
                 }
-                default -> genericFail(event, "Member Edit", "`" + args[3] + "` isn't editable.", false);
+                default -> genericFail(event, "Member Edit", "`" + args[3] + "` isn't editable.", 0);
             }
         } else {
             individualCommandHelp(CommandType.MEMBER_EDIT, event);

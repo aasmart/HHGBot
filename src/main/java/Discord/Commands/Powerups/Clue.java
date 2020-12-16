@@ -47,7 +47,7 @@ public class Clue extends PowerUp {
             now.setTime(new Date());
 
             if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(Main.onTime("7:45", "14:00") && now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)) {
-                genericFail(event, "Powerup Clue", "You can only use this powerup **between Monday** and **Fridays** from **7:45AM to 2:00PM**.", false);
+                genericFail(event, "Powerup Clue", "You can only use this powerup **between Monday** and **Fridays** from **7:45AM to 2:00PM**.", 0);
                 return;
             }
 
@@ -61,7 +61,7 @@ public class Clue extends PowerUp {
                         clueUseTime.setTime(c.getTimeUsed());
 
                         if (clueUseTime.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) && clueUseTime.get(Calendar.YEAR) == now.get(Calendar.YEAR))
-                            genericFail(event, "Powerup Clue", "You have **already** purchased today's clue.", false);
+                            genericFail(event, "Powerup Clue", "You have **already** purchased today's clue.", 0);
                         else
                             activePowerUps.remove(p);
 
@@ -73,10 +73,10 @@ public class Clue extends PowerUp {
             JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
 
             if((long)leaderBoard.get(sender.getName())+sender.getGuildedAmount() - cost < 0) {
-                genericFail(event, "Powerup Clue", "Your team doesn't have enough points/guilded to do this.", false);
+                genericFail(event, "Powerup Clue", "Your team doesn't have enough points/guilded to do this.", 0);
                 return;
             } else if(Main.clue.equals("")) {
-                genericFail(event, "Powerup Clue", "There is not a clue written for today's quest.", false);
+                genericFail(event, "Powerup Clue", "There is not a clue written for today's quest.", 0);
                 return;
             }
 

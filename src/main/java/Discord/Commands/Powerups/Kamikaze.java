@@ -70,7 +70,7 @@ public class Kamikaze extends PowerUp {
                 genericFail(event,
                         "Powerup Kamikaze",
                         "**" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "** doesn't exist.",
-                        false);
+                        0);
                 return;
             } else if(sender == null)
                 return;
@@ -78,7 +78,7 @@ public class Kamikaze extends PowerUp {
                 genericFail(event,
                         "Powerup Kamikaze",
                         "You can't kamikaze that team because they are eliminated.",
-                        false);
+                        0);
                 return;
             }
 
@@ -87,7 +87,7 @@ public class Kamikaze extends PowerUp {
             now.setTime(new Date());
 
             if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)) {
-                genericFail(event, "Powerup Kamikaze", "You can only use this powerup **between Monday** and **Fridays**", false);
+                genericFail(event, "Powerup Kamikaze", "You can only use this powerup **between Monday** and **Fridays**", 0);
                 return;
             }
 
@@ -104,7 +104,7 @@ public class Kamikaze extends PowerUp {
                         canSend.add(Calendar.HOUR_OF_DAY, 24);
 
                         if (canSend.getTime().after(new Date()))
-                            genericFail(event, "Powerup Kamikaze", "You have **already kamikazied** this team **within the past 24 hours**.", false);
+                            genericFail(event, "Powerup Kamikaze", "You have **already kamikazied** this team **within the past 24 hours**.", 0);
                         else
                             activePowerUps.remove(p);
 
@@ -120,7 +120,7 @@ public class Kamikaze extends PowerUp {
                             activePowerUps.remove(p);
                     } else if(p.getSender().getName().equalsIgnoreCase(sender.getName())) {
                         if (s.isActive()) {
-                            genericFail(event, "Powerup Kamikaze", "You **can't kamikaze** with an **active shield**.", false);
+                            genericFail(event, "Powerup Kamikaze", "You **can't kamikaze** with an **active shield**.", 0);
                             return;
                         } else
                             activePowerUps.remove(p);
@@ -131,13 +131,13 @@ public class Kamikaze extends PowerUp {
             JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
 
             if((long)leaderBoard.get(sender.getName())+sender.getGuildedAmount() - cost < 0) {
-                genericFail(event, "Powerup Kamikaze", "Your team doesn't have enough points/guilded to do this.", false);
+                genericFail(event, "Powerup Kamikaze", "Your team doesn't have enough points/guilded to do this.", 0);
                 return;
             } else if(!targetShield && (long)leaderBoard.get(target.getName()) <= -2147483647 + damage) {
-                genericFail(event, "Powerup Kamikaze", "You can't kamikaze this team because they will reach the minimum point limit.", false);
+                genericFail(event, "Powerup Kamikaze", "You can't kamikaze this team because they will reach the minimum point limit.", 0);
                 return;
             } else if(sender == target) {
-                genericFail(event, "Powerup Kamikaze", "Sadly, you **can't kamikaze yourself**. Sucks, right?", false);
+                genericFail(event, "Powerup Kamikaze", "Sadly, you **can't kamikaze yourself**. Sucks, right?", 0);
                 return;
             }
 

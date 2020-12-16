@@ -209,7 +209,7 @@ public class GuildTeam implements Serializable {
         Guild g = Main.guild;
 
         if(readTeams().size() >= 50) {
-            Command.genericFail(event.getChannel(), "The Max Number of Teams has Been Reached", "Sorry, we can't create your team because the max amount of teams has been reached!", true);
+            Command.genericFail(event.getChannel(), "The Max Number of Teams has Been Reached", "Sorry, we can't create your team because the max amount of teams has been reached!", 10);
             return false;
         }
 

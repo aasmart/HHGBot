@@ -87,6 +87,17 @@ public class ResponseCommands extends Command {
                     event.getMessage().delete().queue();
                 }
             }
+            case "edit" -> {
+                if (validSendState(
+                        event,
+                        Main.adminIds,
+                        new TextChannel[] {},
+                        "Response Edit")) {
+                    responseEdit(event, args);
+                } else {
+                    event.getMessage().delete().queue();
+                }
+            }
 
             case "help", "info" -> Command.topicHelpEmbed(event, "response");
             default -> {
@@ -237,6 +248,58 @@ public class ResponseCommands extends Command {
 
         } else
             event.getChannel().sendMessage("There are currently no responses").queue();
+    }
+
+    public static void responseEdit(GuildMessageReceivedEvent event, String[] args) {
+        // !response edit [key] [container] [new-value]
+        if(args.length >= 5) {
+            String key = args[2].toLowerCase();
+            if(!Main.responses.containsKey(key)) {
+                genericFail(event, "Response Edit", "Response with the key **" + (key.length() > 16 ? key.substring(0,17) + "..." : key) + "** does not exist.", 0);
+                return;
+            }
+
+            switch (args[3].toLowerCase()) {
+                case "key" -> {
+                    String newKey = args[4];
+                    // Create regex and checks to make sure the key doesn't contain invalid characters
+                    Pattern p = Pattern.compile("[_]|[^\\w\\d-]");
+                    Matcher matcher = p.matcher(newKey);
+
+                    if(matcher.find())
+                        genericFail(event.getChannel(), "Code Edit", "**[key]** must not contain any special characters, excluding hyphens.", 0);
+                    else if(key.length() > 16)
+                        genericFail(event, "Response Edit", "**[key]** must be between 1 and 16 characters", 0);
+                    else if(key.equalsIgnoreCase(newKey))
+                        genericFail(event, "Response Edit", "This response already has that key!", 0);
+                    else if(Main.responses.containsKey(key))
+                        genericFail(event, "Response Edit", "A response with the key **" + key + "** already exists.", 0);
+                    else {
+                        String oldResponse = Main.responses.get(key);
+                        Main.responses.remove(key);
+                        Main.responses.put(newKey, oldResponse);
+
+                        // Save to file
+                        try {
+                            FileOutputStream outputStream = new FileOutputStream(Main.RESPONSES);
+                            ObjectOutputStream objectOutput = new ObjectOutputStream(outputStream);
+
+                            objectOutput.writeObject(Main.responses);
+
+                            objectOutput.close();
+                            outputStream.close();
+                        } catch(Exception e) {
+                            System.out.println("Error writing responses: " + e.getMessage());
+                        }
+
+                        genericSuccess(event, "Response Edit", "Changed the key: **" + key + "** -> **" + newKey + "**", false);
+                    }
+                }
+                case "response" -> {}
+                default -> genericFail(event, "Response Edit", "Container **" + (args[3].length() > 16 ? args[3].substring(0,17) + "..." : key) + "** does not exist.", 0);
+            }
+        } /*else
+            individualCommandHelp();*/
     }
 
     // --- OTHER METHODS ---

@@ -52,7 +52,7 @@ public class Gift extends PowerUp {
                 genericFail(event,
                         "Powerup Shield",
                         "**" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "** doesn't exist.",
-                        false);
+                        0);
                 return;
             } else if(sender == null)
                 return;
@@ -60,7 +60,7 @@ public class Gift extends PowerUp {
                 genericFail(event,
                         "Powerup Shield",
                         "You can't gift points to this team because they are eliminated.",
-                        false);
+                        0);
                 return;
             }
 
@@ -69,7 +69,7 @@ public class Gift extends PowerUp {
             now.setTime(new Date());
 
             if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.THURSDAY)) {
-                genericFail(event, "Powerup Gift", "You can only use this powerup **between Monday** and **Thursday**", false);
+                genericFail(event, "Powerup Gift", "You can only use this powerup **between Monday** and **Thursday**", 0);
                 return;
             }
 
@@ -83,7 +83,7 @@ public class Gift extends PowerUp {
                         giftUseTime.setTime(g.getTimeUsed());
 
                         if (giftUseTime.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) && giftUseTime.get(Calendar.YEAR) == now.get(Calendar.YEAR))
-                            genericFail(event, "Powerup Gift", "You have **already gifted** today.", false);
+                            genericFail(event, "Powerup Gift", "You have **already gifted** today.", 0);
                         else
                             activePowerUps.remove(p);
 
@@ -96,16 +96,16 @@ public class Gift extends PowerUp {
             int giftAmount = Integer.parseInt(args[3]);
 
             if(giftAmount <= 0 || giftAmount > maxGift) {
-                genericFail(event, "Powerup Gift", "Gift amount must be between 1 and 3 points.", false);
+                genericFail(event, "Powerup Gift", "Gift amount must be between 1 and 3 points.", 0);
                 return;
             } else if((long)leaderBoard.get(sender.getName()) - giftAmount < 0) {
-                genericFail(event, "Powerup Gift", "Your team doesn't have enough points to do this.", false);
+                genericFail(event, "Powerup Gift", "Your team doesn't have enough points to do this.", 0);
                 return;
             } else if((long)leaderBoard.get(target.getName()) >= 2147483647 - giftAmount) {
-                genericFail(event, "Powerup Kamikaze", "You can't gift this team because they will reach the maximum point limit.", false);
+                genericFail(event, "Powerup Kamikaze", "You can't gift this team because they will reach the maximum point limit.", 0);
                 return;
             } else if(sender == target) {
-                genericFail(event, "Powerup Gift", "You **can't gift yourself**. I mean, it's net 0 points, so it wouldn't matter anyways.", false);
+                genericFail(event, "Powerup Gift", "You **can't gift yourself**. I mean, it's net 0 points, so it wouldn't matter anyways.", 0);
                 return;
             }
 

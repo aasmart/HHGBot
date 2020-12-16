@@ -88,12 +88,12 @@ public class PointCommands extends Command{
                 try {
                     points = Integer.parseInt(args[3]);
                 } catch (Exception e) {
-                    genericFail(event, "Points Set", "[points] must be an **integer** between +-2,147,483,647", false);
+                    genericFail(event, "Points Set", "[points] must be an **integer** between +-2,147,483,647", 0);
                     return;
                 }
 
                 if(points == (long)leaderBoard.get(args[2])) {
-                    genericFail(event, "Points Set", args[2] + "'s points are already **" + points + "**", false);
+                    genericFail(event, "Points Set", args[2] + "'s points are already **" + points + "**", 0);
                     return;
                 }
 
@@ -104,7 +104,7 @@ public class PointCommands extends Command{
 
                 genericSuccess(event, "Points Set", "Updated " + args[2] + "'s points to **" + points + "**", false);
             } else {
-                genericFail(event, "Points Set", "Team `" + args[2] + "` does not exist", false);
+                genericFail(event, "Points Set", "Team `" + args[2] + "` does not exist", 0);
             }
         } else {
             // Create the help embed for '!points set'
@@ -126,15 +126,15 @@ public class PointCommands extends Command{
                     if(points == 0)
                         throw new Exception();
                 } catch (Exception e) {
-                    genericFail(event, "Points Modify", "[points] must be a nonzero **integer** between +/-2,147,483,647", false);
+                    genericFail(event, "Points Modify", "[points] must be a nonzero **integer** between +/-2,147,483,647", 0);
                     return;
                 }
 
                 if((long)leaderBoard.get(args[2]) == 2147483647) {
-                    genericFail(event, "Points Modify", "The max limit of 2,147,483,647 was reached.", false);
+                    genericFail(event, "Points Modify", "The max limit of 2,147,483,647 was reached.", 0);
                     return;
                 } else if((long)leaderBoard.get(args[2]) == -2147483647) {
-                    genericFail(event, "Points Modify", "The minimum limit of -2,147,483,647 was reached.", false);
+                    genericFail(event, "Points Modify", "The minimum limit of -2,147,483,647 was reached.", 0);
                     return;
                 }
 
@@ -145,7 +145,7 @@ public class PointCommands extends Command{
 
                 genericSuccess(event, "Points Modify", "Updated " + args[2] + "'s points to **" + leaderBoard.get(args[2]) + "**", false);
             } else {
-                genericFail(event, "Points Modify", "Team `" + args[2] + "` does not exist", false);
+                genericFail(event, "Points Modify", "Team `" + args[2] + "` does not exist", 0);
             }
         } else {
             // Create the help embed for '!points modify'
@@ -162,7 +162,7 @@ public class PointCommands extends Command{
                     throw new Exception();
 
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Incorrect Code Point Deduction", "Points must be an **integer** between 0 and 2,147,483,647.", true);
+                genericFail(event.getChannel(), "Incorrect Code Point Deduction", "Points must be an **integer** between 0 and 2,147,483,647.", 0);
                 return;
             }
 

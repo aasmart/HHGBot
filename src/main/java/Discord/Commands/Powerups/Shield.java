@@ -1,5 +1,6 @@
 package Discord.Commands.Powerups;
 
+import Discord.Commands.Command;
 import Discord.Main;
 import Discord.Submissions.Leaderboard;
 import Discord.Templates.Guild.GuildTeam;
@@ -42,7 +43,7 @@ public class Shield extends PowerUp {
             now.setTime(new Date());
 
             if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && (!Main.onTime("07:15:00", "22:00:00") || !((now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)))) {
-                genericFail(event, "Powerup Shield", "You can only use this powerup **between Monday** and **Friday** from 7:15AM to 10:00PM.", false);
+                genericFail(event, "Powerup Shield", "You can only use this powerup **between Monday** and **Friday** from 7:15AM to 10:00PM.", 0);
                 return;
             }
 
@@ -53,7 +54,7 @@ public class Shield extends PowerUp {
                     // Check to see if the shield was used by this team
                     if (s.getSender().getName().equals(sender.getName())) {
                         if (s.isActive())
-                            genericFail(event, "Powerup Shield", "You already have an active shield that will expire at midnight.", false);
+                            genericFail(event, "Powerup Shield", "You already have an active shield that will expire at midnight.", 0);
                         else
                             activePowerUps.remove(p);
 
@@ -65,7 +66,7 @@ public class Shield extends PowerUp {
             JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
 
             if((long)leaderBoard.get(sender.getName())+sender.getGuildedAmount() - cost < 0) {
-                genericFail(event, "Powerup Shield", "Your team doesn't have enough points/guilded to do this.", false);
+                genericFail(event, "Powerup Shield", "Your team doesn't have enough points/guilded to do this.", 0);
                 return;
             }
 
@@ -79,7 +80,7 @@ public class Shield extends PowerUp {
 
             Main.TEAMS_LOG_CHANNEL.sendMessage(b.build()).queue();
         } else {
-
+            Command.individualCommandHelp(CommandType.POWERUP_SHIELD, event);
         }
     }
 

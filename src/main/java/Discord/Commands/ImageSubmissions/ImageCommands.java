@@ -123,7 +123,7 @@ public class ImageCommands extends Command {
             String imageId = args[2];   // ID of the image request
             String imageInfo = Main.pendingImages.get(imageId); // String containing team and pending image message ID
             if(imageInfo == null) {
-                genericFail(event, "Image Verify", "Image with an ID of **" + args[2] + "** does not exist.", false);
+                genericFail(event, "Image Verify", "Image with an ID of **" + args[2] + "** does not exist.", 0);
                 return;
             }
             String team = imageInfo.split("-")[0];
@@ -132,7 +132,7 @@ public class ImageCommands extends Command {
 
             // Attempt to get the team. If it throws an error the ID does not exist
             if(args.length == 3) {
-                genericFail(event, "Image Verify", "You must provide a code.", false);
+                genericFail(event, "Image Verify", "You must provide a code.", 0);
                 return;
             } else if(imageId == null || team == null || teamChannel == null) {
                 individualCommandHelp(CommandType.IMAGE_VERIFY, event);
@@ -183,7 +183,7 @@ public class ImageCommands extends Command {
             }
 
             // If the loop completes without finding a valid code, tell the user the code doesn't exist
-            genericFail(event.getChannel(), "Image Verify", "There is no image code: " + (args[3].length() > 200 ? args[3].substring(0,200) + "..." : args[3]), true);
+            genericFail(event.getChannel(), "Image Verify", "There is no image code: " + (args[3].length() > 200 ? args[3].substring(0,200) + "..." : args[3]), 0);
         } else
             individualCommandHelp(CommandType.IMAGE_VERIFY, event);
     }
@@ -193,7 +193,7 @@ public class ImageCommands extends Command {
             String imageId = args[2];   // ID of the image request
             String imageInfo = Main.pendingImages.get(imageId); // String containing team and pending image message ID
             if(imageInfo == null) {
-                genericFail(event, "Image Deny", "Image with an ID of **" + args[2] + "** does not exist.", false);
+                genericFail(event, "Image Deny", "Image with an ID of **" + args[2] + "** does not exist.", 0);
                 return;
             }
             String team = imageInfo.split("-")[0];
@@ -201,19 +201,18 @@ public class ImageCommands extends Command {
             TextChannel teamChannel = Main.guild.getTextChannelById(Objects.requireNonNull(GuildTeam.getTeamByName(team)).getChannelId());
 
             if(args.length < 4) {
-                genericFail(event, "Image Deny", "You must provide a reason.", false);
+                genericFail(event, "Image Deny", "You must provide a reason.", 0);
                 return;
             } else if(imageId == null || team == null || teamChannel == null) {
                 individualCommandHelp(CommandType.IMAGE_DENY, event);
                 return;
             }
 
-            String reason = Main.compressArray(Arrays.copyOfRange(args, 3, args.length));
-            if(args.length == 4 && Main.responses.containsKey(reason.toLowerCase()))
-                reason = Main.responses.get(reason.toLowerCase());
+            // Get the reason
+            String reason = ResponseCommands.response(Main.compressArray(Arrays.copyOfRange(args, 3, args.length)));
 
             if(reason.length() > 1000) {
-                genericFail(event, "Image Deny", "**<reason>** must be between 0 & 1000 characters.", false);
+                genericFail(event, "Image Deny", "**<reason>** must be between 0 & 1000 characters.", 0);
                 return;
             }
 
@@ -318,7 +317,7 @@ public class ImageCommands extends Command {
             String imageId = args[2];   // ID of the image request
             String imageInfo = Main.pendingImages.get(imageId); // String containing team and pending image message ID
             if (imageInfo == null) {
-                genericFail(event, "Image Deny", "Image with an ID of **" + args[2] + "** does not exist.", false);
+                genericFail(event, "Image Deny", "Image with an ID of **" + args[2] + "** does not exist.", 0);
                 return;
             }
             Message imageMessage = event.getChannel().retrieveMessageById(imageInfo.split("-")[1]).complete();

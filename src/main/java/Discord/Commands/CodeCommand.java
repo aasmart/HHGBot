@@ -122,7 +122,7 @@ public class CodeCommand extends Command {
             for(Object o : validCodes) {
                 JSONObject code = (JSONObject) o;
                 if(code.get("code").equals(args[2])) {
-                    genericFail(event.getChannel(), "Code Create", "A code with the same name already exists!", false);
+                    genericFail(event, "Code Create", "A code with the same name already exists!", 0);
                     return;
                 }
             }
@@ -135,10 +135,10 @@ public class CodeCommand extends Command {
             Matcher matcher = p.matcher(args[2]);
 
             if(matcher.find()) {
-                genericFail(event.getChannel(), "Code Create", "Creation failed. **[code]** must not contain any special characters, excluding hyphens.", false);
+                genericFail(event, "Code Create", "Creation failed. **[code]** must not contain any special characters, excluding hyphens.", 0);
                 return;
             } else if(args[2].length() > 200) {
-                genericFail(event.getChannel(), "Code Create", "Creation failed. **[code]** must be under 200 characters.", false);
+                genericFail(event, "Code Create", "Creation failed. **[code]** must be under 200 characters.", 0);
                 return;
             } else {
                 // Add the inputted variables to a new code
@@ -148,19 +148,19 @@ public class CodeCommand extends Command {
             try {
                 code.put("points", Integer.parseInt(args[3]));
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Code Create", "Creation failed. [points] must be an **integer** between +/-2,147,483,647.", false);
+                genericFail(event, "Code Create", "Creation failed. [points] must be an **integer** between +/-2,147,483,647.", 0);
                 return;
             }
 
             try {
                 int maxSubmits = Integer.parseInt(args[4]);
                 if(maxSubmits <= 0) {
-                    genericFail(event.getChannel(), "Code Create", "Creation failed. [maxsubmits] must be greater than 0.", false);
+                    genericFail(event, "Code Create", "Creation failed. [maxsubmits] must be greater than 0.", 0);
                     return;
                 }
                 code.put("maxsubmits", maxSubmits);
             } catch (Exception e) {
-                genericFail(event.getChannel(), "Code Create", "Creation failed. [maxsubmits] must be an **integer** less than or equal to 2,147,483,647.", false);
+                genericFail(event, "Code Create", "Creation failed. [maxsubmits] must be an **integer** less than or equal to 2,147,483,647.", 0);
                 return;
             }
 
@@ -211,7 +211,7 @@ public class CodeCommand extends Command {
 
             // If validCodesObj is empty, return and send an error
             if(validCodesObj == null) {
-                genericFail(event.getChannel(), "Code Delete", "There are no codes to delete!", false);
+                genericFail(event, "Code Delete", "There are no codes to delete!", 0);
                 return;
             }
 
@@ -219,7 +219,7 @@ public class CodeCommand extends Command {
             validCodes = (JSONArray) validCodesObj.get("codes");
 
             if(validCodes.size() == 0) {
-                genericFail(event.getChannel(), "Code Delete", "There are no codes to delete.", false);
+                genericFail(event, "Code Delete", "There are no codes to delete.", 0);
                 return;
             }
 
@@ -260,8 +260,7 @@ public class CodeCommand extends Command {
                 }
             }
 
-            event.getMessage().delete().queue();
-            genericFail(event.getChannel(), "Code Delete", "There is no code: " + args[2], false);
+            genericFail(event, "Code Delete", "There is no code: " + args[2], 0);
 
         } else {
             // Create the help embed for '!code delete'
@@ -307,7 +306,7 @@ public class CodeCommand extends Command {
 
             validCodesObj = Main.readJSONObject(Main.VALID_CODES_FILE);
             if(validCodesObj == null) {
-                genericFail(event.getChannel(), "Code Get", "There are no codes!", false);
+                genericFail(event, "Code Get", "There are no codes!", 0);
                 return;
             }
 
@@ -334,8 +333,7 @@ public class CodeCommand extends Command {
                 }
             }
 
-            event.getMessage().delete().queue();
-            genericFail(event.getChannel(), "Code Get", "There is no code: " + args[2], false);
+            genericFail(event, "Code Get", "There is no code: " + args[2], 0);
 
         } else {
             // Create the help embed for '!code remove'
@@ -356,7 +354,7 @@ public class CodeCommand extends Command {
             validCodesObj = Main.readJSONObject(Main.VALID_CODES_FILE);
             // Make sure there are codes to edit
             if(validCodesObj == null) {
-                genericFail(event.getChannel(), "Code Edit", "There are no codes to edit!", false);
+                genericFail(event, "Code Edit", "There are no codes to edit!", 0);
                 return;
             }
 
@@ -388,17 +386,17 @@ public class CodeCommand extends Command {
                             // Make sure code with the new name doesn't exist
                             for(Object tempCode : validCodes) {
                                 if(((JSONObject)tempCode).get("code").equals(args[4])) {
-                                    genericFail(event.getChannel(), "Code Edit", "Edit failed. A code with that name already exists", false);
+                                    genericFail(event, "Code Edit", "Edit failed. A code with that name already exists", 0);
                                     return;
                                 }
                             }
 
                             // Make sure length is less than 200 characters and it contains valid characters, and if so, edit the code
                             if(matcher.find()) {
-                                genericFail(event.getChannel(), "Code Edit", "Edit failed. **[value]** must not contain any special characters, excluding hyphens.", false);
+                                genericFail(event, "Code Edit", "Edit failed. **[value]** must not contain any special characters, excluding hyphens.", 0);
                                 return;
                             } else if(args[4].length() > 200) {
-                                genericFail(event.getChannel(), "Code Edit", "Edit failed. **[value]** must be under 200 characters.", false);
+                                genericFail(event, "Code Edit", "Edit failed. **[value]** must be under 200 characters.", 0);
                                 return;
                             } else {
                                 // Add the inputted variables to a new code
@@ -413,7 +411,7 @@ public class CodeCommand extends Command {
                                 // Edit the code
                                 code.replace("points", val);
                             } catch (Exception e) {
-                                genericFail(event.getChannel(), "Code Edit", "Please make sure [value] is an **integer** between +/-2,147,483,647.", false);
+                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** between +/-2,147,483,647.", 0);
                                 return;
                             }
 
@@ -428,8 +426,8 @@ public class CodeCommand extends Command {
                                 // Update the value for submits
                                 code.replace("submits", val);
                             } catch (Exception e) {
-                                genericFail(event.getChannel(), "Code Edit", "Please make sure [value] is an **integer** between 1 and 2,147,483,647 " +
-                                        "and less than or equal to `maxsubmits`.", false);
+                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** between 1 and 2,147,483,647 " +
+                                        "and less than or equal to `maxsubmits`.", 0);
                                 return;
                             }
 
@@ -444,7 +442,7 @@ public class CodeCommand extends Command {
                                 // Update the value for max submits
                                 code.replace("maxsubmits", val);
                             } catch (Exception e) {
-                                genericFail(event.getChannel(), "Code Edit", "Please make sure [value] is an **integer** and between 0 and 2,147,483,647.", false);
+                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** and between 0 and 2,147,483,647.", 0);
                                 return;
                             }
 
@@ -460,8 +458,8 @@ public class CodeCommand extends Command {
                                     s = s.trim();
                                     // Make sure all teams in the list exist, if not, return
                                     if (!Main.teams.contains(s)) {
-                                        genericFail(event.getChannel(),
-                                                "Code Edit", "The team `" + (s.length() > 200 ? s + "..." : s) + "` does not exist.", false);
+                                        genericFail(event,
+                                                "Code Edit", "The team `" + (s.length() > 200 ? s + "..." : s) + "` does not exist.", 0);
                                         return;
                                     }
                                     submitters.add(s);
@@ -490,13 +488,13 @@ public class CodeCommand extends Command {
                                 // Update the value for isImage
                                 code.replace("isImage", val);
                             } catch (Exception e) {
-                                genericFail(event.getChannel(), "Code Edit", "[value] must be *TRUE* or *FALSE*.", false);
+                                genericFail(event, "Code Edit", "[value] must be *TRUE* or *FALSE*.", 0);
                                 return;
                             }
 
                             break;
                         default:
-                            genericFail(event.getChannel(), "Code Edit", "Container **" + (args[3].length() > 200 ? args[3].substring(0,200) + "..." : args[3]) + "** does not exist. Please try `!code edit` for information.", false);
+                            genericFail(event, "Code Edit", "Container **" + (args[3].length() > 200 ? args[3].substring(0,200) + "..." : args[3]) + "** does not exist. Please try `!code edit` for information.", 0);
                             return;
                     }
 
@@ -509,8 +507,7 @@ public class CodeCommand extends Command {
                 }
             }
 
-            event.getMessage().delete().queue();
-            genericFail(event.getChannel(), "Code Edit", "There is no code: " + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]), false);
+            genericFail(event, "Code Edit", "There is no code: " + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]), 0);
 
         } else {
             // Create the help embed for '!code edit'
