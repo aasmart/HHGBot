@@ -3,6 +3,9 @@
 /workspace.xml
 # Datasource local storage ignored files
 /../../../../../../:\Users\alexa\IdeaProjects\HaslettHighGuildBot\.idea/dataSources/
+C:\Users\alexa\IdeaProjects\HaslettHighGuildBot\src\main\resources\credentials.json
+C:\Users\alexa\IdeaProjects\HaslettHighGuildBot\src\main\resources\trellocreds.txt
+C:\Users\alexa\IdeaProjects\HaslettHighGuildBot\tokens\StoredCredential
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
