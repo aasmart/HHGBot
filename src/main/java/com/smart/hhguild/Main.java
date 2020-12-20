@@ -184,10 +184,11 @@ public class Main extends ListenerAdapter implements EventListener {
                 .setChunkingFilter(ChunkingFilter.ALL)
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .addEventListeners(new MessageReceivedHandler())
-                .addEventListeners(new UserVerificationHandler())
+                .addEventListeners(new PrivateMessageHandler())
                 .addEventListeners(new MessageReactionHandler())
                 .addEventListeners(new GuildStartupHandler())
                 .addEventListeners(new MessageUpdateHandler())
+                .addEventListeners(new MemberJoinHandler())
                 .setActivity(Activity.competing("The HHG"))
                 .build();
         jda.awaitReady();

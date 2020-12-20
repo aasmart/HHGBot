@@ -20,24 +20,17 @@
  * SOFTWARE.
  */
 
-package com.smart.hhguild.EventHandlers;
+package com.smart.hhguild;
 
-import com.smart.hhguild.Commands.PrivateMessageCommand;
-import com.smart.hhguild.GmailSender;
-import com.smart.hhguild.Main;
 import com.smart.hhguild.Templates.Guild.GuildMember;
 import com.smart.hhguild.Templates.Other.EmbedField;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
@@ -48,51 +41,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class UserVerificationHandler extends ListenerAdapter implements Serializable {
+/**
+ * This class contains the methods for verifying a user is a Haslett student, setting their nickname, and admitting them into
+ * the Guild.
+ */
+public class UserVerification {
     private static final String helpCmd = "!help request [problem]";
-
-    @Override
-    public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-        User u = event.getMember().getUser();
-
-        if(u.isBot())
-            return;
-
-        Main.sendPrivateMessage(u,
-                "Hello and welcome to the **Haslett High Guild**!\n\n" +
-                        "We value the safety and security of Haslett students above all else! Therefore," +
-                        " in order to be admitted into the HHG, please submit your **full SCHOOL EMAIL** " +
-                        "(00exampleex@haslett.k12.mi.us). If an error has occurred, please contact us using `" + helpCmd +"` for assistance."
-        );
-
-        GuildMember.writeMember(new GuildMember(u.getIdLong(),"", "",0,generateVerificationCode()));
-    }
 
     /**
      * Generates a random 6-digit code
+     *
      * @return 6-digit code in string form
      */
     public static String generateVerificationCode() {
         StringBuilder code = new StringBuilder();
 
-        for(int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; i++) {
             code.append(new Random().nextInt(10));
         }
         return code.toString();
     }
 
-    @Override
-    public void onPrivateMessageReceived(@NotNull PrivateMessageReceivedEvent event) {
-        User u = event.getAuthor();
-        if(u.isBot())
-            return;
-
-        String msg = event.getMessage().getContentRaw();
-        ArrayList<GuildMember> members = GuildMember.readMembers();
-        Guild g = Main.guild;  // Get the HHG server
-
-        Main.logMessage(event.getMessage(), Main.PRIVATE_MESSAGES_LOG_FILE);
-
+    /**
+     * Checks to see if a member has GuildMember data stored.
+     *
+     * @param event   The event
+     * @param u       The user to search for
+     * @param members The list of GuildMembers read from the file
+     * @return The found GuildMember. Null if it failed to find one
+     */
+    public static GuildMember checkMember(PrivateMessageReceivedEvent event, User u, ArrayList<GuildMember> members) {
         int userIndex = members     // Finds the index of the member in the members arraylist where the
                 .stream()
                 .map(GuildMember::getId)
@@ -100,37 +78,41 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 .indexOf(event.getAuthor().getIdLong());
 
         GuildMember m;
-        // Checks to make sure the dm is from is in the server members folder
+
+        // Attempt to get the user at the index. If it is -1, it will throw an error and send a welcome message as they are missing
+        // member data
         try {
             m = members.get(userIndex);
-        } catch(Exception e) {
+            return m;
+        } catch (Exception e) {
             Main.sendPrivateMessage(u,
                     "Hello and welcome to the **Haslett High Guild**!\n\n" +
                             "We value the safety and security of Haslett students above all else! Therefore," +
                             " in order to be admitted into the HHG, please submit your **SCHOOL EMAIL** " +
                             "(00exampleex@haslett.k12.mi.us). Note, the @haslett.k12.mi.us is optional. " +
-                            "If an error has occurred, please contact us using `" + helpCmd +"` for assistance."
+                            "If an error has occurred, please contact us using `" + helpCmd + "` for assistance."
             );
 
-            GuildMember.writeMember(new GuildMember(u.getIdLong(),"", "",0,generateVerificationCode()));
-            return;
+            GuildMember.writeMember(new GuildMember(u.getIdLong(), "", "", 0, generateVerificationCode()));
+            return null;
         }
-
-        if(msg.startsWith("!")) {
-            String[] args = msg.substring(1).split(" ");
-            String type = args[0];
-
-            switch (type) {
-                case "help" -> {
-                    PrivateMessageCommand.help(event, args);
-                    return;
-                }
-            }
-        }
-
-        userVerification(m, members, msg, u, g);
     }
 
+    /**
+     * This method contains all the steps for verification, which are as follows:
+     * 0 - Ask for user email
+     * 1 - Send and receive verification code sent to email
+     * 2 - Get the user's IRL name
+     * 3 - Confirm nickname and apply
+     * 4 - Accept rules
+     * 5 - MISC.
+     *
+     * @param m The member being verified
+     * @param members The list of GuildMembers
+     * @param msg The message the user sent
+     * @param u The user
+     * @param g The guild
+     */
     public static void userVerification(GuildMember m, ArrayList<GuildMember> members, String msg, User u, Guild g) {
         /*
             USER VERIFICATION SWITCH STATEMENT:
@@ -148,13 +130,13 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 case -1 -> Main.sendPrivateMessage(u, "Your name is being verified.");
 
                 case 0 -> {
-                    if(msg == null) {
+                    if (msg == null) {
                         Main.sendPrivateMessage(u,
                                 "Hello and welcome to the **Haslett High Guild**!\n\n" +
                                         "We value the safety and security of Haslett students above all else! Therefore," +
                                         " in order to be admitted into the HHG, please submit your **SCHOOL EMAIL** " +
                                         "(00exampleex@haslett.k12.mi.us). Note, the @haslett.k12.mi.us is optional. " +
-                                        "If an error has occurred, please contact us using `" + helpCmd +"` for assistance."
+                                        "If an error has occurred, please contact us using `" + helpCmd + "` for assistance."
                         );
                         return;
                     }
@@ -165,21 +147,22 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                         String email = matcher.group(1) + matcher.group(2) + matcher.group(3) + (matcher.groupCount() != 5 ? "@haslett.k12.mi.us" : "");
                         int emailIndex = members.stream().map(GuildMember::getEmail).collect(Collectors.toList()).indexOf(email);
 
-                        if(emailIndex != -1 && members.get(emailIndex).getVerificationStep() > 1) {
+                        if (emailIndex != -1 && members.get(emailIndex).getVerificationStep() > 1) {
                             Main.sendPrivateMessage(u,
                                     "Hmm, `" + email + "` seems to already be in use. " +
                                             "If you need assistance, please type `" + helpCmd + "`"
                             );
                         } else {
+                            // Send email
                             new Thread(() -> {
                                 try {
-                                GmailSender.sendMessage(GmailSender.createEmail(
-                                        email,
-                                        "thehasletthighguild@gmail.com",
-                                        "HHG Verification",
-                                        "If you are receiving this, your email was used by Discord user: " + u.getName() +
-                                                ". If this is not you, delete this email. If not, your verification code is " +
-                                                m.getVerificationCode()));
+                                    GmailSender.sendMessage(GmailSender.createEmail(
+                                            email,
+                                            "thehasletthighguild@gmail.com",
+                                            "HHG Verification",
+                                            "If you are receiving this, your email was used by Discord user: " + u.getName() +
+                                                    ". If this is not you, delete this email. If not, your verification code is " +
+                                                    m.getVerificationCode()));
                                 } catch (Exception e) {
                                     Main.sendPrivateMessage(u,
                                             "There was a fatal error attempting to send an email. If this issue persists, don't hesitate " +
@@ -208,12 +191,12 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 }
 
                 case 1 -> {
-                    if(msg == null)
+                    if (msg == null)
                         return;
 
 
                     if (msg.equals("change")) {
-                        if(Main.changeCooldown.contains(Long.toString(m.getId()))) {
+                        if (Main.changeCooldown.contains(Long.toString(m.getId()))) {
                             Main.sendPrivateMessage(u, "You have already used `!change` in the past **30 minutes**. Please wait until you can use it again");
                             return;
                         }
@@ -234,7 +217,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                                 "Please submit your **SCHOOL EMAIL**."
                         );
                     } else if (msg.equals("regenerate")) {
-                        if(Main.regenerateCooldown.contains(Long.toString(m.getId()))) {
+                        if (Main.regenerateCooldown.contains(Long.toString(m.getId()))) {
                             Main.sendPrivateMessage(u, "You have already used `!regenerate` in the past **30 minutes**. Please wait until you can use it again");
                             return;
                         }
@@ -281,7 +264,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 }
 
                 case 2 -> {
-                    if(msg == null) {
+                    if (msg == null) {
                         Main.sendPrivateMessage(u,
                                 "Please provide us with your " +
                                         "**first and last name** in the form: `First Last`. We will use this to create " +
@@ -294,15 +277,14 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                     msg = matcher.replaceAll("").trim();
                     String[] name = msg.split(" ");
 
-                    System.out.println(name);
                     // Make sure the name contains a 'First' and a 'Last'
-                    if(name.length == 2) {
-                        if (!name[1].toLowerCase().startsWith(m.getEmail().substring(2, m.getEmail().indexOf("@") - 2))){
+                    if (name.length == 2) {
+                        if (!name[1].toLowerCase().startsWith(m.getEmail().substring(2, m.getEmail().indexOf("@") - 2))) {
                             Main.sendPrivateMessage(u,
                                     "Please use your **real name**. If you need assistance, send `" + helpCmd + "`"
                             );
 
-                        // Check to see if the first name starts with the 2 letters at the end of the email match the first two of the name
+                            // Check to see if the first name starts with the 2 letters at the end of the email match the first two of the name
                         } else if (!name[0].toLowerCase().startsWith(m.getEmail().substring(m.getEmail().indexOf("@") - 2, m.getEmail().indexOf("@")))) {
                             Main.sendPrivateMessage(u,
                                     "One moment as your name is verified."
@@ -342,7 +324,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 }
 
                 case 3 -> {
-                    if(msg == null)
+                    if (msg == null)
                         return;
 
                     if (msg.equalsIgnoreCase("confirm")) {
@@ -362,7 +344,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
 
                         m.setVerificationStep(4);
                         GuildMember.writeMember(m);
-                    } else if(msg.equalsIgnoreCase("deny")) {
+                    } else if (msg.equalsIgnoreCase("deny")) {
                         m.setVerificationStep(2);
                         GuildMember.writeMember(m);
 
@@ -375,7 +357,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 }
 
                 case 4 -> {
-                    if(msg == null) {
+                    if (msg == null) {
                         Main.sendPrivateMessage(u,
                                 "Please review the rules in " + Main.mentionChannel(761370031929163786L) + ". Once you have " +
                                         "read through them, please respond with `accept` to be admitted into the HHG. *By typing 'accept' " +
@@ -402,17 +384,13 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
                 }
 
                 case 5 -> {
-                    if(msg == null) {
+                    if (msg == null) {
                         Main.sendPrivateMessage(u,
                                 "Congratulations! You have been admitted to the HHG. Enjoy your time here, make some " +
                                         "friends, and solve some quests! If you need help at any time, type `!help`"
                         );
                     }
                 }
-
-                /*default -> Main.sendPrivateMessage(u,
-                        "Sorry, an error has occurred."
-                );*/
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -424,7 +402,8 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
 
     /**
      * Handles the reactions for verifying/denying a user's requested nickname
-     * @param event The reaction event
+     *
+     * @param event   The reaction event
      * @param message The message containing the quest embed
      */
     public static void handleNameVerification(GuildMessageReactionAddEvent event, Message message) {
@@ -440,7 +419,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
 
         try {
             m = members.get(userIndex);
-        } catch(Exception e) {
+        } catch (Exception e) {
             message.delete().queue();
             return;
         }
@@ -460,7 +439,7 @@ public class UserVerificationHandler extends ListenerAdapter implements Serializ
             GuildMember.writeMember(m);
             event.getChannel().sendMessage("Verified " + u.getAsMention() + "'s name, " + name[0] + " " + name[1].charAt(0)).queue();
 
-        } else if(event.getReactionEmote().toString().equals(Main.CROSS_EMOJI)) {
+        } else if (event.getReactionEmote().toString().equals(Main.CROSS_EMOJI)) {
             Main.sendPrivateMessage(u, "Your name request was denied. Please provide a new name.");
 
             // Change verification stuff and send success message

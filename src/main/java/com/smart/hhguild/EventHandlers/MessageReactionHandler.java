@@ -30,6 +30,7 @@ import com.smart.hhguild.Commands.Quests.CodeCommand;
 import com.smart.hhguild.Commands.Quests.QuestExtras;
 import com.smart.hhguild.Commands.Teams.TeamCommand;
 import com.smart.hhguild.Main;
+import com.smart.hhguild.UserVerification;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
@@ -65,7 +66,7 @@ public class MessageReactionHandler extends ListenerAdapter {
                     MiscCommand.handleSuggestion(event, message);
 
                 else if(message.getEmbeds().size() > 0 && Objects.equals(message.getEmbeds().get(0).getTitle(), "Name Verification"))
-                    UserVerificationHandler.handleNameVerification(event, message);
+                    UserVerification.handleNameVerification(event, message);
             }
 
             // Figure out the name of the reaction

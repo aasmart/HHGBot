@@ -22,12 +22,12 @@
 
 package com.smart.hhguild.Commands;
 
-import com.smart.hhguild.EventHandlers.UserVerificationHandler;
 import com.smart.hhguild.GmailSender;
 import com.smart.hhguild.Main;
 import com.smart.hhguild.Templates.Guild.GuildMember;
 import com.smart.hhguild.Templates.Guild.GuildTeam;
 import com.smart.hhguild.Templates.Other.EmbedField;
+import com.smart.hhguild.UserVerification;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -178,7 +178,7 @@ public class MemberCmds extends Command {
                 return;
             }
 
-            guildMember.setVerificationCode(UserVerificationHandler.generateVerificationCode());
+            guildMember.setVerificationCode(UserVerification.generateVerificationCode());
             GuildMember.writeMember(guildMember);
 
             GuildTeam.reloadTeams();
@@ -233,7 +233,7 @@ public class MemberCmds extends Command {
             }
 
             guildMember.setVerificationStep(0);
-            guildMember.setVerificationCode(UserVerificationHandler.generateVerificationCode());
+            guildMember.setVerificationCode(UserVerification.generateVerificationCode());
             GuildMember.writeMember(guildMember);
 
             GuildTeam.reloadTeams();
@@ -295,7 +295,7 @@ public class MemberCmds extends Command {
                         new Thread(() -> {
                             GuildMember.writeMember(guildMember);
                             GuildTeam.reloadTeams();
-                            UserVerificationHandler.userVerification(guildMember, GuildMember.readMembers(), null, m.getUser(), Main.guild);
+                            UserVerification.userVerification(guildMember, GuildMember.readMembers(), null, m.getUser(), Main.guild);
                             genericSuccess(event, "Member Edit", "Updated " + m.getAsMention() + "'s verification step to **" + args[4] + "**", false);
                         }).start();
                     } catch (Exception e) {
