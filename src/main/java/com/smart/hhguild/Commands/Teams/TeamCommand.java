@@ -422,7 +422,7 @@ public class TeamCommand extends Command {
                     // Create embed to verify that the request was sent
                     b = Main.buildEmbed(
                             ":white_check_mark: Success!",
-                            Main.mention(event.getMember().getIdLong()) + ", your team request for `" + teamName + "` was sent. It will *hopefully* be verified shortly.",
+                            event.getMember().getAsMention() + ", your team request for `" + teamName + "` was sent. It will *hopefully* be verified shortly.",
                             Main.GREEN,
                             new EmbedField[] {}
                     );
@@ -478,7 +478,7 @@ public class TeamCommand extends Command {
                                     ":white_check_mark: Team Request Verified!",
                                     "Team request by " + (member.getNickname() != null ? member.getNickname() : member.getUser().getName()),
                                     member.getUser().getAvatarUrl(),
-                                    "Team verified by: " + Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()),
+                                    "Team verified by: " + Objects.requireNonNull(event.getMember()).getAsMention(),
                                     Main.GREEN,
                                     new EmbedField[] { new EmbedField("Verified Team", "`" + teamName + "`", false)}
                             );
@@ -486,7 +486,7 @@ public class TeamCommand extends Command {
 
                             b = Main.buildEmbed(
                                     ":white_check_mark: Team Request Verified!",
-                                    "Hey " + Main.mention(member.getIdLong()) + ", your team request for `" + teamName + "` was verified!.",
+                                    "Hey " + member.getAsMention() + ", your team request for `" + teamName + "` was verified!.",
                                     Main.GREEN,
                                     new EmbedField[] {}
                             );
@@ -554,7 +554,7 @@ public class TeamCommand extends Command {
                                 ":white_check_mark: Team Request Denied!",
                                 "Team request by " + (member.getNickname() != null ? member.getNickname() : member.getUser().getName()),
                                 member.getUser().getAvatarUrl(),
-                                "Team request denied by: " + Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()),
+                                "Team request denied by: " + Objects.requireNonNull(event.getMember()).getAsMention(),
                                 Main.GREEN,
                                 new EmbedField[] { new EmbedField("Denied Team", "`" + teamName + "`", false)}
                         );
@@ -563,7 +563,7 @@ public class TeamCommand extends Command {
                         // Requester deny embed
                         b = Main.buildEmbed(
                                 ":x: Team Request Denied!",
-                                "Hey " + Main.mention(member.getIdLong()) + ", your team request for `" + teamName + "` was denied. Please see **Reason** as to why!",
+                                "Hey " + member.getAsMention() + ", your team request for `" + teamName + "` was denied. Please see **Reason** as to why!",
                                 Main.RED,
                                 new EmbedField[] {
                                         new EmbedField("Reason", denyReason, false)}
@@ -611,7 +611,7 @@ public class TeamCommand extends Command {
                     }
 
                         // Creates the message and adds a bunch of stuff to the message
-                    event.getChannel().sendMessage(Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()) + ", you're about to delete `" + teamName + "`. Once deleted, it can't be undone. " +
+                    event.getChannel().sendMessage(Objects.requireNonNull(event.getMember()).getAsMention() + ", you're about to delete `" + teamName + "`. Once deleted, it can't be undone. " +
                         "React to this message with :white_check_mark: to confirm, or :x: to cancel. This delete request will delete in 30 seconds")
                         .queue(message -> {
                             // Add the reactions to the message and call finish removal
@@ -687,7 +687,7 @@ public class TeamCommand extends Command {
                         Main.guild.addRoleToMember(joinerMember, Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
 
                         // Welcome user to team
-                        Objects.requireNonNull(Main.guild.getTextChannelById(team.getChannelId())).sendMessage("Welcome " + Main.mention(joiner.getId()) + " to **" + team.getName() + "**").queue();
+                        Objects.requireNonNull(Main.guild.getTextChannelById(team.getChannelId())).sendMessage("Welcome " + joinerMember.getAsMention() + " to **" + team.getName() + "**").queue();
 
                         // Rewrite team to file
                         GuildTeam.writeTeam(team);
@@ -696,7 +696,7 @@ public class TeamCommand extends Command {
 
                     // Creates the message and sends it to the team
                     assert teamChannel != null;
-                    teamChannel.sendMessage("Hi " + Main.mention(leaderId) + ", " + Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()) +
+                    teamChannel.sendMessage("Hi " + Objects.requireNonNull(Main.guild.getMemberById(leaderId)).getAsMention() + ", " + Objects.requireNonNull(event.getMember()).getAsMention() +
                             " would like to join your team. React with :white_check_mark: to accept, or :x: to deny")
                             .queue(message -> {
                                 // Add the reactions to the message
@@ -706,7 +706,7 @@ public class TeamCommand extends Command {
 
                     EmbedBuilder b = Main.buildEmbed(
                             ":white_check_mark: Success!",
-                            Main.mention(event.getMember().getIdLong()) + ", your request to join `" + teamName + "` was sent. Good luck!",
+                            event.getMember().getAsMention() + ", your request to join `" + teamName + "` was sent. Good luck!",
                             Main.GREEN,
                             new EmbedField[] {}
                     );
@@ -746,7 +746,7 @@ public class TeamCommand extends Command {
             if(team == null)
                 genericFail(event , "Team Kick", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams", 0);
             else if(!Main.containsRole(m, Main.guild.getRoleById(team.getRoleId())))
-                genericFail(event , "Team Kick", "I couldn't find " + Main.mention(m.getIdLong()) + " in the team `" + teamName + "`", 0);
+                genericFail(event , "Team Kick", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`", 0);
             else {
                 Main.guild.removeRoleFromMember(m, Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
                 team.removeMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong())));
@@ -757,7 +757,7 @@ public class TeamCommand extends Command {
                         ":white_check_mark: Player Removed!",
                         "Removed by " + event.getAuthor().getName(),
                         event.getAuthor().getAvatarUrl(),
-                        "Successfully kicked " + Main.mention(m.getIdLong()) + " from `" + team.getName() + "`",
+                        "Successfully kicked " + m.getAsMention() + " from `" + team.getName() + "`",
                         Main.GREEN,
                         new EmbedField[] {}
                 );
@@ -798,9 +798,9 @@ public class TeamCommand extends Command {
                         return;
                     } catch (Exception ignore) {}
                 }
-                genericFail(event , "Team Add",  Main.mention(m.getIdLong()) + " is already in `" + teamName + "`", 0);
+                genericFail(event , "Team Add",  m.getAsMention() + " is already in `" + teamName + "`", 0);
             } else if(!team.addMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong()))))
-                genericFail(event , "Team Add", "I couldn't find " + Main.mention(m.getIdLong()) + " in the team `" + teamName + "`", 0);
+                genericFail(event , "Team Add", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`", 0);
             else {
                 GuildTeam.writeTeam(team);
                 Main.guild.addRoleToMember(m.getId(), Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
@@ -809,7 +809,7 @@ public class TeamCommand extends Command {
                         ":white_check_mark: Player Added!",
                         "Added by " + event.getAuthor().getName(),
                         event.getAuthor().getAvatarUrl(),
-                        "Successfully added " + Main.mention(m.getIdLong()) + " to `" + team.getName() + "`",
+                        "Successfully added " + m.getAsMention() + " to `" + team.getName() + "`",
                         Main.GREEN,
                         new EmbedField[] {}
                 );
@@ -1358,7 +1358,7 @@ public class TeamCommand extends Command {
                     event.getGuild().addRoleToMember(joinerMember, Objects.requireNonNull(event.getGuild().getRoleById(team.getRoleId()))).queue();
 
                     // Welcome user to team
-                    event.getChannel().sendMessage("Welcome " + Main.mention(joiner.getId()) + " to **" + team.getName() + "**").queue();
+                    event.getChannel().sendMessage("Welcome " + joinerMember.getAsMention() + " to **" + team.getName() + "**").queue();
 
                     // Rewrite team to file
                     GuildTeam.writeTeam(team);
@@ -1370,7 +1370,7 @@ public class TeamCommand extends Command {
 
                     EmbedBuilder b = Main.buildEmbed(
                             ":x: Join Denied!",
-                            "Sorry " + Main.mention(message.getMentionedMembers().get(1).getIdLong()) + ", you weren't admitted into team **" + team.getName() + "**!",
+                            "Sorry " + message.getMentionedMembers().get(1).getAsMention() + ", you weren't admitted into team **" + team.getName() + "**!",
                             Main.RED,
                             new EmbedField[] {}
                     );

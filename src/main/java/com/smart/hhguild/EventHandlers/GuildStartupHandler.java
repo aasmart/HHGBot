@@ -76,6 +76,7 @@ public class GuildStartupHandler extends ListenerAdapter {
         Main.BUG_CHANNEL = Main.guild.getTextChannelById(763459055070740510L);
         Main.FEEDBACK_LOG_CHANNEL = Main.guild.getTextChannelById(772836495026946059L);
         Main.IMAGE_SUBMISSIONS_CHANNEL = Main.guild.getTextChannelById(784519025089970216L);
+        Main.BOT_LOGS_CHANNEL = Main.guild.getTextChannelById(761579041676460043L);
 
         // Categories
         Main.TEAM_COMMANDS_CATEGORY = Main.guild.getCategoryById(761290187937677312L);
@@ -133,6 +134,8 @@ public class GuildStartupHandler extends ListenerAdapter {
                 outputStream.close();
             } catch (Exception ignore) {}
         }
+
+        PowerUp.loadPowerups();
 
         Command.initializeHelpFields();
 

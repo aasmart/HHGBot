@@ -22,32 +22,32 @@
 
 package com.smart.hhguild.EventHandlers;
 
-import com.smart.hhguild.Main;
 import com.smart.hhguild.Templates.Guild.GuildMember;
-import com.smart.hhguild.UserVerification;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import com.smart.hhguild.Templates.Guild.GuildTeam;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * This class contains the event for when a member joins the server
- */
-public class MemberJoinHandler extends ListenerAdapter {
-    private static final String helpCmd = "!help request [problem]";
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
+public class MemberLeaveHandler extends ListenerAdapter {
     @Override
-    public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-        User u = event.getMember().getUser();
+    public void onGuildMemberRemove(@NotNull GuildMemberRemoveEvent event) {
+        super.onGuildMemberRemove(event);
 
-        if (u.isBot())
-            return;
+        try {
+            ArrayList<GuildMember> members = GuildMember.readMembers();
+            List<Long> ids = members.stream().map(GuildMember::getId).collect(Collectors.toList());
 
-        Main.sendPrivateMessage(u, "Hello and welcome to the **Haslett High Guild**!\n\n" +
-                "We value the safety and security of Haslett students above all else! Therefore," +
-                " in order to be admitted into the HHG, please submit your **full SCHOOL EMAIL** " +
-                "(00exampleex@haslett.k12.mi.us). If an error has occurred, please contact us using `" + helpCmd + "` for assistance."
-        );
+            members.remove(ids.indexOf(Objects.requireNonNull(event.getMember()).getIdLong()));
+            GuildMember.writeMember(members);
 
-        GuildMember.writeMember(new GuildMember(u.getIdLong(), "", "", 0, UserVerification.generateVerificationCode()));
+            GuildTeam.reloadTeams();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

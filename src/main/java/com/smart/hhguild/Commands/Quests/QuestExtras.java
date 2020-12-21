@@ -67,7 +67,7 @@ public class QuestExtras extends Command {
         // Make sure the person performing this action is the editor of the quest
         if(!Main.isEditing(event.getMember(), Editor.EditType.QUEST, questName)) {
             event.getChannel().sendMessage(
-                    Main.mention(event.getMember().getIdLong()) + ", you can't do this because you're not the editor!")
+                    event.getMember().getAsMention() + ", you can't do this because you're not the editor!")
                     .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
         }
@@ -108,7 +108,7 @@ public class QuestExtras extends Command {
         } else if(reaction.contains("add")) {
             if(editor.getEditAction() != Editor.EditAction.NONE) {
                 event.getChannel().sendMessage(
-                        Main.mention(event.getMember().getIdLong()) + ", you can't do this because you are already performing an action!")
+                        event.getMember().getAsMention() + ", you can't do this because you are already performing an action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
@@ -120,12 +120,12 @@ public class QuestExtras extends Command {
         } else if(reaction.contains("remove")) {
             if(editor.getEditAction() != Editor.EditAction.NONE) {
                 event.getChannel().sendMessage(
-                        Main.mention(event.getMember().getIdLong()) + ", you can't do this because you are already performing an action!")
+                        event.getMember().getAsMention() + ", you can't do this because you are already performing an action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             } else if(quest.getCodes().size() + quest.getQuestFields().size() == 0) {
                 event.getChannel().sendMessage(
-                        Main.mention(event.getMember().getIdLong()) + ", there is nothing to remove, so you can't perform this action!")
+                        event.getMember().getAsMention() + ", there is nothing to remove, so you can't perform this action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
@@ -138,7 +138,7 @@ public class QuestExtras extends Command {
         } else if(reaction.contains("edit")) {
             if(editor.getEditAction() != Editor.EditAction.NONE) {
                 event.getChannel().sendMessage(
-                        Main.mention(event.getMember().getIdLong()) + ", you can't do this because you are already performing an action!")
+                        event.getMember().getAsMention() + ", you can't do this because you are already performing an action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
@@ -180,7 +180,7 @@ public class QuestExtras extends Command {
         // Make sure the reactor is an editor
         if(!Main.isEditing(event.getMember(), Editor.EditType.QUEST, questName)) {
             event.getChannel().sendMessage(
-                    Main.mention(event.getMember().getIdLong()) + ", you can't do this because you're not the editor!")
+                    event.getMember().getAsMention() + ", you can't do this because you're not the editor!")
                     .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
         }

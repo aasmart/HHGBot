@@ -57,7 +57,7 @@ public class MessageUpdateHandler extends ListenerAdapter {
                     if (Moderation.containsSwearWord(rawMsg.toLowerCase().trim())) {
                         msg.delete().queue();
                         channel.sendMessage(
-                                Main.mention(member.getIdLong()) + " **please keep language school appropriate!**")
+                                member.getAsMention() + " **please keep language school appropriate!**")
                                 .queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     }
                 } catch (Exception ignore) {

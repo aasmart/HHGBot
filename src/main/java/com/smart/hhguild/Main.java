@@ -51,6 +51,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class Main extends ListenerAdapter implements EventListener {
@@ -80,6 +81,7 @@ public class Main extends ListenerAdapter implements EventListener {
     public static TextChannel BUG_CHANNEL;
     public static TextChannel FEEDBACK_LOG_CHANNEL;
     public static TextChannel IMAGE_SUBMISSIONS_CHANNEL;
+    public static TextChannel BOT_LOGS_CHANNEL;
 
     // Categories
     public static Category TEAM_COMMANDS_CATEGORY;
@@ -156,10 +158,11 @@ public class Main extends ListenerAdapter implements EventListener {
 
     /**
      * Run this method to startup the bot
+     *
      * @param args The arguments. Left blank
-     * @throws LoginException If the bot fails to login
+     * @throws LoginException       If the bot fails to login
      * @throws InterruptedException If the bot is interrupted during setup
-     * @throws IOException If the BOT_TOKEN_FILE isn't found
+     * @throws IOException          If the BOT_TOKEN_FILE isn't found
      */
     public static void main(String[] args) throws LoginException, InterruptedException, IOException {
         // Load the bot
@@ -189,21 +192,12 @@ public class Main extends ListenerAdapter implements EventListener {
                 .addEventListeners(new GuildStartupHandler())
                 .addEventListeners(new MessageUpdateHandler())
                 .addEventListeners(new MemberJoinHandler())
+                .addEventListeners(new MemberLeaveHandler())
                 .setActivity(Activity.competing("The HHG"))
                 .build();
         jda.awaitReady();
 
         System.out.println("Bot Loaded");
-    }
-
-    /**
-     * Takes an id and creates a mention to a user
-     *
-     * @param id The id of the user
-     * @return A string mention
-     */
-    public static String mention(long id) {
-        return "<@" + id + ">";
     }
 
     /**
@@ -423,7 +417,15 @@ public class Main extends ListenerAdapter implements EventListener {
      * @param contents The message to send
      */
     public static void sendPrivateMessage(User u, String contents) {
-        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents).queue());
+        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents).queue(success -> {
+        }, throwable -> {
+            EmbedBuilder b = Main.buildEmbed(":x: Failed Direct Message",
+                    "Failed to message " + u.getAsMention() + ". Please attempt to contact them " +
+                            "to resolve this issue",
+                    Main.RED,
+                    new EmbedField[]{new EmbedField("Message Contents", contents, false)});
+            Main.BOT_LOGS_CHANNEL.sendMessage(b.build()).queue();
+        }));
     }
 
     /**
@@ -431,9 +433,12 @@ public class Main extends ListenerAdapter implements EventListener {
      *
      * @param u        The user to send the private message to
      * @param contents The embed to send
+     * @return True if the DM was sent successfully
      */
-    public static void sendPrivateMessage(User u, EmbedBuilder contents) {
-        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents.build()).queue());
+    public static boolean sendPrivateMessage(User u, EmbedBuilder contents) {
+        AtomicBoolean sent = new AtomicBoolean(false);
+        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents.build()).queue(success -> sent.set(false), throwable -> sent.set(true)));
+        return sent.get();
     }
 
     /**
@@ -442,28 +447,23 @@ public class Main extends ListenerAdapter implements EventListener {
      * @param u          The user to send the private message to
      * @param contents   The embed to send
      * @param attachment The file attachment to send with the message
-     * @return If the message was sent successfully
+     * @return Tru if the message was sent successfully
      */
     public static boolean sendPrivateMessage(User u, EmbedBuilder contents, Message.Attachment attachment) {
+        AtomicBoolean sent = new AtomicBoolean(false);
         contents.setImage("attachment://attachment.png");
 
         // Get the InputStream and read the bytes
-        return attachment.retrieveInputStream().thenAccept(in -> {
-            byte[] bytes;
-            try {
-                bytes = in.readAllBytes();
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-
+        attachment.retrieveInputStream().thenAccept(in -> {
             // Send the private message containing the embed and image
-            u.openPrivateChannel().flatMap(channel -> channel.sendMessage(contents.build()).addFile(bytes, "attachment.png")).queue();
+            u.openPrivateChannel().flatMap(channel -> channel.sendMessage(contents.build()).addFile(in, "attachment.png"))
+                    .queue(success -> sent.set(true), throwable -> sent.set(false));
         }).exceptionally(t -> { // handle failure
             t.printStackTrace();
             return null;
         }).isDone();
+
+        return sent.get();
     }
 
     /**
@@ -478,17 +478,8 @@ public class Main extends ListenerAdapter implements EventListener {
 
         // Get the InputStream and read the bytes
         attachment.retrieveInputStream().thenAccept(in -> {
-            byte[] bytes;
-            try {
-                bytes = in.readAllBytes();
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-
             // Send the embed
-            channel.sendMessage(contents.build()).addFile(bytes, "attachment.png").queue();
+            channel.sendMessage(contents.build()).addFile(in, "attachment.png").queue();
         }).exceptionally(t -> { // handle failure
             t.printStackTrace();
             return null;

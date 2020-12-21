@@ -78,7 +78,7 @@ public class Clue extends PowerUp {
             for(PowerUp p : activePowerUps) {
                 if(p.getClass() == Clue.class) {
                     Clue c = (Clue) p;
-                    // Check to see if the kamikaze has the same sender and target as one before
+                    // Check to see if the clue has already been purchased by the team
                     if (c.getSender().getName().equals(sender.getName())) {
                         Calendar clueUseTime = Calendar.getInstance();
                         clueUseTime.setTime(c.getTimeUsed());
@@ -117,8 +117,8 @@ public class Clue extends PowerUp {
             b.setTitle("A Clue was Purchased!");
             b.setDescription("**" + sender.getName() + "** purchased a clue!");
             Main.TEAMS_LOG_CHANNEL.sendMessage(b.build()).queue();
-        } else {
+        } else
             Command.individualCommandHelp(CommandType.POWERUP_CLUE, event);
-        }
+
     }
 }

@@ -118,7 +118,7 @@ public class CooldownCmds extends Command {
         if (args.length == 4) {
             SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 
-            if (Main.teams.contains(args[2])) {
+            if (Main.teamNames.contains(args[2])) {
                 int duration;
                 try {
                     duration = Integer.parseInt(args[3]);
@@ -176,7 +176,7 @@ public class CooldownCmds extends Command {
         if (args.length == 3) {
             SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 
-            if (Main.teams.contains(args[2])) {
+            if (Main.teamNames.contains(args[2])) {
                 // Get the hashmap of cooldowns from the file
                 HashMap<String, String> coolDowns;
                 try {
@@ -223,7 +223,7 @@ public class CooldownCmds extends Command {
         if (args.length == 4) {
             SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 
-            if (Main.teams.contains(args[2])) {
+            if (Main.teamNames.contains(args[2])) {
                 // Get the hashmap of cooldowns from the file
                 HashMap<String, String> coolDowns;
                 try {

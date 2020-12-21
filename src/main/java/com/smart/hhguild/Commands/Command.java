@@ -100,9 +100,9 @@ public class Command {
         b.setColor(Main.GREEN);
         b.setTitle(":white_check_mark: Mod Log", null);
         b.setDescription("Action Type: **" + type + "**");
-        b.addField("Moderator ", Main.mention(mod.getIdLong()), true);
+        b.addField("Moderator ", mod.getAsMention(), true);
         b.addField("","",true);
-        b.addField("Affected User", Main.mention(m.getIdLong()), true);
+        b.addField("Affected User", m.getAsMention(), true);
 
         if(fields != null)
             for (EmbedField f : fields) {
@@ -126,9 +126,9 @@ public class Command {
         b.setColor(Main.RED);
         b.setTitle(Main.makeEmoji(Main.RED_CROSS_EMOJI) + " Mod Log", null);
         b.setDescription("Action Type: " + type);
-        b.addField("Moderator: ", Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()), true);
+        b.addField("Moderator: ", Objects.requireNonNull(event.getMember()).getAsMention(), true);
         b.addField("","",true);
-        try { b.addField("Affected User:", Main.mention(m.getIdLong()), true); } catch(Exception e) {
+        try { b.addField("Affected User:", m.getAsMention(), true); } catch(Exception e) {
             b.addField("Affected User:", "None", true);
         }
         b.addField("Failure Reason:", reason, false);
@@ -148,7 +148,7 @@ public class Command {
         b.setColor(Main.RED);
         b.setTitle(Main.makeEmoji(Main.RED_CROSS_EMOJI) + " Mod Log", null);
         b.setDescription("Action Type: " + type);
-        b.addField("Moderator: ", Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()), false);
+        b.addField("Moderator: ", Objects.requireNonNull(event.getMember()).getAsMention(), false);
         b.addField("Failure Reason:", reason, false);
 
         c.sendMessage(b.build()).queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
@@ -376,7 +376,7 @@ public class Command {
         MISC_SUGGEST, MISC_BUG, MISC_EDIT, MISC_SUBMIT, MISC_CLUE,
 
         // Powerup Commands
-        POWERUP_KAMIKAZE, POWERUP_SHIELD, POWERUP_GIFT, POWERUP_CLUE,
+        POWERUP_KAMIKAZE, POWERUP_SHIELD, POWERUP_GIFT, POWERUP_CLUE, POWERUP_VAULT,
 
         // Member Commands
         MEMBER_GET, MEMBER_REGENERATE, MEMBER_CHANGE, MEMBER_EDIT,
@@ -408,7 +408,7 @@ public class Command {
                             "`!sweardetection [on/off/get]`",
                             "**[on/off/get]** is simply on or off and get returns the current status",
                             new Role[]{Main.adminIds[0]},
-                            new TextChannel[]{},
+                            new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -670,8 +670,8 @@ public class Command {
                             "edits the requested part of a given code.",
                             "`!code edit [code] [container] [value]`",
                             "**[code]** is the 'name' of the code you want to edit." +
-                                    "\n**[container]** is the data container you want to modify. This can be several thing: " +
-                                    "code, points, submits, maxsubmits, submitters, and isimage. " +
+                                    "\n**[container]** is the data container you want to modify. This can be several things: " +
+                                    "name, points, submits, maxsubmits, submitters (teams that have submitted the code), and is image. " +
                                     "Note, when using **submitters**, you must separate team names by commas and can use NONE to clear submitters." +
                                     "\n**[value]** is the data you want to replace the container with.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
@@ -867,13 +867,13 @@ public class Command {
                             new String[]{},
                             event.getChannel(), false);
 
-                    case MISC_TOGGLE_REMAINING_CODES -> buildHelpEmbed("Toggle Remaining Codes",
+                    case MISC_TOGGLE_REMAINING_CODES -> buildHelpEmbed("Remaining Codes",
                             "changes if the number of remaining codes is told to the user when using the `!submit` command . The current status is: " + (Main.numRemainingCodes ? "**ON**" : "**OFF**"),
                             "`!remainingcodes [on/off/get]`",
                             "**[on/off/get]** is simply on/off. Get returns the current status.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[]{},
-                            new String[]{},
+                            new String[]{"!remainingcode"},
                             event.getChannel(), false);
 
                     case MISC_SEND -> buildHelpEmbed("Send",
@@ -964,7 +964,7 @@ public class Command {
                     case POWERUP_KAMIKAZE -> buildHelpEmbed("Powerup Kamikaze",
                             "**takes away " + Kamikaze.damage + " of your target's points** but **costs " + Kamikaze.cost + " of your points/Guilded**. But beware: " +
                                     "if your target has an **active shield** your kamikaze will be deflected, dealing an additional " + (int)(Kamikaze.damage * .75) + " damage to you. " +
-                                    "This powerup can only be **used between Mondays and Fridays**. After using a kamikaze on a team, you can't kamikaze that team for" +
+                                    "This powerup can only be bought **during weekdays**. After using a kamikaze on a team, you can't kamikaze that team for" +
                                     " 24 hours. You can't use the kamikaze powerup if you have an active shield.",
                             "!powerup kamikaze [team]",
                             "**[team]** is the name of team you wish to kamikaze.",
@@ -974,9 +974,9 @@ public class Command {
                             event.getChannel(), true);
 
                     case POWERUP_SHIELD -> buildHelpEmbed("Powerup Shield",
-                            "**costs " + Kamikaze.cost + " of you points/Guilded** and protects you from kamikazes. However, " +
-                                    "if you have an active shield you can't kamikaze others and doesn't deactivate until midnight." +
-                                    "This powerup can only be **used between Mondays and Fridays** between 7:15AM and 10:00PM" +
+                            "**costs " + Kamikaze.cost + " of your points/Guilded** and protects you from kamikazes. However, " +
+                                    "if you have an active shield you can't kamikaze others and the shield doesn't deactivate until midnight. " +
+                                    "This powerup can only be bought **during weekdays** between 7:15AM and 10:00PM" +
                                     " and will expire at midnight.",
                             "!powerup shield buy",
                             "No syntax info",
@@ -987,8 +987,8 @@ public class Command {
 
                     case POWERUP_GIFT -> buildHelpEmbed("Powerup Gift",
                             "allows you to give another team one to three points and **can't** be purchased with Guilded. However, " +
-                                    "you can only gift one team per-day, which means until midnight. This powerup can only be **used** " +
-                                    "**between Mondays and Fridays**.",
+                                    "you can only gift one team per-day, which means until midnight. This powerup can only be bought " +
+                                    "**during weekdays**.",
                             "!powerup gift [team] [amount]",
                             "**[team]** is the name of the team you want to give points to." +
                                     "\n**[amount]** is the amount of points you want to gift the team ranging from one to three.",
@@ -999,7 +999,7 @@ public class Command {
 
                     case POWERUP_CLUE -> buildHelpEmbed("Powerup Clue",
                             "gives you the clue, if it exists, for the current quest. Purchasing a clue" +
-                                    " cost 2 points/guilded and can only be used from **7:45AM to 2:00PM**, **Mondays through Fridays**." +
+                                    " cost 2 points/guilded and can only be bought from **7:45AM to 2:00PM**, **during weekdays**." +
                                     " *Clues may not provide information helpful for your certain circumstances and are only designed to provide key info for" +
                                     " solving the quest. Clues are designed to be as helpful as they can be and are non refundable.*",
                             "!powerup clue buy",
@@ -1007,6 +1007,16 @@ public class Command {
                             new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[]{},
                             new String[]{"!powerups clue"},
+                            event.getChannel(), true);
+                    case POWERUP_VAULT -> buildHelpEmbed("Powerup Vault",
+                            "allows you to vault up to 50% of your total points (rounded down). After 7 days, the vault" +
+                                    "will be returned and you will gain the initial vault and 50% more (rounded down) on top of your current points. " +
+                                    "This powerup can only be bought between **Mondays** and **Thursdays**.",
+                            "!powerup vault [amount]",
+                            "**[amount]** is the amount of points to vault.",
+                            new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
+                            new TextChannel[]{},
+                            new String[]{"!powerups Vault"},
                             event.getChannel(), true);
                 }
             }
@@ -1341,7 +1351,7 @@ public class Command {
                 // ---------- MODERATION ----------
                 new HelpField("Moderation","Swear Detection Toggle",
                         "The `!sweardetection` command changes the status of auto swear detection based on the input. Type `!sweardetection` to learn more.",
-                        new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
+                        new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Moderation","Mute",
                         "The `!mute` command adds the muted role to the specified user. Use `!mute` to learn more.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
@@ -1390,7 +1400,7 @@ public class Command {
                         "To kick players from a team, use `!team kick [team-name] [member]`. Use `!team kick` to learn more.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Listing All Teams or Team Requests",
-                        "To list all the current teams use `!team list teams` or `!team list requests` for all team requests. Use `!team list` to learn more.",
+                        "To list all the current teams use `!team list teams`. For all team requests, `!team list requests`. Use `!team list` to learn more.",
                         new Role[] {}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Changing a Team's Color",
                         "To change the color of a team, use `!team color [team-name] [hex-code]`. Use `!team color` to learn more.",
@@ -1413,7 +1423,7 @@ public class Command {
                         "To delete a code, you must use `!code delete [code]`. Type `!code delete` to learn more.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Code","Listing all Codes",
-                        "To list all codes, use `!code list`. This will return the 'names' of all codes. If there is more than one page, you can change pages using the arrow reactions.",
+                        "To list all codes, use `!code list`. This will return the 'names' of all codes.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Code","Getting Information about a Code",
                         "To get a code, use `!code get [code]`. This will return all info about the given code. Use `!code get` to learn more.",
@@ -1443,8 +1453,8 @@ public class Command {
                 new HelpField("Cooldown","Modifying a CoolDown",
                         "To modify an existing cooldown, use `!cooldown modify [team] [duration]` where [duration] can be positive or negative. Use `!cooldown modify` to learn more.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
-                new HelpField("Cooldown","Setting the Incorrect Code Cooldown",
-                        "To modify the incorrect code cooldown, use `!cooldown incorrect [duration]` where [duration] is in seconds. Use `!cooldown incorrect` to learn more.",
+                new HelpField("Cooldown","Setting the Cooldown for Incorrect Codes",
+                        "To modify the cooldown for incorrect codes, use `!cooldown incorrect [duration]`. Note: [duration] is in seconds. Use `!cooldown incorrect` to learn more.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- QUEST ----------
@@ -1464,7 +1474,7 @@ public class Command {
                         "To list all quests, use `!quest list`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Loading Quests",
-                        "To load quests, or run a quest, use `!quest load [quest-name]`. It can also be used to manually send quest fields, tTo learn more, use `!quest load`",
+                        "To load quests, or run a quest, use `!quest load [quest-name]`. It can also be used to manually send quest fields. To learn more, use `!quest load`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Halting Loaded Quests",
                         "To halt the loaded quest, use `!quest halt`. This will stop the quest from sending quest fields.",
@@ -1513,16 +1523,19 @@ public class Command {
 
                 // ---------- POWERUP ----------
                 new HelpField("Powerup","Kamikaze",
-                        "Kamikaze allows you to deal damage to opposing team at the cost of some of yours by using `!powerup kamikaze [team]`. Use `!powerup kamikaze` to learn more.",
+                        "Kamikaze allows you to deal damage(take away points) to opposing team at the cost of some of your points by using `!powerup kamikaze [team]`. Use `!powerup kamikaze` to learn more.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Shield",
                         "Shield protects you from kamikazes but also prevents you from using kamikazes. To activate a shield use `!powerup shield buy`. To learn more, use `!powerup shield`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Gift",
-                        "Gifts allows you to give teams 1 to 3 of your *own* points. To do this, use `!powerup gift [team] [points]`",
+                        "Gifts allows you to give teams 1 to 3 of your *own* points. To do this, use `!powerup gift [team] [points]`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Clue",
-                        "Clues can provide helpful information for quests. To purchase one, use `!powerup clue buy` and `!powerup clue` to learn more.`",
+                        "Clues can provide helpful information for quests. To purchase one, use `!powerup clue buy` and `!powerup clue` to learn more.",
+                        new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
+                new HelpField("Powerup","Vault",
+                        "Vaults allow you to store points for a 50% return after one week (rounded down). To vault points, use `!powerup vault [amount]`. Or, use `!powerup vault` to learn more.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
 
                 // ---------- MEMBER ----------

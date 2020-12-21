@@ -70,7 +70,7 @@ public class MessageReceivedHandler extends ListenerAdapter {
                     if (Moderation.containsSwearWord(rawMsg.toLowerCase().trim())) {
                         msg.delete().queue();
                         channel.sendMessage(
-                                Main.mention(member.getIdLong()) + " **please keep language school appropriate!**")
+                                member.getAsMention() + " **please keep language school appropriate!**")
                                 .queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     }
                 } catch (Exception ignore) {
@@ -142,7 +142,7 @@ public class MessageReceivedHandler extends ListenerAdapter {
             case "code", "codes" -> CodeCommand.code(event, args);
             case "cooldown", "cooldowns" -> CooldownCmds.cooldown(event, args);
             case "points", "point" -> PointCommands.points(event, args);
-            case "remainingcodes" -> MiscCommand.toggleRemainingCodes(event, args);
+            case "remainingcodes", "remainingcode" -> MiscCommand.toggleRemainingCodes(event, args);
             case "send" -> MiscCommand.send(event, args);
             case "edit" -> MiscCommand.edit(event, args);
             case "message" -> MiscCommand.message(event, args);
@@ -164,7 +164,7 @@ public class MessageReceivedHandler extends ListenerAdapter {
             case "guilded" -> GuildedCommands.guilded(event, args);
             case "help", "info" -> {
                 if (args.length < 2 || args[1].equals("[topic]")) {
-                    msg.reply("You can get help with following topics: **Moderation, Codes, Teams, Cooldowns, Points, Member. Quest, and Miscellaneous**. You can also" +
+                    msg.reply("You can get help with following topics: **Moderation, Codes, Teams, Cooldowns, Points, Member. Quest, Powerup, Image, Response, Guilded, and Miscellaneous**. You can also" +
                             " do **here** to get all commands you can use in this channel. Use `!help [topic]`").queue(message -> message.delete().queueAfter(15, TimeUnit.SECONDS));
                     break;
                 }
@@ -180,6 +180,9 @@ public class MessageReceivedHandler extends ListenerAdapter {
                     case "quest", "quests" -> Command.topicHelpEmbed(event, "quest");
                     case "member", "members" -> Command.topicHelpEmbed(event, "member");
                     case "image", "images" -> Command.topicHelpEmbed(event, "image");
+                    case "response", "responses" -> Command.topicHelpEmbed(event, "response");
+                    case "powerup", "powerups" -> Command.topicHelpEmbed(event, "powerup");
+                    case "guilded" -> Command.topicHelpEmbed(event, "guilded");
                     case "help" -> event.getMessage().reply("No").queue();
                     default -> msg.reply("You can get help with following topics: **Moderation, Codes, Teams, Cooldowns, Points, Member. Quest, and Miscellaneous**. You can also" +
                             " do **here** to get all commands you can use in this channel. Use `!help [topic]`").queue(message -> message.delete().queueAfter(15, TimeUnit.SECONDS));

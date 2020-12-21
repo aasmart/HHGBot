@@ -60,8 +60,6 @@ public class CodeCommand extends Command {
 
         String type = args[1].toLowerCase();  // The command type
 
-        //boolean onTeam = Main.isOnTeam(event.getMember());
-
         switch (type) {
             case "create" -> {
                 if (validSendState(
@@ -401,7 +399,7 @@ public class CodeCommand extends Command {
 
                     // Determine which 'container' to edit
                     switch (args[3].toLowerCase()) {
-                        case "code":
+                        case "name":
                             // Create regex and checks to make sure the code doesn't contain invalid characters
                             Pattern p = Pattern.compile("[_]|[^\\w\\d-]");
                             Matcher matcher = p.matcher(args[4]);
@@ -480,7 +478,7 @@ public class CodeCommand extends Command {
                                 for (String s : commaSplit) {
                                     s = s.trim();
                                     // Make sure all teams in the list exist, if not, return
-                                    if (!Main.teams.contains(s)) {
+                                    if (!Main.teamNames.contains(s)) {
                                         genericFail(event,
                                                 "Code Edit", "The team `" + (s.length() > 200 ? s + "..." : s) + "` does not exist.", 0);
                                         return;

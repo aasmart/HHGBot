@@ -80,11 +80,16 @@ public class Moderation extends Command {
      * @param args The arguments for the command
      */
     public static void toggleSwearDetection(GuildMessageReceivedEvent event, String[] args) {
+        if(!validSendState(event, new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, "Toggle Swear Detection"))
+            return;
+
+        // If the command doesn't have the proper parameters, send the help embed
         if(args.length != 2 || !(args[1].equalsIgnoreCase("on") || args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("get"))) {
             individualCommandHelp(CommandType.MOD_TOGGLE_SWEAR_DETECTION, event);
             return;
         }
 
+        // If the command is get, send the 'get' pane
         if(args[1].equalsIgnoreCase("get")) {
             event.getChannel()
                     .sendMessage("Auto Swear Detection is currently **" + (swearDetection ? "ON**" : "OFF**"))
@@ -92,34 +97,29 @@ public class Moderation extends Command {
             return;
         }
 
-        try {
-            boolean senderIsAdmin = Main.isGuildMaster(event.getMember());
+        // Make sure the user isn't setting it to its current value
+        if ((args[1].equalsIgnoreCase("on") && swearDetection) || (args[1].equalsIgnoreCase("off") && !swearDetection))
+            modLogFail("Swear Detection", "Swear detection is already **" + args[1].toUpperCase() + "**", event, event.getChannel());
+        else {
+            // Change swear detection
+            swearDetection = args[1].equalsIgnoreCase("on");
+            // Create mod log embed
+            EmbedBuilder b = Main.buildEmbed("Mod Log",
+                "Action Type: Swear Detection",
+                Main.GREEN,
+                new EmbedField[] {
+                        new EmbedField("Moderator:", Objects.requireNonNull(event.getMember()).getAsMention(), false),
+                        new EmbedField("Toggled To: ", swearDetection ? "ON" : "OFF", false),
+                }
+            );
 
-            if (!senderIsAdmin) {
-                modLogFail(null, "Swear Detection", "Insufficient Permissions", event, event.getChannel());
-            } else if ((args[1].equalsIgnoreCase("on") && swearDetection) || (args[1].equalsIgnoreCase("off") && !swearDetection)) {
-                modLogFail("Swear Detection", "Swear detection is already **" + args[1].toUpperCase() + "**", event, event.getChannel());
-            } else {
-                swearDetection = args[1].equalsIgnoreCase("on");
-                try {
-                    EmbedBuilder b = Main.buildEmbed("Mod Log",
-                        "Action Type: Swear Detection",
-                        Main.GREEN,
-                        new EmbedField[] {
-                                new EmbedField("Moderator:", Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()), false),
-                                new EmbedField("Toggled To: ", swearDetection ? "ON" : "OFF", false),
-                        }
-                );
+            // Save the property change
+            GuildStartupHandler.writeProperties();
 
-                    GuildStartupHandler.writeProperties();
-                    genericSuccess(event, "Swear Detection", "Changed swear detection to **" + (swearDetection ? "ON" : "OFF") + "**", true);
-                    Main.MOD_LOG_CHANNEL.sendMessage(b.build()).queue();
-                    event.getMessage().delete().queue();
-                } catch(Exception ignore) {}
-            }
-
-        } catch (Exception e) {
-            modLogFail("Swear Detection", "Unknown Error!", event, event.getChannel());
+            // Send success messages
+            genericSuccess(event, "Swear Detection", "Changed swear detection to **" + (swearDetection ? "ON" : "OFF") + "**", true);
+            Main.MOD_LOG_CHANNEL.sendMessage(b.build()).queue();
+            event.getMessage().delete().queue();
         }
     }
 
@@ -150,19 +150,19 @@ public class Moderation extends Command {
             boolean targetIsMod = Main.isMod(m);
             Role mutedRole = Main.MUTED_ROLE;
 
-            if (targetIsMod) {
+            // Add the muted role if the target isn't a moderator and isn't muted
+            if (targetIsMod)
                 modLogFail(m, "Mute", "You can't mute this role!", event, event.getChannel());
-            } else if (Main.containsRole(m, mutedRole)) {
+            else if (Main.containsRole(m, mutedRole))
                 modLogFail(m, "Mute", "User already muted!", event, event.getChannel());
-            } else {
+            else {
                 Main.guild.addRoleToMember(m, mutedRole).queue();
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Mute", null, reason, Main.MOD_LOG_CHANNEL);
-                genericSuccess(event, "Mute", "Muted user " + Main.mention(m.getIdLong()), true);
+                genericSuccess(event, "Mute", "Muted user " + m.getAsMention(), true);
                 event.getMessage().delete().queue();
             }
-        } else {
+        } else
             individualCommandHelp(CommandType.MOD_MUTE, event);
-        }
     }
 
     /**
@@ -192,20 +192,20 @@ public class Moderation extends Command {
             boolean targetIsMod = Main.isMod(m);
             Role mutedRole = Main.MUTED_ROLE;
 
-            if (targetIsMod) {
+            if (targetIsMod)
                 modLogFail(m, "Unmute", "You can't unmute this role!", event, event.getChannel());
-            } else if (!Main.containsRole(m, mutedRole)) {
+            else if (!Main.containsRole(m, mutedRole))
                 modLogFail(m, "Unmute", "User already un-muted!", event, event.getChannel());
-            } else {
+            else {
                 assert mutedRole != null;
                 Main.guild.removeRoleFromMember(m, mutedRole).queue();
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Unmute", null, reason, Main.MOD_LOG_CHANNEL);
-                genericSuccess(event, "Unmute", "Un-muted user " + Main.mention(m.getIdLong()), true);
+                genericSuccess(event, "Unmute", "Un-muted user " + m.getAsMention(), true);
                 event.getMessage().delete().queue();
             }
-        } else {
+        } else
             individualCommandHelp(CommandType.MOD_UNMUTE, event);
-        }
+
     }
 
     /**
@@ -239,7 +239,7 @@ public class Moderation extends Command {
             } else {
                 Main.guild.kick(m, reason).queue();
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Kick", null, reason, Main.MOD_LOG_CHANNEL);
-                genericSuccess(event, "Kick", "Kicked user " + Main.mention(m.getIdLong()), true);
+                genericSuccess(event, "Kick", "Kicked user " + m.getAsMention(), true);
                 event.getMessage().delete().queue();
             }
         } else {
@@ -291,7 +291,7 @@ public class Moderation extends Command {
                         reason,
                         Main.MOD_LOG_CHANNEL
                 );
-                genericSuccess(event, "Ban", "Banned user " + Main.mention(m.getIdLong()), true);
+                genericSuccess(event, "Ban", "Banned user " + m.getAsMention(), true);
                 event.getMessage().delete().queue();
             }
         } else {
@@ -369,7 +369,7 @@ public class Moderation extends Command {
 
                     });
                     modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Clear", null, finalReason, Main.MOD_LOG_CHANNEL);
-                    genericSuccess(event, "Clear", "Cleared messages from user " + Main.mention(m.getIdLong()), true);
+                    genericSuccess(event, "Clear", "Cleared messages from user " + m.getAsMention(), true);
                     event.getMessage().delete().queue();
                 }).start();
             }
@@ -418,7 +418,7 @@ public class Moderation extends Command {
                     "Action Type: Purge",
                     Main.GREEN,
                     new EmbedField[] {
-                            new EmbedField("Moderator", Main.mention(Objects.requireNonNull(event.getMember()).getIdLong()), true),
+                            new EmbedField("Moderator", Objects.requireNonNull(event.getMember()).getAsMention(), true),
                             new EmbedField("","",true),
                             new EmbedField("Messages Deleted", Integer.toString(deleted), true),
                             new EmbedField("Reason", finalReason, false)
@@ -468,7 +468,7 @@ public class Moderation extends Command {
                 Main.sendPrivateMessage(m.getUser(), b);
                 // Success messages
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Warn", null, reason, Main.MOD_LOG_CHANNEL);
-                genericSuccess(event, "Warn", "Warned " + Main.mention(m.getIdLong()) + " with \"" + reason + "\"", true);
+                genericSuccess(event, "Warn", "Warned " + m.getAsMention() + " with \"" + reason + "\"", true);
                 event.getMessage().delete().queue();
             }
         } else {

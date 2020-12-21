@@ -106,7 +106,7 @@ public class PrivateMessageCommand extends Command {
                     "\"" + problem + "\"",
                     Main.DARK_RED,
                     new EmbedField[] {
-                            new EmbedField("Mention:", Main.mention(event.getAuthor().getIdLong()) + "\n",false)
+                            new EmbedField("Mention:", event.getAuthor().getAsMention() + "\n",false)
                     }
             );
 
@@ -143,13 +143,12 @@ public class PrivateMessageCommand extends Command {
             // Tell the user their help request was sent
             event.getChannel().sendMessage("I have sent your help request. Moderators will *hopefully* get back to you shortly.").queue();
 
-        } else {
+        } else
             // Create the help embed for '!help request'
             buildHelpEmbed("Help Request",
                     "requests assistance from moderators",
                     "`!help request [problem]`",
                     "**[problem]** is the issue you are currently having. Ex. (!help request I keep getting an error)",
                     event.getAuthor());
-        }
     }
 }

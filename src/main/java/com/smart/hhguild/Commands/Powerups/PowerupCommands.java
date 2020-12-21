@@ -92,6 +92,18 @@ public class PowerupCommands extends Command {
                     event.getMessage().delete().queue();
                 }
             }
+            case "vault" -> {
+                if (validSendState(
+                        event,
+                        new Role[] {},
+                        new TextChannel[] {},
+                        new Category[] {Main.TEAMS_CATEGORY},
+                        "Powerup Vault")) {
+                    Vault.powerupVault(event, args);
+                } else {
+                    event.getMessage().delete().queue();
+                }
+            }
 
             case "help", "info" -> Command.topicHelpEmbed(event, "powerup");
             default -> {

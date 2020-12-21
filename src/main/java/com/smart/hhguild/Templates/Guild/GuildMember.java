@@ -111,6 +111,26 @@ public class GuildMember implements Serializable {
     }
 
     /**
+     * Writes a given list of GuildMembers to a file of guild members
+     * @param members The list of GuildMembers
+     */
+    public static void writeMember(ArrayList<GuildMember> members) {
+        try {
+            FileOutputStream outputStream = new FileOutputStream(Main.GUILD_MEMBERS_FILE);
+            ObjectOutputStream objectOutput = new ObjectOutputStream(outputStream);
+
+            objectOutput.writeObject(members);
+
+            objectOutput.close();
+            outputStream.close();
+
+            //System.out.println("Data Serialized");
+        } catch(Exception e) {
+            System.out.println("Error Writing Guild Members");
+        }
+    }
+
+    /**
      * Reads through the file containing guild members
      * @return An arraylist of GuildMembers
      */
@@ -146,11 +166,11 @@ public class GuildMember implements Serializable {
         List<Long> fileIds = fileMembers.stream().map(GuildMember::getId).collect(Collectors.toList());
         ArrayList<GuildMember> membersTemp = new ArrayList<>();
 
-        for(Member m : members) {
+        for(Member m : members)
             try {
                 membersTemp.add(fileMembers.get(fileIds.indexOf(m.getIdLong())));
             } catch(Exception ignore) { }
-        }
+
         return membersTemp;
     }
 

@@ -45,14 +45,26 @@ public class PowerUp extends Command implements Serializable {
         this.timeUsed = timeUsed;
     }
 
+    /**
+     * Gets the team that sent the powerup
+     * @return The team that used the powerup
+     */
     public GuildTeam getSender() {
         return sender;
     }
 
+    /**
+     * Gets the team that the powerup affected
+     * @return The team the powerup affected
+     */
     public GuildTeam getReceiver() {
         return receiver;
     }
 
+    /**
+     * Gets the time that the powerup was used
+     * @return The time the powerup was used
+     */
     public Date getTimeUsed() {
         return timeUsed;
     }
@@ -105,16 +117,26 @@ public class PowerUp extends Command implements Serializable {
         }
     }
 
+    /**
+     * Logs powerups to the Main.POWERUP_LOGS_FILE
+     * @param p The powerup to log
+     */
     public static void logPowerup(PowerUp p) {
         SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy-HH:mm:ss");
 
+        // Get the powerups info
         final String sender = p.getSender().getName();
         final String receiver = p.getReceiver().getName();
         final String date = formatter.format(p.getTimeUsed());
         String type = p.getClass().getSimpleName();
 
+        // Format the info
         String stringMessage = date + " - SENDER:" + sender + ", RECEIVER:" + receiver + ", TYPE:"+type;
 
+        if(p.getClass() == Vault.class)
+            stringMessage += ", AMOUNT:" + ((Vault) p).getAmount();
+
+        // Attempt to write it to the file
         try {
             FileWriter fileWriter = new FileWriter(Main.POWERUP_LOGS_FILE, true);
             BufferedWriter bw = new BufferedWriter(fileWriter);
@@ -128,16 +150,40 @@ public class PowerUp extends Command implements Serializable {
         }
     }
 
+    /**
+     * Takes a team's points/guilded away depending on a cost
+     * @param leaderBoard The leaderboard
+     * @param team The team to deduct from
+     * @param cost The amount of points/guilded to deduct
+     * @param useGuilded True if guilded should be used alongside points.
+     */
     @SuppressWarnings("unchecked")
-    static void deductPoints(JSONObject leaderBoard, GuildTeam team, int cost, boolean useGuilded) {
-        if(useGuilded && team.getGuildedAmount() >= cost) {
+    public static void deductPoints(JSONObject leaderBoard, GuildTeam team, int cost, boolean useGuilded) {
+        if(useGuilded && team.getGuildedAmount() >= cost)
             team.modifyGuilded(-cost);
-        } else if(useGuilded && team.getGuildedAmount() < cost && team.getGuildedAmount() > 0) {
+        else if(useGuilded && team.getGuildedAmount() < cost && team.getGuildedAmount() > 0) {
             leaderBoard.replace(team.getName(), (long) leaderBoard.get(team.getName()) - (cost - team.getGuildedAmount()));
             team.setGuildedAmount(0);
-        } else {
+        } else
             leaderBoard.replace(team.getName(), (long) leaderBoard.get(team.getName()) - cost);
-        }
+
         GuildTeam.writeTeam(team);
+    }
+
+    /**
+     * Runs through Main.activePowerUps and attempts to set-up various necessities for the powerup:
+     * - Vault: Load return timer/check if the points need to be returned
+     */
+    public static void loadPowerups() {
+        for(PowerUp p : activePowerUps) {
+            // If the powerup is a vault, attempt to setup its return time
+            if(p.getClass() == Vault.class) {
+                Vault v = (Vault)p;
+                if(v.isActive()) {
+                    v.schedule();
+                } else
+                    v.vaultReturn();
+            }
+        }
     }
 }

@@ -113,7 +113,13 @@ public class Gift extends PowerUp {
             }
 
             JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
-            int giftAmount = Integer.parseInt(args[3]);
+            int giftAmount;
+            try {
+                 giftAmount = Integer.parseInt(args[3]);
+            } catch (Exception e) {
+                genericFail(event, "Powerup Gift", "Gift amount must be an integer.", 0);
+                return;
+            }
 
             if(giftAmount <= 0 || giftAmount > maxGift) {
                 genericFail(event, "Powerup Gift", "Gift amount must be between 1 and 3 points.", 0);
@@ -122,7 +128,7 @@ public class Gift extends PowerUp {
                 genericFail(event, "Powerup Gift", "Your team doesn't have enough points to do this.", 0);
                 return;
             } else if((long)leaderBoard.get(target.getName()) >= 2147483647 - giftAmount) {
-                genericFail(event, "Powerup Kamikaze", "You can't gift this team because they will reach the maximum point limit.", 0);
+                genericFail(event, "Powerup Gift", "You can't gift this team because they will reach the maximum point limit.", 0);
                 return;
             } else if(sender == target) {
                 genericFail(event, "Powerup Gift", "You **can't gift yourself**. I mean, it's net 0 points, so it wouldn't matter anyways.", 0);

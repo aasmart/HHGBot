@@ -362,9 +362,11 @@ public class GuildTeam implements Serializable {
             List<Long> teamMemberIds = team.getTeamMembers().stream().map(GuildMember::getId).collect(Collectors.toList());
             ArrayList<GuildMember> tempMembers = new ArrayList<>();
 
-            for (Long l : teamMemberIds) {
-                tempMembers.add(members.get(memberIds.indexOf(l)));
-            }
+            // Loop through and get attempt to re-add the members
+            for (Long l : teamMemberIds)
+                try { tempMembers.add(members.get(memberIds.indexOf(l))); } catch (Exception ignore) {}
+
+            // Set the team's members to the reloaded ones
             team.setTeamMembers(tempMembers);
         }
 
