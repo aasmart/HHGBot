@@ -105,16 +105,14 @@ public class PointCommands extends Command {
             if(Main.teamNames.contains(args[2])) {
                 JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
 
-                int points;
-                try {
-                    points = Integer.parseInt(args[3]);
-                } catch (Exception e) {
-                    genericFail(event, "Points Set", "[points] must be an **integer** between +-2,147,483,647", 0);
+                Integer points = Main.convertInt(args[3]);
+                if(points == null) {
+                    genericFail(event, "Points Set", "[points] must be an **integer** between \u00B12,147,483,647.", 0);
                     return;
                 }
 
                 if(points == (long)leaderBoard.get(args[2])) {
-                    genericFail(event, "Points Set", args[2] + "'s points are already **" + points + "**", 0);
+                    genericFail(event, "Points Set", args[2] + "'s points are already **" + points + "**.", 0);
                     return;
                 }
 
@@ -123,9 +121,9 @@ public class PointCommands extends Command {
                 Main.writeJSONObjectToFile(leaderBoard, Main.LEADERBOARD_FILE);
                 Leaderboard.createLeaderboard();
 
-                genericSuccess(event, "Points Set", "Updated " + args[2] + "'s points to **" + points + "**", false);
+                genericSuccess(event, "Points Set", "Updated " + args[2] + "'s points to **" + points + "**.", false);
             } else {
-                genericFail(event, "Points Set", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Points Set", "Team `" + args[2] + "` does not exist.", 0);
             }
         } else {
             // Create the help embed for '!points set'
@@ -140,14 +138,10 @@ public class PointCommands extends Command {
             if(Main.teamNames.contains(args[2])) {
                 JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
 
-                int points;
-                try {
-                    points = Integer.parseInt(args[3]);
-                    
-                    if(points == 0)
-                        throw new Exception();
-                } catch (Exception e) {
-                    genericFail(event, "Points Modify", "[points] must be a nonzero **integer** between +/-2,147,483,647", 0);
+                Integer points = Main.convertInt(args[3]);
+
+                if(points == null || points == 0) {
+                    genericFail(event, "Points Modify", "[points] must be a nonzero **integer** between \u00B12,147,483,647", 0);
                     return;
                 }
 
@@ -164,9 +158,9 @@ public class PointCommands extends Command {
                 Main.writeJSONObjectToFile(leaderBoard, Main.LEADERBOARD_FILE);
                 Leaderboard.createLeaderboard();
 
-                genericSuccess(event, "Points Modify", "Updated " + args[2] + "'s points to **" + leaderBoard.get(args[2]) + "**", false);
+                genericSuccess(event, "Points Modify", "Updated " + args[2] + "'s points to **" + leaderBoard.get(args[2]) + "**.", false);
             } else {
-                genericFail(event, "Points Modify", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Points Modify", "Team `" + args[2] + "` does not exist.", 0);
             }
         } else {
             // Create the help embed for '!points modify'
@@ -176,13 +170,9 @@ public class PointCommands extends Command {
 
     public static void pointsIncorrect(GuildMessageReceivedEvent event, String[] args) {
         if(args.length == 3) {
-            int newPoints;
-            try {
-                newPoints = Integer.parseInt(args[2]);
-                if(newPoints < 0)
-                    throw new Exception();
+            Integer newPoints = Main.convertInt(args[2]);
 
-            } catch (Exception e) {
+            if(newPoints == null || newPoints < 0) {
                 genericFail(event.getChannel(), "Incorrect Code Point Deduction", "Points must be an **integer** between 0 and 2,147,483,647.", 0);
                 return;
             }

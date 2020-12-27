@@ -104,8 +104,7 @@ public class UserVerification {
      * 1 - Send and receive verification code sent to email
      * 2 - Get the user's IRL name
      * 3 - Confirm nickname and apply
-     * 4 - Accept rules
-     * 5 - MISC.
+     * 4 - MISC.
      *
      * @param m The member being verified
      * @param members The list of GuildMembers
@@ -197,7 +196,7 @@ public class UserVerification {
 
                     if (msg.equals("change")) {
                         if (Main.changeCooldown.contains(Long.toString(m.getId()))) {
-                            Main.sendPrivateMessage(u, "You have already used `!change` in the past **30 minutes**. Please wait until you can use it again");
+                            Main.sendPrivateMessage(u, "You have already used `change` in the past **30 minutes**. Please wait until you can use it again");
                             return;
                         }
 
@@ -337,9 +336,17 @@ public class UserVerification {
                                 .queue();
 
                         Main.sendPrivateMessage(u,
-                                "Your nickname has been applied! Please review the rules in " + Main.mentionChannel(761370031929163786L) + ". Once you have " +
-                                        "read through them, please respond with `accept` to be admitted into the HHG. *By typing 'accept' " +
-                                        "you agree to adhere to all rules and accept the consequences for breaking them*."
+                                "Your nickname has been applied!."
+                        );
+
+                        g.addRoleToMember(
+                                Objects.requireNonNull(g.getMember(u)),
+                                Main.VERIFIED_ROLE)
+                                .queue();
+
+                        Main.sendPrivateMessage(u,
+                                "Congratulations! You have been admitted to the HHG. Enjoy your time here, make some " +
+                                        "friends, and solve some quests! If you need help at any time, type `!help`"
                         );
 
                         m.setVerificationStep(4);
@@ -357,7 +364,7 @@ public class UserVerification {
                 }
 
                 case 4 -> {
-                    if (msg == null) {
+                    /*if (msg == null) {
                         Main.sendPrivateMessage(u,
                                 "Please review the rules in " + Main.mentionChannel(761370031929163786L) + ". Once you have " +
                                         "read through them, please respond with `accept` to be admitted into the HHG. *By typing 'accept' " +
@@ -367,29 +374,7 @@ public class UserVerification {
                     }
 
                     if (msg.equals("accept")) {
-                        Main.sendPrivateMessage(u,
-                                "Congratulations! You have been admitted to the HHG. Enjoy your time here, make some " +
-                                        "friends, and solve some quests! If you need help at any time, type `!help`"
-                        );
-
-                        assert g != null;
-                        g.addRoleToMember(
-                                Objects.requireNonNull(g.getMember(u)),
-                                Main.VERIFIED_ROLE)
-                                .queue();
-
-                        m.setVerificationStep(5);
-                        GuildMember.writeMember(m);
-                    }
-                }
-
-                case 5 -> {
-                    if (msg == null) {
-                        Main.sendPrivateMessage(u,
-                                "Congratulations! You have been admitted to the HHG. Enjoy your time here, make some " +
-                                        "friends, and solve some quests! If you need help at any time, type `!help`"
-                        );
-                    }
+                    }*/
                 }
             }
         } catch (Exception e) {

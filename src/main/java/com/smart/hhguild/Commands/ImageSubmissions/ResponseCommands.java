@@ -146,7 +146,7 @@ public class ResponseCommands extends Command {
                 genericFail(event.getChannel(), "Code Create", "**[key]** must not contain any special characters, excluding hyphens.", 0);
                 return;
             } else if(key.length() > 16) {
-                genericFail(event, "Response Create", "**[key]** must be between 1 and 16 characters", 0);
+                genericFail(event, "Response Create", "**[key]** must be between 1 and 16 characters.", 0);
                 return;
             } else if(Main.responses.containsKey(key)) {
                 genericFail(event, "Response Create", "A response with the key **" + key + "** already exists.", 0);
@@ -155,14 +155,14 @@ public class ResponseCommands extends Command {
 
             String response = Main.compressArray(Arrays.copyOfRange(args, 3, args.length));
             if(response.length() > 1000) {
-                genericFail(event, "Response Create", "Response must be between 1 and 1000 characters", 0);
+                genericFail(event, "Response Create", "Response must be between 1 and 1000 characters.", 0);
                 return;
             }
 
             Main.responses.put(key, response);
 
             if(!saveResponses()) {
-                genericFail(event, "Response Create", "Failed to save response data", 0);
+                genericFail(event, "Response Create", "Failed to save response data.", 0);
                 return;
             }
 
@@ -196,7 +196,7 @@ public class ResponseCommands extends Command {
             Main.responses.remove(key);
 
             if(!saveResponses()) {
-                genericFail(event, "Response Delete", "Failed to save response data", 0);
+                genericFail(event, "Response Delete", "Failed to save response data.", 0);
                 return;
             }
 
@@ -255,7 +255,7 @@ public class ResponseCommands extends Command {
             });
 
         } else
-            event.getChannel().sendMessage("There are currently no responses").queue();
+            event.getChannel().sendMessage("There are currently no responses.").queue();
     }
 
     /**
@@ -284,9 +284,9 @@ public class ResponseCommands extends Command {
                     if(matcher.find())
                         genericFail(event.getChannel(), "Code Edit", "**[key]** must not contain any special characters, excluding hyphens.", 0);
                     else if(newKey.length() > 16)
-                        genericFail(event, "Response Edit", "**[key]** must be between 1 and 16 characters", 0);
+                        genericFail(event, "Response Edit", "**[key]** must be between 1 and 16 characters.", 0);
                     else if(key.equalsIgnoreCase(newKey))
-                        genericFail(event, "Response Edit", "This response already has that key!", 0);
+                        genericFail(event, "Response Edit", "This response already has that key.", 0);
                     else if(Main.responses.containsKey(newKey))
                         genericFail(event, "Response Edit", "A response with the key **" + newKey + "** already exists.", 0);
                     else {
@@ -298,14 +298,14 @@ public class ResponseCommands extends Command {
                         if(saveResponses())
                             genericSuccess(event, "Response Edit", "Changed the key: **" + key + "** -> **" + newKey + "**", false);
                         else
-                            genericFail(event, "Response Edit", "Failed to save response data", 0);
+                            genericFail(event, "Response Edit", "Failed to save response data.", 0);
 
                     }
                 }
                 case "response" -> {
                     String response = Main.compressArray(Arrays.copyOfRange(args, 4, args.length));
                     if(response.length() > 1000) {
-                        genericFail(event, "Response Create", "Response must be between 1 and 1000 characters", 0);
+                        genericFail(event, "Response Create", "Response must be between 1 and 1000 characters.", 0);
                         return;
                     }
 
@@ -313,7 +313,7 @@ public class ResponseCommands extends Command {
                     Main.responses.replace(key, response);
 
                     if(!saveResponses()) {
-                        genericFail(event, "Response Create", "Failed to save response data", 0);
+                        genericFail(event, "Response Create", "Failed to save response data.", 0);
                         return;
                     }
 

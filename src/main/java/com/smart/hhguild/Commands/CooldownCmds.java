@@ -31,11 +31,9 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -104,6 +102,18 @@ public class CooldownCmds extends Command {
                     event.getMessage().delete().queue();
                 }
             }
+            case "get" -> {
+                if (validSendState(
+                        event,
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
+                        //new long[] {Main.TEAMS_CATEGORY},
+                        "Cooldown Get")) {
+                    cooldownGet(event, args);
+                } else {
+                    event.getMessage().delete().queue();
+                }
+            }
             case "help", "info" -> topicHelpEmbed(event, "cooldown");
             default -> {
                 event.getMessage().delete().queue();
@@ -119,14 +129,10 @@ public class CooldownCmds extends Command {
             SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 
             if (Main.teamNames.contains(args[2])) {
-                int duration;
-                try {
-                    duration = Integer.parseInt(args[3]);
-                    if (duration < 1)
-                        throw new Exception();
+                Integer duration = Main.convertInt(args[3]);
 
-                } catch (Exception e) {
-                    genericFail(event, "Cooldown Set", "**[duration]** must be an integer between 1 and 2,147,483,647", 0);
+                if (duration == null || duration < 1) {
+                    genericFail(event, "Cooldown Set", "**[duration]** must be an integer between 1 and 2,147,483,647.", 0);
                     return;
                 }
 
@@ -156,26 +162,23 @@ public class CooldownCmds extends Command {
                     objectOutput.writeObject(coolDowns);
                     objectOutput.close();
 
-                    genericSuccess(event, "Cooldown Set", "Set a **" + duration + " second** cool down for `" + args[2] + "`", false);
+                    genericSuccess(event, "Cooldown Set", "Set **" + args[2] + " **'s cooldown to **" + duration + (duration == 1 ? " second" : " seconds") + "**.", false);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    genericFail(event, "Cooldown Set", "Unable to set cooldown", 0);
+                    genericFail(event, "Cooldown Set", "Unable to set cooldown.", 0);
                 }
             } else {
-                genericFail(event, "Cooldown Set", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Cooldown Set", "Team `" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "` does not exist.", 0);
             }
-        } else {
+        } else
             // Create the help embed for '!cooldown set'
             individualCommandHelp(CommandType.COOLDOWN_SET, event);
-        }
     }
 
     @SuppressWarnings("unchecked")
     public static void cooldownRemove(GuildMessageReceivedEvent event, String[] args) {
         // !cooldown remove [team]
         if (args.length == 3) {
-            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-
             if (Main.teamNames.contains(args[2])) {
                 // Get the hashmap of cooldowns from the file
                 HashMap<String, String> coolDowns;
@@ -188,11 +191,9 @@ public class CooldownCmds extends Command {
                 }
 
                 try {
-                    boolean isAfter = (new Date()).after(formatter.parse(coolDowns.get(args[2])));
-
-                    if (coolDowns.remove(args[2]) == null) {
-                        if (isAfter)
-                            genericFail(event, "Cooldown Remove", "Team `" + args[2] + "` doesn't have an active cooldown", 0);
+                    // Check if cooldown exists
+                    if (coolDowns.get(args[2]) == null) {
+                        genericFail(event, "Cooldown Remove", "Team does not have an active cooldown.", 0);
                         return;
                     }
 
@@ -203,18 +204,17 @@ public class CooldownCmds extends Command {
                     objectOutput.writeObject(coolDowns);
                     objectOutput.close();
 
-                    genericSuccess(event, "Cooldown Remove", "Removed " + args[2] + "'s cooldown", false);
-                } catch (Exception e) {
+                    genericSuccess(event, "Cooldown Remove", "Removed " + args[2] + "'s cooldown.", false);
+                } catch (IOException e) {
                     e.printStackTrace();
-                    genericFail(event, "Cooldown Remove", "Unable to remove cooldown", 0);
+                    genericFail(event, "Cooldown Remove", "Unable to remove cooldown.", 0);
                 }
             } else {
-                genericFail(event, "Cooldown Remove", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Cooldown Remove", "Team `" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "` does not exist.", 0);
             }
-        } else {
+        } else
             // Create the help embed for '!cooldown remove'
             individualCommandHelp(CommandType.COOLDOWN_REMOVE, event);
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -236,21 +236,17 @@ public class CooldownCmds extends Command {
 
                 try {
                     boolean isAfter = (new Date()).after(formatter.parse(coolDowns.get(args[2])));
-                    int value;
+                    Integer value = Main.convertInt(args[3]);
 
                     if (coolDowns.get(args[2]) == null) {
                         if (isAfter)
-                            genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` doesn't have an active cooldown to modify", 0);
+                            genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` doesn't have an active cooldown to modify.", 0);
                         return;
 
+                    } else if(value == null) {
+                        genericFail(event, "Cooldown Modify", "**[value]** must be an integer between \u00B12,147,483,647.", 0);
+                        return;
                     } else {
-                        try {
-                            value = Integer.parseInt(args[3]);
-                        } catch (Exception e) {
-                            genericFail(event, "Cooldown Modify", "**[value]** must be an integer between +/-2,147,483,647", 0);
-                            return;
-                        }
-
                         Date oldCoolDown = formatter.parse(coolDowns.get(args[2]));
 
                         // Create date object and formatter to create the time at which the cooldown will finish
@@ -261,7 +257,7 @@ public class CooldownCmds extends Command {
                         Date newCoolDown = date.getTime();
 
                         if (newCoolDown.before(new Date())) {
-                            genericFail(event, "Cooldown Modify", "This modification will result in an inactive cooldown, consider `!cooldown remove` to remove the cooldown instead", 0);
+                            genericFail(event, "Cooldown Modify", "This modification will result in an inactive cooldown, consider `!cooldown remove` to remove the cooldown instead.", 0);
                             return;
                         }
 
@@ -276,35 +272,29 @@ public class CooldownCmds extends Command {
                     objectOutput.writeObject(coolDowns);
                     objectOutput.close();
 
-                    genericSuccess(event, "Cooldown Modify", "Modified " + args[2] + "'s cooldown by **" + value + "**", false);
+                    genericSuccess(event, "Cooldown Modify", "Modified " + args[2] + "'s cooldown by **" + value + (value == 1 ? " second" : " seconds") + "**.", false);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    genericFail(event, "Cooldown Modify", "Unable to modify cooldown", 0);
+                    genericFail(event, "Cooldown Modify", "Unable to modify cooldown.", 0);
                 }
             } else {
-                genericFail(event, "Cooldown Modify", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Cooldown Modify", "Team `" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "` does not exist.", 0);
             }
-        } else {
+        } else
             // Create the help embed for '!cooldown modify'
             individualCommandHelp(CommandType.COOLDOWN_MODIFY, event);
-        }
     }
 
     public static void cooldownIncorrect(GuildMessageReceivedEvent event, String[] args) {
         if (args.length == 3) {
-            int newCooldown;
-            try {
-                newCooldown = Integer.parseInt(args[2]);
-                if (newCooldown < 0)
-                    throw new Exception();
+            Integer newCooldown = Main.convertInt(args[2]);
 
-            } catch (Exception e) {
+            if (newCooldown == null || newCooldown < 0) {
                 genericFail(event, "Incorrect Code Cooldown", "Cooldown must be an **integer** 0 and 2,147,483,647.", 0);
                 return;
-            }
-
-            if (Quest.isQuestRunning()) {
+            } else if (Quest.isQuestRunning()) {
                 genericFail(event, "Incorrect Code Cooldown", "You can't edit the incorrect code cooldown while a quest is loaded.", 0);
+                return;
             }
 
             // Get the old cooldown of the quest and set it to the new one
@@ -324,5 +314,68 @@ public class CooldownCmds extends Command {
         } else {
             individualCommandHelp(CommandType.COOLDOWN_INCORRECT, event);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void cooldownGet(GuildMessageReceivedEvent event, String[] args) {
+        if(args.length == 3) {
+            if (Main.teamNames.contains(args[2])) {
+                // Cooldown Format: MM/DD/YYYY HH:MM:SS
+                HashMap<String, String> coolDowns;
+
+                try {
+                    ObjectInputStream objectInput = new ObjectInputStream(new FileInputStream(Main.COOLDOWNS_FILE));
+                    coolDowns = (HashMap<String, String>) objectInput.readObject();
+                    objectInput.close();
+                } catch(Exception e) {
+                    genericFail(event, "Cooldown Get", "Failed to read cooldowns file.", 0);
+                    return;
+                }
+
+                // Embed for telling the teams cooldown
+                EmbedBuilder b = Main.buildEmbed(args[2] + "'s Cooldown",
+                        "",
+                        Main.GREEN,
+                        new EmbedField[] {}
+                );
+
+                SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+                Date coolDown;
+                try {
+                    coolDown = formatter.parse(coolDowns.get(args[2]));
+                } catch (Exception e) {
+                    b.setDescription("This team does not have a cooldown.");
+                    event.getChannel().sendMessage(b.build()).queue();
+                    return;
+                }
+
+                Date date = new Date();
+
+                try {
+                    if (date.after(coolDown)) {
+                        // Remove the team from cooldowns if the cooldown has expired
+                        coolDowns.remove(args[2]);
+
+                        // Setup the objectOutput to write the hashmap back to Main.COOLDOWNS_FILE
+                        ObjectOutputStream objectOutput = new ObjectOutputStream(new FileOutputStream(Main.COOLDOWNS_FILE));
+
+                        // Write objects and close writer
+                        objectOutput.writeObject(coolDowns);
+                        objectOutput.close();
+
+                        b.setDescription("This team does not have a cooldown.");
+                    } else {
+                        long cooldown = ChronoUnit.SECONDS.between(date.toInstant(), coolDown.toInstant());
+
+                        b.setDescription("This team has a cooldown of **" + cooldown + (cooldown == 1 ? " second" : " seconds") + "**.");
+                    }
+                    event.getChannel().sendMessage(b.build()).queue();
+                } catch (Exception e) {
+                    genericFail(event, "Cooldown Get", "Failed to write cooldowns file", 0);
+                }
+            } else
+                genericFail(event, "Cooldown Get", "Team `" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "` does not exist.", 0);
+        } else
+            individualCommandHelp(CommandType.COOLDOWN_GET, event);
     }
 }

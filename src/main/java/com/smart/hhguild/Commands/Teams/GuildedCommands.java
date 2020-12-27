@@ -123,16 +123,15 @@ public class GuildedCommands extends Command {
                 GuildTeam team = GuildTeam.getTeamByName(args[2]);
                 assert team != null;
 
-                int guilded;
-                try {
-                    guilded = Integer.parseInt(args[3]);
-                } catch (Exception e) {
-                    genericFail(event, "Guilded Set", "[guilded] must be an **integer** between +-2,147,483,647", 0);
+                Integer guilded = Main.convertInt(args[3]);
+                
+                if(guilded == null) {
+                    genericFail(event, "Guilded Set", "[guilded] must be an **integer** between \u00B12,147,483,647.", 0);
                     return;
                 }
 
                 if(guilded == team.getGuildedAmount()) {
-                    genericFail(event, "Guilded Set", args[2] + "'s guilded are already **" + guilded + "**", 0);
+                    genericFail(event, "Guilded Set", args[2] + "'s guilded are already **" + guilded + "**.", 0);
                     return;
                 }
 
@@ -140,9 +139,9 @@ public class GuildedCommands extends Command {
                 team.setGuildedAmount(guilded);
                 GuildTeam.writeTeam(team);
 
-                genericSuccess(event, "Guilded Set", "Updated " + args[2] + "'s guilded to **" + guilded + "**", false);
+                genericSuccess(event, "Guilded Set", "Updated " + args[2] + "'s guilded to **" + guilded + "**.", false);
             } else
-                genericFail(event, "Guilded Set", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Guilded Set", "Team `" + args[2] + "` does not exist.", 0);
 
         } else
             // Create the help embed for '!guilded set'
@@ -163,14 +162,10 @@ public class GuildedCommands extends Command {
                 GuildTeam team = GuildTeam.getTeamByName(args[2]);
                 assert team != null;
 
-                int guilded;
-                try {
-                    guilded = Integer.parseInt(args[3]);
+                Integer guilded = Main.convertInt(args[3]);
 
-                    if(guilded == 0)
-                        throw new Exception();
-                } catch (Exception e) {
-                    genericFail(event, "Guilded Modify", "[guilded] must be a nonzero **integer** between +/-2,147,483,647", 0);
+                if(guilded == null || guilded == 0) {
+                    genericFail(event, "Guilded Modify", "[guilded] must be a nonzero **integer** between \u00B12,147,483,647.", 0);
                     return;
                 }
 
@@ -186,9 +181,9 @@ public class GuildedCommands extends Command {
                 team.setGuildedAmount(guilded + team.getGuildedAmount());
                 GuildTeam.writeTeam(team);
 
-                genericSuccess(event, "Points Modify", "Updated " + args[2] + "'s guilded to **" + team.getGuildedAmount() + "**", false);
+                genericSuccess(event, "Points Modify", "Updated " + args[2] + "'s guilded to **" + team.getGuildedAmount() + "**.", false);
             } else {
-                genericFail(event, "Points Modify", "Team `" + args[2] + "` does not exist", 0);
+                genericFail(event, "Points Modify", "Team `" + args[2] + "` does not exist.", 0);
             }
         } else {
             // Create the help embed for '!guilded modify'
@@ -224,6 +219,11 @@ public class GuildedCommands extends Command {
         event.getChannel().sendMessage(embed.build()).queue();
     }
 
+    /**
+     * This method is for the '!guilded convert' command. This command converts three guilded into one point
+     * @param event The event
+     * @param args The arguments
+     */
     @SuppressWarnings("unchecked")
     public static void guildedConvert(GuildMessageReceivedEvent event, String[] args) {
         // !guilded convert [points]
@@ -231,12 +231,9 @@ public class GuildedCommands extends Command {
             GuildTeam team = GuildTeam.getTeamByName(event.getChannel().getName());
             assert team != null;
 
-            int points;
-            try {
-                points = Integer.parseInt(args[2]);
-                if(points < 1)
-                    throw new Exception();
-            } catch (Exception e) {
+            Integer points = Main.convertInt(args[2]);
+
+            if(points == null || points < 1) {
                 genericFail(event, "Guilded Convert", "[points] must be an **integer** between 1 and 2,147,483,647.", 0);
                 return;
             }
@@ -258,7 +255,7 @@ public class GuildedCommands extends Command {
             // Reload leaderboard
             Leaderboard.createLeaderboard();
             // Success message
-            genericSuccess(event, "Guilded Convert", "Converted **" + (points*3) + " guilded** to **" + points + " points.**", false);
+            genericSuccess(event, "Guilded Convert", "Converted **" + (points*3) + " guilded** to **" + points + (points == 1 ? " point**." : " points**."), false);
         } else
             individualCommandHelp(CommandType.GUILDED_CONVERT, event);
     }

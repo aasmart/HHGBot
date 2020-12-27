@@ -699,7 +699,7 @@ public class Quest implements Serializable {
                     "`~[new-name]`",
                     false);
             b.addField("Syntax Info",
-                    "**[new-name]** is the desired new name for the quest. It can only contain lowercase letters, numbers, hyphens, and underscores.`",
+                    "**[new-name]** is the desired new name for the quest. It can only contain lowercase letters, numbers, and hyphens.",
                     false);
         }
 

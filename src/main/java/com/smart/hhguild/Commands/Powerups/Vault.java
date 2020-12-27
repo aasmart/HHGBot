@@ -132,27 +132,26 @@ public class Vault extends PowerUp {
             }
 
             // Check to see if the team has an active Vault
-            for(PowerUp p : activePowerUps) {
+            for(int i = activePowerUps.size()-1; i >= 0; i--) {
+                PowerUp p = activePowerUps.get(i);
                 if(p.getClass() == Vault.class) {
                     Vault v = (Vault) p;
                     // Check to see if the Vault was used by the sending team
                     if (v.getSender().getName().equals(sender.getName())) {
-                        if (v.isActive())
+                        if (v.isActive()) {
                             genericFail(event, "Powerup Vault", "You **already** have an active vault.", 0);
-                        else
+                            return;
+                        } else
                             v.vaultReturn();
 
-
-                        return;
                     }
                 }
             }
 
             JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
-            int vaultAmount;
-            try {
-                vaultAmount = Integer.parseInt(args[2]);
-            } catch (Exception e) {
+            Integer vaultAmount = Main.convertInt(args[2]);
+
+            if(vaultAmount == null) {
                 genericFail(event, "Powerup Vault", "Vault amount must be an integer.", 0);
                 return;
             }

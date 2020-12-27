@@ -24,6 +24,7 @@ package com.smart.hhguild.Commands.Powerups;
 
 import com.smart.hhguild.Commands.Command;
 import com.smart.hhguild.Main;
+import com.smart.hhguild.Templates.Guild.GuildTeam;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -42,6 +43,15 @@ public class PowerupCommands extends Command {
         }
 
         String type = args[1].toLowerCase();  // The command type
+
+        GuildTeam team = GuildTeam.getTeamByName(event.getChannel().getName());
+        if(team == null) {
+            genericFail(event, "Powerup", "You must use this in your team channel!", 10);
+            return;
+        } else if(Freeze.isFrozen(team)) {
+            genericFail(event, "Powerup", "You can't do this since your team is frozen.", 0);
+            return;
+        }
 
         switch (type) {
             case "kamikaze" -> {
@@ -104,11 +114,23 @@ public class PowerupCommands extends Command {
                     event.getMessage().delete().queue();
                 }
             }
+            case "freeze" -> {
+                if (validSendState(
+                        event,
+                        new Role[] {},
+                        new TextChannel[] {},
+                        new Category[] {Main.TEAMS_CATEGORY},
+                        "Powerup Freeze")) {
+                    Freeze.powerupFreeze(event, args);
+                } else {
+                    event.getMessage().delete().queue();
+                }
+            }
 
             case "help", "info" -> Command.topicHelpEmbed(event, "powerup");
             default -> {
                 event.getMessage().delete().queue();
-                event.getChannel().sendMessage("Sorry. I do not understand that command, try typing `!help powerup`").queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
+                event.getChannel().sendMessage("Sorry. I do not understand that command, try typing `!help powerup`.").queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
             }
         }
     }

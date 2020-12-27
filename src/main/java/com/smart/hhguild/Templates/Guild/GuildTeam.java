@@ -390,12 +390,11 @@ public class GuildTeam implements Serializable {
         GuildTeam guildTeam = (GuildTeam) o;
         return  Objects.equals(channelId, guildTeam.channelId) &&
                 Objects.equals(roleId, guildTeam.roleId) &&
-                Objects.equals(name, guildTeam.name) &&
-                Objects.equals(teamMembers, guildTeam.teamMembers);
+                Objects.equals(name, guildTeam.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(channelId, roleId, name, teamMembers);
+        return Objects.hash(channelId, roleId, name);
     }
 }

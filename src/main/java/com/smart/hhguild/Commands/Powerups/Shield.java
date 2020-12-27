@@ -67,22 +67,22 @@ public class Shield extends PowerUp {
             now.setTime(new Date());
 
             if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && (!Main.onTime("07:15:00", "22:00:00") || !((now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)))) {
-                genericFail(event, "Powerup Shield", "You can only use this powerup **between Monday** and **Friday** from 7:15AM to 10:00PM.", 0);
+                genericFail(event, "Powerup Shield", "You can only use this powerup **during weekdays** from 7:15AM to 10:00PM.", 0);
                 return;
             }
 
             // Check to see if the team has an active shield
-            for(PowerUp p : activePowerUps) {
+            for(int i = activePowerUps.size()-1; i >= 0; i--) {
+                PowerUp p = activePowerUps.get(i);
                 if(p.getClass() == Shield.class) {
                     Shield s = (Shield) p;
                     // Check to see if the shield was used by this team
                     if (s.getSender().getName().equals(sender.getName())) {
-                        if (s.isActive())
+                        if (s.isActive()) {
                             genericFail(event, "Powerup Shield", "You already have an active shield that will expire at midnight.", 0);
-                        else
-                            activePowerUps.remove(p);
-
-                        return;
+                            return;
+                        } else
+                            PowerUp.removePowerUp(p);
                     }
                 }
             }

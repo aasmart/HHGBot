@@ -38,6 +38,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -169,12 +171,12 @@ public class MemberCmds extends Command {
             // Get the guild member from the member
             GuildMember guildMember = GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong());
             if(guildMember == null) {
-                event.getMessage().reply("Member lacks member data").queue();
+                genericFail(event, "Member", "Member lacks GuildMember data. The user must message the bot to have GuildMember data.", 0);
                 return;
             }
 
             if(guildMember.getVerificationStep() != 1) {
-                genericFail(event, "Member Regenerate", "Member is on a step where you can't regenerate their verification code", 0);
+                genericFail(event, "Member Regenerate", "Member is on a step where you can't regenerate their verification code.", 0);
                 return;
             }
 
@@ -228,7 +230,7 @@ public class MemberCmds extends Command {
             // Get the guild member from the member
             GuildMember guildMember = GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong());
             if(guildMember == null) {
-                event.getMessage().reply("Member lacks member data").queue();
+                genericFail(event, "Member", "Member lacks GuildMember data. The user must message the bot to have GuildMember data.", 0);
                 return;
             }
 
@@ -242,7 +244,7 @@ public class MemberCmds extends Command {
                     "Your email was forcefully rest, so please submit your **SCHOOL EMAIL**."
             );
 
-            genericSuccess(event, "Member Change", "Forced " + m.getAsMention() + " to change their email", false);
+            genericSuccess(event, "Member Change", "Forced " + m.getAsMention() + " to change their email.", false);
         } else {
             individualCommandHelp(CommandType.MEMBER_CHANGE, event);
         }
@@ -265,30 +267,72 @@ public class MemberCmds extends Command {
             // Get the guild member from the member
             GuildMember guildMember = GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong());
             if(guildMember == null) {
-                event.getMessage().reply("Member lacks member data").queue();
+                genericFail(event, "Member", "Member lacks GuildMember data. The user must message the bot to have GuildMember data.", 0);
                 return;
             }
 
             switch (args[3].toLowerCase()) {
                 case "email" -> {
-                    if(args[4].length() > 250) {
+                    Pattern p = Pattern.compile(Main.EMAIL_REGEX);
+                    Matcher matcher = p.matcher(args[4]);
+
+                    String email;
+                    if (matcher.find()) {
+                        email = matcher.group(1) + matcher.group(2) + matcher.group(3) + (matcher.groupCount() != 5 ? "@haslett.k12.mi.us" : "");
+
+                    } else {
+                        genericFail(event, "Member Edit", "That is not a valid Haslett email address (00exampleex@haslett.k12.mi.us).", 0);
+                        return;
+                    }
+
+                    if(email.length() > 250) {
                         genericFail(event, "Member Edit", "Email must be between 0 and 250 characters.", 0);
                         return;
                     }
-                    guildMember.setEmail(args[4]);
+
+                    guildMember.setEmail(email);
+                    Main.sendPrivateMessage(m.getUser(), "Your email was updated to **" + args[4] + "** by an admin.");
+
+                    // If the user doesn't have a verified email, go through the process of sending an email with the verification code
+                    if(guildMember.getVerificationStep() == 0) {
+                        System.out.println("eek");
+                        new Thread(() -> {
+                            try {
+                                GmailSender.sendMessage(GmailSender.createEmail(
+                                        email,
+                                        "thehasletthighguild@gmail.com",
+                                        "HHG Verification",
+                                        "If you are receiving this, your email was used by Discord user: " + guildMember.getName() +
+                                                ". If this is not you, delete this email. If not, your verification code is " +
+                                                guildMember.getVerificationCode()));
+                            } catch (Exception e) {
+                                Main.sendPrivateMessage(m.getUser(),
+                                        "There was a fatal error attempting to send an email. If this issue persists, don't hesitate " +
+                                                "to contact us with `!help request [problem]`."
+                                );
+                            }
+                        }).start();
+
+                        Main.sendPrivateMessage(m.getUser(),
+                                "An email was sent to `" + email + "` containing a six digit verification code. " +
+                                        "Please respond with the verification code to proceed to the next step. If you want to change the " +
+                                        "email, type `change`. "
+                        );
+
+                        guildMember.setVerificationStep(1);
+                    }
 
                     new Thread(() -> {
                         GuildMember.writeMember(guildMember);
                         GuildTeam.reloadTeams();
-                        Main.sendPrivateMessage(m.getUser(), "Your email was updated to **" + args[4] + "** by an admin.");
-                        genericSuccess(event, "Member Edit", "Updated " + m.getAsMention() + "'s email to **" + args[4] + "**", false);
+                        genericSuccess(event, "Member Edit", "Updated " + m.getAsMention() + "'s email to **" + args[4] + "**.", false);
                     }).start();
                 }
                 case "step" -> {
                     try {
-                        int step = Integer.parseInt(args[4]);
+                        Integer step = Main.convertInt(args[4]);
 
-                        if(step < 0 || step > 5)
+                        if(step == null || step < 0 || step > 4)
                             throw new Exception();
 
                         guildMember.setVerificationStep(step);
@@ -299,13 +343,12 @@ public class MemberCmds extends Command {
                             genericSuccess(event, "Member Edit", "Updated " + m.getAsMention() + "'s verification step to **" + args[4] + "**", false);
                         }).start();
                     } catch (Exception e) {
-                        genericFail(event, "Member Edit", "Step must be between 0 and 5.", 0);
+                        genericFail(event, "Member Edit", "Step must be between 0 and 4.", 0);
                     }
                 }
                 default -> genericFail(event, "Member Edit", "`" + args[3] + "` isn't editable.", 0);
             }
-        } else {
+        } else
             individualCommandHelp(CommandType.MEMBER_EDIT, event);
-        }
     }
 }

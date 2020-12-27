@@ -89,12 +89,13 @@ public class Gift extends PowerUp {
             now.setTime(new Date());
 
             if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.THURSDAY)) {
-                genericFail(event, "Powerup Gift", "You can only use this powerup **between Monday** and **Thursday**", 0);
+                genericFail(event, "Powerup Gift", "You can only use this powerup **between Monday** and **Thursday**.", 0);
                 return;
             }
 
             // Check to see if the team gifted today
-            for(PowerUp p : activePowerUps) {
+            for(int i = activePowerUps.size()-1; i >= 0; i--) {
+                PowerUp p = activePowerUps.get(i);
                 if(p.getClass() == Gift.class) {
                     Gift g = (Gift) p;
                     // Check to see if the gift has the same sender
@@ -102,26 +103,19 @@ public class Gift extends PowerUp {
                         Calendar giftUseTime = Calendar.getInstance();
                         giftUseTime.setTime(g.getTimeUsed());
 
-                        if (giftUseTime.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) && giftUseTime.get(Calendar.YEAR) == now.get(Calendar.YEAR))
+                        if (giftUseTime.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) && giftUseTime.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
                             genericFail(event, "Powerup Gift", "You have **already gifted** today.", 0);
-                        else
-                            activePowerUps.remove(p);
-
-                        return;
+                            return;
+                        } else
+                            PowerUp.removePowerUp(p);
                     }
                 }
             }
 
             JSONObject leaderBoard = Main.readJSONObject(Main.LEADERBOARD_FILE);
-            int giftAmount;
-            try {
-                 giftAmount = Integer.parseInt(args[3]);
-            } catch (Exception e) {
-                genericFail(event, "Powerup Gift", "Gift amount must be an integer.", 0);
-                return;
-            }
+            Integer giftAmount = Main.convertInt(args[3]);
 
-            if(giftAmount <= 0 || giftAmount > maxGift) {
+            if(giftAmount == null || giftAmount <= 0 || giftAmount > maxGift) {
                 genericFail(event, "Powerup Gift", "Gift amount must be between 1 and 3 points.", 0);
                 return;
             } else if((long)leaderBoard.get(sender.getName()) - giftAmount < 0) {
@@ -149,7 +143,7 @@ public class Gift extends PowerUp {
             Objects.requireNonNull(Main.guild.getTextChannelById(target.getChannelId())).sendMessage(b.build()).queue();
 
             b.setTitle("A Gift was Sent!");
-            b.setDescription("**" + sender.getName() + "** gifted **" + target.getName() + " " + giftAmount + (giftAmount == 1 ? " point**" : " points**"));
+            b.setDescription("**" + sender.getName() + "** gifted **" + target.getName() + " " + giftAmount + (giftAmount == 1 ? " point**." : " points**."));
             Main.TEAMS_LOG_CHANNEL.sendMessage(b.build()).queue();
         } else {
             Command.individualCommandHelp(CommandType.POWERUP_GIFT, event);

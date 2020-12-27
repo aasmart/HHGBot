@@ -69,26 +69,26 @@ public class Clue extends PowerUp {
             Calendar now = Calendar.getInstance();
             now.setTime(new Date());
 
-            if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(Main.onTime("7:45", "14:00") && now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)) {
+            if(!Main.isAdmin(Objects.requireNonNull(event.getMember())) && !(Main.onTime("7:45", "14:30") && now.get(Calendar.DAY_OF_WEEK) >= Calendar.MONDAY) && (now.get(Calendar.DAY_OF_WEEK) <= Calendar.FRIDAY)) {
                 genericFail(event, "Powerup Clue", "You can only use this powerup **between Monday** and **Fridays** from **7:45AM to 2:00PM**.", 0);
                 return;
             }
 
             // Check to see if the team purchased a clue today
-            for(PowerUp p : activePowerUps) {
-                if(p.getClass() == Clue.class) {
+            for(int i = activePowerUps.size()-1; i >= 0; i--) {
+                PowerUp p = activePowerUps.get(i);
+                if (p.getClass() == Clue.class) {
                     Clue c = (Clue) p;
                     // Check to see if the clue has already been purchased by the team
                     if (c.getSender().getName().equals(sender.getName())) {
                         Calendar clueUseTime = Calendar.getInstance();
                         clueUseTime.setTime(c.getTimeUsed());
 
-                        if (clueUseTime.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) && clueUseTime.get(Calendar.YEAR) == now.get(Calendar.YEAR))
+                        if (clueUseTime.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR) && clueUseTime.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
                             genericFail(event, "Powerup Clue", "You have **already** purchased today's clue.", 0);
-                        else
-                            activePowerUps.remove(p);
-
-                        return;
+                            return;
+                        } else
+                            PowerUp.removePowerUp(p);
                     }
                 }
             }

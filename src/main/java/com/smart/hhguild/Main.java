@@ -146,7 +146,6 @@ public class Main extends ListenerAdapter implements EventListener {
     public static HashMap<String, String> responses;
     public static ArrayList<Editor> editors;
 
-
     // Quest stuff
     public static ScheduledExecutorService runningQuest;
     public static String runningQuestName = "";
@@ -154,7 +153,7 @@ public class Main extends ListenerAdapter implements EventListener {
     public static int INCORRECT_POINTS_LOST = 0;            // Amount of points a team loses for submitting an incorrect value
     public static boolean numRemainingCodes = true;         // If a correct submission shows the amount of codes left for the team to submit
     public static Submissions.submissionMethods submissionMethod = Submissions.submissionMethods.SIMPLE_SUBMIT;
-    public static String clue = "Lol you just got **MEMED**! There is no clue, loser. HAHA git gud idiot and use your two brain cells to solve the quest. Scammed rofl.";
+    public static String clue = "";
 
     /**
      * Run this method to startup the bot
@@ -421,7 +420,7 @@ public class Main extends ListenerAdapter implements EventListener {
         }, throwable -> {
             EmbedBuilder b = Main.buildEmbed(":x: Failed Direct Message",
                     "Failed to message " + u.getAsMention() + ". Please attempt to contact them " +
-                            "to resolve this issue",
+                            "to resolve this issue.",
                     Main.RED,
                     new EmbedField[]{new EmbedField("Message Contents", contents, false)});
             Main.BOT_LOGS_CHANNEL.sendMessage(b.build()).queue();
@@ -568,9 +567,9 @@ public class Main extends ListenerAdapter implements EventListener {
         }
 
         if (failState == 1)
-            Command.genericFail(event.getChannel(), command, "Too many members with that name. Consider mentioning the user instead", 10);
+            Command.genericFail(event.getChannel(), command, "Too many members with that name. Consider mentioning the user instead.", 10);
         else if (failState == 2)
-            Command.genericFail(event.getChannel(), command, "I couldn't find a member called **" + (nameParsed.length() > 200 ? nameParsed.substring(0, 200) : nameParsed) + "**", 10);
+            Command.genericFail(event.getChannel(), command, "I couldn't find a member called **" + (nameParsed.length() > 200 ? nameParsed.substring(0, 200) : nameParsed) + "**.", 10);
 
         return member;
     }
@@ -642,13 +641,13 @@ public class Main extends ListenerAdapter implements EventListener {
                 channel = Main.guild.getTextChannelById(args[channelPos]);
             else {
                 if (sendErrors) {
-                    Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`", delete ? 10 : 0);
+                    Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`.", delete ? 10 : 0);
                 }
                 return null;
             }
         } catch (Exception e) {
             if (sendErrors) {
-                Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`", delete ? 10 : 0);
+                Command.genericFail(event, command, "I could not get a channel from `" + args[1] + "`.", delete ? 10 : 0);
             }
             return null;
         }
@@ -721,6 +720,12 @@ public class Main extends ListenerAdapter implements EventListener {
         }
     }
 
+    /**
+     * Takes two time strings and checks if the current time is between the two
+     * @param minTime The minimum time
+     * @param maxTime The maximum time
+     * @return True if the current time is between the given times (inclusive)
+     */
     public static boolean onTime(String minTime, String maxTime) {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US);
@@ -741,5 +746,24 @@ public class Main extends ListenerAdapter implements EventListener {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Takes a string value and attempt to convert it to an Integer
+     * @param stringVal The string to convert to an int
+     * @return An integer, null if it failed to convert
+     */
+    public static Integer convertInt(String stringVal) {
+        int val;
+        try {
+            double doubleVal = Double.parseDouble(stringVal);
+            if(doubleVal < Integer.MIN_VALUE || doubleVal > Integer.MAX_VALUE)
+                return null;
+            val = (int)doubleVal;
+        } catch (Exception e) {
+            return null;
+        }
+
+        return val;
     }
 }

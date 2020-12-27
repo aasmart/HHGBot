@@ -169,7 +169,7 @@ public class CodeCommand extends Command {
             try {
                 code.put("points", Integer.parseInt(args[3]));
             } catch (Exception e) {
-                genericFail(event, "Code Create", "Creation failed. [points] must be an **integer** between +/-2,147,483,647.", 0);
+                genericFail(event, "Code Create", "Creation failed. [points] must be an **integer** between \u00B12,147,483,647.", 0);
                 return;
             }
 
@@ -281,7 +281,7 @@ public class CodeCommand extends Command {
                 }
             }
 
-            genericFail(event, "Code Delete", "There is no code: " + args[2], 0);
+            genericFail(event, "Code Delete", "There is no code: " + args[2] + ".", 0);
 
         } else {
             // Create the help embed for '!code delete'
@@ -295,7 +295,7 @@ public class CodeCommand extends Command {
 
         validCodesObj = Main.readJSONObject(Main.VALID_CODES_FILE);
         if(validCodesObj == null) {
-            event.getChannel().sendMessage("There are currently no codes").queue(message -> message.delete().queueAfter(45, TimeUnit.SECONDS));
+            event.getChannel().sendMessage("There are currently no codes.").queue(message -> message.delete().queueAfter(45, TimeUnit.SECONDS));
             return;
         }
 
@@ -315,7 +315,7 @@ public class CodeCommand extends Command {
             });
 
         } else {
-            event.getChannel().sendMessage("There are currently no codes").queue();
+            event.getChannel().sendMessage("There are currently no codes.").queue();
         }
     }
 
@@ -354,7 +354,7 @@ public class CodeCommand extends Command {
                 }
             }
 
-            genericFail(event, "Code Get", "There is no code: " + args[2], 0);
+            genericFail(event, "Code Get", "There is no code: " + args[2] + ".", 0);
 
         } else {
             // Create the help embed for '!code remove'
@@ -399,82 +399,74 @@ public class CodeCommand extends Command {
 
                     // Determine which 'container' to edit
                     switch (args[3].toLowerCase()) {
-                        case "name":
+                        case "name" -> {
                             // Create regex and checks to make sure the code doesn't contain invalid characters
                             Pattern p = Pattern.compile("[_]|[^\\w\\d-]");
                             Matcher matcher = p.matcher(args[4]);
 
                             // Make sure code with the new name doesn't exist
-                            for(Object tempCode : validCodes) {
-                                if(((JSONObject)tempCode).get("code").equals(args[4])) {
-                                    genericFail(event, "Code Edit", "Edit failed. A code with that name already exists", 0);
+                            for (Object tempCode : validCodes) {
+                                if (((JSONObject) tempCode).get("code").equals(args[4])) {
+                                    genericFail(event, "Code Edit", "Edit failed. A code with that name already exists.", 0);
                                     return;
                                 }
                             }
 
                             // Make sure length is less than 200 characters and it contains valid characters, and if so, edit the code
-                            if(matcher.find()) {
+                            if (matcher.find()) {
                                 genericFail(event, "Code Edit", "Edit failed. **[value]** must not contain any special characters, excluding hyphens.", 0);
                                 return;
-                            } else if(args[4].length() > 200) {
+                            } else if (args[4].length() > 200) {
                                 genericFail(event, "Code Edit", "Edit failed. **[value]** must be under 200 characters.", 0);
                                 return;
                             } else {
                                 // Add the inputted variables to a new code
-                                code.replace("code",args[4]);
+                                code.replace("code", args[4]);
                             }
 
-                            break;
-                        case "points":
+                        }
+                        case "points" -> {
                             // Make sure value is an integer
-                            try {
-                                int val = Integer.parseInt(args[4]);
+                            Integer val = Main.convertInt(args[4]);
+
+                            if (val == null) {
+                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** between \\u00B12,147,483,647.", 0);
+                                return;
+                            } else
                                 // Edit the code
                                 code.replace("points", val);
-                            } catch (Exception e) {
-                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** between +/-2,147,483,647.", 0);
-                                return;
-                            }
 
-                            break;
-                        case "submits":
+                        }
+                        case "submits" -> {
                             // Make sure value is an integer between 1 and maxsubmits
-                            try {
-                                int val = Integer.parseInt(args[4]);
-                                if(val < 0 || val >= (long) code.get("maxsubmits"))
-                                    throw new Exception();
+                            Integer val = Main.convertInt(args[4]);
 
-                                // Update the value for submits
-                                code.replace("submits", val);
-                            } catch (Exception e) {
+                            if (val == null || val < 0 || val >= (long) code.get("maxsubmits")) {
                                 genericFail(event, "Code Edit", "Please make sure [value] is an **integer** between 1 and 2,147,483,647 " +
                                         "and less than or equal to `maxsubmits`.", 0);
                                 return;
-                            }
+                            } else
+                                // Update the value for submits
+                                code.replace("submits", val);
 
-                            break;
-                        case "maxsubmits":
+                        }
+                        case "maxsubmits" -> {
                             // Make sure value is greater than 0
-                            try {
-                                int val = Integer.parseInt(args[4]);
-                                if(val < 1)
-                                    throw new Exception();
-
+                            Integer val = Main.convertInt(args[4]);
+                            if(val == null || val < 1) {
+                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** and between 1 and 2,147,483,647.", 0);
+                                return;
+                            } else
                                 // Update the value for max submits
                                 code.replace("maxsubmits", val);
-                            } catch (Exception e) {
-                                genericFail(event, "Code Edit", "Please make sure [value] is an **integer** and between 0 and 2,147,483,647.", 0);
-                                return;
-                            }
-
-                            break;
-                        case "submitters":
+                        }
+                        case "submitters" -> {
                             // Get the array from index 4 to the end and split it by commas
                             String[] commaSplit = Main.compressArray(Arrays.copyOfRange(args, 4, args.length)).split(",");
                             JSONArray submitters = new JSONArray();
 
                             // If the array's first element is not NONE, loop through and check if the team exists, return if not
-                            if(!commaSplit[0].contains("NONE")) {
+                            if (!commaSplit[0].contains("NONE")) {
                                 for (String s : commaSplit) {
                                     s = s.trim();
                                     // Make sure all teams in the list exist, if not, return
@@ -495,13 +487,13 @@ public class CodeCommand extends Command {
                                     event.getAuthor().getAvatarUrl(),
                                     "",
                                     Main.GREEN,
-                                    new EmbedField[] {
+                                    new EmbedField[]{
                                             new EmbedField("Updated Container: " + args[3], "", false),
                                             new EmbedField("New Value: " + Main.oxfordComma((List<String>) submitters.stream().map(Object::toString).collect(Collectors.toList()), "and"), "", false),
                                     }
                             );
-                            break;
-                        case "isimage":
+                        }
+                        case "isimage" -> {
                             // Make sure value is a valid boolean
                             try {
                                 boolean val = Boolean.parseBoolean(args[4]);
@@ -513,10 +505,11 @@ public class CodeCommand extends Command {
                                 return;
                             }
 
-                            break;
-                        default:
-                            genericFail(event, "Code Edit", "Container **" + (args[3].length() > 200 ? args[3].substring(0,200) + "..." : args[3]) + "** does not exist. Please try `!code edit` for information.", 0);
+                        }
+                        default -> {
+                            genericFail(event, "Code Edit", "Container **" + (args[3].length() > 200 ? args[3].substring(0, 200) + "..." : args[3]) + "** does not exist. Please try `!code edit` for information.", 0);
                             return;
+                        }
                     }
 
                     // Save the updated code

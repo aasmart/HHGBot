@@ -54,7 +54,7 @@ public class Command {
      * @param c The text channel for it to be sent in
      * @param haveSpaces Determines if the the command will have spaces when printing out the syntax
      */
-    public static void buildHelpEmbed(String command, String usageInfo, String syntax, String syntaxInfo, Role[] requiredRoles, TextChannel[] requiredChannels, String[] aliases, TextChannel c, boolean haveSpaces) {
+    public static void buildHelpEmbed(String command, String usageInfo, String syntax, String syntaxInfo, Role[] requiredRoles, TextChannel[] requiredChannels, Category[] requiredCategories, String[] aliases, TextChannel c, boolean haveSpaces) {
         String description;
 
         if(haveSpaces)
@@ -70,8 +70,10 @@ public class Command {
 
         if (requiredRoles.length > 0)
             fields.add(new EmbedField("Required Roles: ", Main.oxfordComma(Arrays.stream(requiredRoles).map(Role::getName).collect(Collectors.toList()), "or"), false));
-        if (requiredChannels.length > 0 )
+        if (requiredChannels.length > 0)
             fields.add(new EmbedField("Required Channels: ",  Main.oxfordComma(Arrays.stream(requiredChannels).map(channel -> Main.mentionChannel(channel.getIdLong())).collect(Collectors.toList()), "or"), false));
+        if (requiredCategories.length > 0)
+            fields.add(new EmbedField("Required Categories: ",  Main.oxfordComma(Arrays.stream(requiredCategories).map(Category::getName).collect(Collectors.toList()), "or"), false));
         if (aliases.length > 0)
             fields.add(new EmbedField("Aliases: ", Main.oxfordComma(Arrays.stream(aliases).collect(Collectors.toList()), "or"), false));
 
@@ -82,6 +84,8 @@ public class Command {
                 Main.BLUE,
                 fields.toArray(new EmbedField[0])
         );
+        if(requiredChannels.length > 0 && requiredCategories.length > 0)
+            b.setFooter("Note: Commands can be used in either the required categories or the required channels.");
         c.sendMessage(b.build()).queue();
     }
 
@@ -283,7 +287,7 @@ public class Command {
         } else if(channels.length > 0 && Arrays.stream(channels).noneMatch(channel -> channel.getIdLong() == event.getChannel().getIdLong())) {
             EmbedBuilder b = Main.buildEmbed(
                     ":x: " + cmd,
-                    "You can only use that command in " + (channels.length == 1 ? "channel " : "channels") + Main.oxfordComma(Arrays.stream(channels).map(channel -> Main.mentionChannel(channel.getIdLong())).collect(Collectors.toList()), "and"),
+                    "You can only use that command in the following " + (channels.length == 1 ? "channel: " : "channels: ") + Main.oxfordComma(Arrays.stream(channels).map(channel -> Main.mentionChannel(channel.getIdLong())).collect(Collectors.toList()), "and"),
                     Main.RED,
                     new EmbedField[]{}
             );
@@ -326,8 +330,8 @@ public class Command {
             else {
                 EmbedBuilder b = Main.buildEmbed(
                         ":x: " + cmd,
-                        "You can only use that command in " + (channels.length > 0 ? (channels.length == 1 ? "channel " : "channels") + Main.oxfordComma(Arrays.stream(channels).map(channel -> Main.mentionChannel(channel.getIdLong())).collect(Collectors.toList()), "and") : "") +
-                                (categories.length > 0 ? (channels.length > 0 ? "; and in" : "") + (categories.length == 1 ? "category " : "categories ") + Main.oxfordComma(Arrays.stream(categories).map(Category::getName).collect(Collectors.toList()), "and") : ""),
+                        "You can only use that command in the following " + (channels.length > 0 ? (channels.length == 1 ? "channel: " : "channels: ") + Main.oxfordComma(Arrays.stream(channels).map(channel -> Main.mentionChannel(channel.getIdLong())).collect(Collectors.toList()), "and") : "") +
+                                (categories.length > 0 ? (channels.length > 0 ? "; and in" : "") + (categories.length == 1 ? "category: " : "categories: ") + Main.oxfordComma(Arrays.stream(categories).map(Category::getName).collect(Collectors.toList()), "and") : ""),
                         Main.RED,
                         new EmbedField[]{}
                 );
@@ -366,6 +370,7 @@ public class Command {
 
         // Cooldown Commands
         COOLDOWN_SET, COOLDOWN_REMOVE, COOLDOWN_MODIFY, COOLDOWN_INCORRECT,
+        COOLDOWN_GET,
 
         // Quest Commands
         QUEST_CREATE, QUEST_DELETE, QUEST_EDIT, QUEST_LIST, QUEST_LOAD,
@@ -377,6 +382,7 @@ public class Command {
 
         // Powerup Commands
         POWERUP_KAMIKAZE, POWERUP_SHIELD, POWERUP_GIFT, POWERUP_CLUE, POWERUP_VAULT,
+        POWERUP_FREEZE,
 
         // Member Commands
         MEMBER_GET, MEMBER_REGENERATE, MEMBER_CHANGE, MEMBER_EDIT,
@@ -404,83 +410,91 @@ public class Command {
             case "MOD" -> {
                 switch (commandType) {
                     case MOD_TOGGLE_SWEAR_DETECTION -> buildHelpEmbed("Swear Detection",
-                            "changes the bot swear detection on or off. You can also get the current status with *get*. The current status is: " + Moderation.swearDetection,
+                            "changes the bots auto swear detection on or off and can also get the current status with *get*. The current status is: " + Moderation.swearDetection,
                             "`!sweardetection [on/off/get]`",
-                            "**[on/off/get]** is simply on or off and get returns the current status",
+                            "**[on/off/get]** is simply on or off. *Get* returns the current status.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_MUTE -> buildHelpEmbed("Mute",
                             "adds the **muted** role to the specified user.",
                             "`!mute [member] <reason>`",
-                            "**[member]** is either a mention or the nickname of the member. If you are using a nickname, all spaces must be replaced with hyphens." +
+                            "**[member]** is either a mention or the nickname of a member. If you are using a nickname, all spaces must be replaced with hyphens." +
                                     "\n**<reason>** is optional and will consist of all text after the mentioned user.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_UNMUTE -> buildHelpEmbed("Unmute",
                             "removes the **Muted** role from the specified user.",
                             "!unmute [member] <reason>",
-                            "**[member]** is either a mention or the nickname of the member. If you are using a nickname, all spaces must be replaced with hyphens." +
+                            "**[member]** is either a mention or the nickname of a member. If you are using a nickname, all spaces must be replaced with hyphens." +
                                     "\n**<reason>** is optional and will consist of all text after the mentioned user.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_KICK -> buildHelpEmbed("Kick",
                             "**kicks** the specified user from the server.",
                             "!kick [member] <reason>",
-                            "**[member]** is either a mention or the nickname of the member. If you are using a nickname, all spaces must be replaced with hyphens." +
+                            "**[member]** is either a mention or the nickname of a member. If you are using a nickname, all spaces must be replaced with hyphens." +
                                     "\n**<reason>** is optional and will consist of all text after the mentioned user.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_BAN -> buildHelpEmbed("Ban",
                             "**bans** the specified user from the server for a specified amount of days.",
                             "!ban [member] [days] <reason>",
-                            "**[member]** is either a mention or the nickname of the member. If you are using a nickname, all spaces must be replaced with hyphens." +
+                            "**[member]** is either a mention or the nickname of a member. If you are using a nickname, all spaces must be replaced with hyphens." +
                                     "\n**[days]** is a positive integer for the amount of days the user is banned for." +
                                     "\n**<reason>** is optional and will consist of all text after the amount of days.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_CLEAR -> buildHelpEmbed("Clear",
-                            "**deletes a specified amount of messages** from the specified  user.",
+                            "**deletes a specified amount of messages** by the specified user.",
                             "!clear [member] [amount] <reason>",
-                            "**[member]** is either a mention or the nickname of the member. If you are using a nickname, all spaces must be replaced with hyphens." +
+                            "**[member]** is either a mention or the nickname of a member. If you are using a nickname, all spaces must be replaced with hyphens." +
                                     "\n**[amount]** is a positive integer, but less than or equal to 100 for the amount of messages to delete." +
                                     "\n**<reason>** is optional and will consist of all text after the amount of messages.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_PURGE -> buildHelpEmbed("Purge",
-                            "**removes a specified amount of messages** from the channel it was sent in.",
+                            "**removes a specified amount of messages** from the channel the command is used in.",
                             "!purge [amount] <reason>",
                             "**[amount]** is a positive integer less than or equal to 100 for the amount of messages to delete." +
                                     "\n**<reason>** is optional and will consist of all text after the amount of messages.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MOD_WARN -> buildHelpEmbed("Warn",
-                            "warns a given user.",
+                            "**warns** a given user.",
                             "`!warn [member] [warning]`",
-                            "**[member]** is either a mention or the nickname of the member. If you are using a nickname, all spaces must be replaced with hyphens." +
+                            "**[member]** is either a mention or the nickname of a member. If you are using a nickname, all spaces must be replaced with hyphens." +
                                     "\n**[warning]** is the warning you are giving the user.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
                 }
@@ -493,9 +507,10 @@ public class Command {
                             "creates a team and bypasses the team verification process.",
                             "`!team create [team-name] <members>`",
                             "**[team-name]** is the name of the team you are trying to create." +
-                                    "\n**<members>** can be one or multiple members, either mentions or names, separated by commas (@member1/member OR member1, @member2). Spaces must be replaced with hyphens.",
+                                    "\n**<members>** can be one or multiple members. They can either mentions or names separated by commas (@member1/member OR member1, @member2). Spaces must be replaced with hyphens.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!teams create"},
                             event.getChannel(), true);
 
@@ -503,9 +518,10 @@ public class Command {
                             "requests a team to be created, requiring verification.",
                             "`!team request [team-name]`",
                             "**[team-name]** is the name of the team you are trying to create. Must be between 2 and 16 characters and contain " +
-                                    "no special characters, excluding hyphens and underscores.",
+                                    "no special characters, excluding hyphens.",
                             new Role[] {Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!teams request"},
                             event.getChannel(), true);
 
@@ -515,6 +531,7 @@ public class Command {
                             "**[team-name]** is the name of the team you are trying to verify.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!teams accept"},
                             event.getChannel(), true
                     );
@@ -523,9 +540,10 @@ public class Command {
                             "denies a team request.",
                             "`!team deny [team-name] [reason]`",
                             "**[team-name]** is the name of the team you are trying to verify." +
-                                    "\n**[reason]** is why it's denied and is under 200 characters.",
+                                    "\n**[reason]** is why it's denied and must be under 200 characters.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!teams deny"},
                             event.getChannel(), true
                     );
@@ -537,16 +555,18 @@ public class Command {
                                     "To delete all teams or team requests, use `ALL_TEAMS` and `ALL_REQUESTS` respectively.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!teams delete"},
                             event.getChannel(), true
                     );
 
                     case TEAM_JOIN -> buildHelpEmbed("Team Join",
-                            "request to join a team.",
+                            "sends a request to join a team.",
                             "`!team join [team-name]`",
                             "**[team-name]** is the team you would like to join.",
                             new Role[] {Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL ,Main.TEAMS_REQUEST_CHANNEL},
+                            new Category[]{},
                             new String[] {"!teams join"},
                             event.getChannel(), true
                     );
@@ -558,6 +578,7 @@ public class Command {
                                     "\n**[member]** is either a mention or the nickname of the member you want to kick from the team.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {},
+                            new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                             new String[] {"!teams kick"},
                             event.getChannel(), true);
 
@@ -568,26 +589,29 @@ public class Command {
                                     "\n**[member]** is either a mention or the nickname of the member you want to add to the team.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {},
+                            new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                             new String[] {"!teams add"},
                             event.getChannel(), true);
 
                     case TEAM_LIST -> buildHelpEmbed("Team List",
                             "lists either teams or team requests.",
                             "`!team list [list-type]`",
-                            "**[list-type]** is which list you want to retrieve, which is *teams* or *requests*.",
+                            "**[list-type]** is which list you want to retrieve, which can be *teams* or *requests*.",
                             new Role[] {},
-                            new TextChannel[] {},
+                            new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                             new String[] {"!teams list"},
                             event.getChannel(), true
                     );
 
                     case TEAM_COLOR -> buildHelpEmbed("Team Color",
-                            "sets the team role color for a specified team.",
+                            "sets the role color for a specified team.",
                             "`!team color [team-name] [hex-code]`",
                             "**[team-name]** is the team you are setting the color of." +
                                     "\n**[hex-code]** is a hex-code for the color you want to set the team to.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {},
+                            new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                             new String[] {"!teams color"},
                             event.getChannel(), true
                     );
@@ -598,6 +622,7 @@ public class Command {
                             "**[value]** is a greater than 0 integer representing the max amount of players.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[] {},
                             new String[] {"!teams maxmembers"},
                             event.getChannel(), true
                     );
@@ -608,6 +633,7 @@ public class Command {
                             "**[team-name]** is the team you are eliminating.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[] {"!teams eliminate"},
                             event.getChannel(), true
                     );
@@ -618,6 +644,7 @@ public class Command {
                             "**[team-name]** is the team you are qualifying.",
                             new Role[] {Main.adminIds[0]},
                             new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[] {"!teams qualify"},
                             event.getChannel(), true
                     );
@@ -631,24 +658,26 @@ public class Command {
                             "Code Create",
                             "creates a code with the given arguments.",
                             "`!code create [code] [points] [max-submits] <is-image-code>`",
-                            "**[code]** is the 'name' of the code. [code] can only contain hyphens, digits, letters, and must be under 200 characters long." +
+                            "**[code]** is the 'name' of the code. [code] can only contain hyphens, digits, letters, and must be 200 or less characters long." +
                                     "\n**[points]** is the number of points the code is worth once submitted." +
                                     "\n**[max-submits]** is the maximum amount of times the code can be submitted." +
-                                    "\n**<is-image-code>** TRUE if the code can only be used for images, FALSE if it can't be used for images. Defaults to false if omitted.",
+                                    "\n**<is-image-code>** TRUE if the code can only be used for images and FALSE if it can't be used for images. Defaults to false if omitted.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!codes create"},
                             event.getChannel(), true
                     );
 
                     case CODE_DELETE -> buildHelpEmbed(
                             "Code Delete",
-                            "removes a given code from the list of codes.",
+                            "deletes a given code from the list of codes.",
                             "`!code delete [code]`",
                             "**[code]** is the 'name' of the code you want to remove. To remove all codes, use `ALL_CODES`. Warning, " +
                                     "code deletion doesn't require verification.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!codes delete"},
                             event.getChannel(), true
                     );
@@ -656,11 +685,12 @@ public class Command {
                     case CODE_LIST -> {}
 
                     case CODE_GET -> buildHelpEmbed("Code Get",
-                            "gets the requested code.",
+                            "gets information about a code.",
                             "`!code get [code]`",
                             "**[code]** is the 'name' of the code you want to get.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!codes get"},
                             event.getChannel(), true
                     );
@@ -676,6 +706,7 @@ public class Command {
                                     "\n**[value]** is the data you want to replace the container with.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!codes edit"},
                             event.getChannel(), true
                     );
@@ -687,12 +718,13 @@ public class Command {
                 switch (commandType) {
                     case POINT_SET -> buildHelpEmbed(
                             "Points Set",
-                            "sets a specified teams points to a specified points.",
+                            "sets a specified teams points to a specified point value.",
                             "`!points set [team] [points]`",
-                            "**[team]** is the team who's points you want to change." +
+                            "**[team]** is the team who's points you want to set." +
                                     "\n**[points]** is a positive or negative integer to set the points to.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!point set"},
                             event.getChannel(), true
                     );
@@ -701,10 +733,11 @@ public class Command {
                             "Points Modify",
                             "modifies a specified teams points by a specified value.",
                             "`!points modify [team] [points]`",
-                            "**[team]** is the team who's points you want to change." +
-                                    "**[points]** is a positive or negative integer to modify the points by.",
+                            "**[team]** is the team who's points you want to modify." +
+                                    "\n**[points]** is a positive or negative integer to modify the points by.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!point modify"},
                             event.getChannel(), true
                     );
@@ -716,6 +749,7 @@ public class Command {
                             "**[amount]** is a positive integer for the amount of points the team loses.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!point incorrect"},
                             event.getChannel(), true);
                 }
@@ -727,11 +761,12 @@ public class Command {
                     case COOLDOWN_SET -> buildHelpEmbed(
                             "Cooldown Set",
                             "sets a cool-down for a specified team for a given number of seconds.",
-                            "`!cooldown set [team] [seconds]`",
+                            "`!cooldown set [team] [duration]`",
                             "**[team]** is the team you want to set the cooldown for." +
-                                    "\n**[duration]** is the duration of the cooldown as a positive integer in seconds.",
+                                    "\n**[duration]** is the duration of the cooldown as a positive integer measured in seconds.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!cooldowns set"},
                             event.getChannel(), true
                     );
@@ -743,6 +778,7 @@ public class Command {
                             "**[team]** is the team you want to remove the cooldown from.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!cooldowns remove"},
                             event.getChannel(), true
                     );
@@ -752,9 +788,10 @@ public class Command {
                             "modifies a team's cooldown.",
                             "`!cooldown modify [team] [duration]`",
                             "**[team]** is the team who's cooldown you want to modify." +
-                                    "\n**[duration]** is a positive or negative integer for the amount of seconds you want to modify the cooldown by.",
+                                    "\n**[duration]** is a positive or negative integer measured in seconds.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!cooldowns modify"},
                             event.getChannel(), true
                     );
@@ -766,7 +803,20 @@ public class Command {
                                     "**[duration]** is a positive integer measured in seconds.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!cooldowns incorrect"},
+                            event.getChannel(), true
+                    );
+
+                    case COOLDOWN_GET -> buildHelpEmbed(
+                            "Cooldown Get",
+                            "gets a team's cooldown.",
+                            "`!cooldown get [team]`",
+                            "**[team]** is the name of the team.",
+                            new Role[] {Main.adminIds[0], Main.adminIds[1]},
+                            new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
+                            new String[] {"!cooldowns get"},
                             event.getChannel(), true
                     );
                 }
@@ -777,12 +827,13 @@ public class Command {
                 switch (commandType) {
                     case QUEST_CREATE -> buildHelpEmbed(
                             "Quest Create",
-                            "creates a quest with the given name.",
-                            "`!quest create [questname]`",
-                            "**[quest-name]** is the unique name for identification. It can only contain lowercase letters/numbers, hyphens, and underscores. " +
+                            "creates a quest with a given name.",
+                            "`!quest create [quest-name]`",
+                            "**[quest-name]** is the unique name for identification. It can only contain lowercase letters/numbers, and hyphens. " +
                                     "It must also contain less than or equal to 100 characters.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!quests create", "!quest new", "!quests new", "!quest add", "!quests add"},
                             event.getChannel(), true
                     );
@@ -795,17 +846,19 @@ public class Command {
                                     "Deletion does not require verification.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!quests delete", "!quest remove", "!quests remove"},
                             event.getChannel(), true
                     );
 
                     case QUEST_EDIT -> buildHelpEmbed(
                             "Quest Edit",
-                            "is used to edit a quest.",
+                            "is used to edit a quest. This will provide you with an embed with reactions for advanced editing.",
                             "`!quest edit [quest]`",
                             "**[quest-name]** is the name of the quest you want to edit. To stop editing, use **CANCEL** (Case Sensitive).",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!quests edit"},
                             event.getChannel(),
                             true
@@ -817,11 +870,12 @@ public class Command {
                             "Quest Load",
                             "loads a quest causing fields to be sent, codes to be overwritten, and the submit method to be set. Only" +
                                     " one quest can be loaded at a time. It can also be used to send the un-scheduled quest fields.",
-                            "`!quest load [quest-name] <quest_field_index>`",
+                            "`!quest load [quest-name] <quest-field-index>`",
                             "**[quest-name]** is the name of the quest you want to load." +
-                                    "\n**<quest-field-index>** is optional and is the index of a quest field to be manually ran/sent.",
+                                    "\n**<quest-field-index>** is optional and is the index of a quest field to be manually run/sent.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!quests load"},
                             event.getChannel(), true
                     );
@@ -833,6 +887,7 @@ public class Command {
                             "There is no info",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!quests halt", "!quest stop", "!quests stop"},
                             event.getChannel(), true
                     );
@@ -846,6 +901,7 @@ public class Command {
                             "**[quest-name]** is the name of the quest you want to get.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[] {"!quests get"},
                             event.getChannel(),
                             true
@@ -861,9 +917,10 @@ public class Command {
                             "`!dm [member] [message]`",
                             "**[member]** is the member you are dming. [member] can be a mention to or the nickname of the member and spaces must be replaced with hyphens." +
                                     "\n**[message]** is the message you want to send to the user." +
-                                    "\nAdding attachments will add it to the embed. This will only send the first attachment.",
+                                    "\nAdding attachments will add it to the embed and this will only send the first attachment.",
                             Main.adminIds,
                             new TextChannel[]{Main.DM_HELP_CHANNEL},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -872,7 +929,8 @@ public class Command {
                             "`!remainingcodes [on/off/get]`",
                             "**[on/off/get]** is simply on/off. Get returns the current status.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1]},
-                            new TextChannel[]{},
+                            new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
                             new String[]{"!remainingcode"},
                             event.getChannel(), false);
 
@@ -881,21 +939,23 @@ public class Command {
                             "`!send <messageID> [channel]" +
                                     "\n!send [channel]`",
                             "**<messageID>** is the ID of the message you want to send (must be a message in the channel this command is used in). If omitted, the preceding message will be used." +
-                                    "\n**[channel]** can either be a mention (#channel), the name (channel), or the id (123456789) of the channel you want to send the message in.",
+                                    "\n**[channel]** can either be a mention (#channel), the name (channel), or the id (123456789) of the channel you want to send the message to.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]},
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
                     case MISC_EDIT -> buildHelpEmbed("Edit",
-                            "edits a given message. Message must be from this bot.",
+                            "edits a given message. Note: the message must be from this bot.",
                             "`!edit [message-channel] [old-messageID] <new-contents-messageID>" +
                                     "\n!edit [message-channel] [old-messageID]`",
                             "**<message-channel>** can either be a mention (#channel), the name (channel), or the id (123456789) of the channel the message you want to edit was sent in." +
                                     "\n**[old-messageID]** is the ID of the message you want to edit." +
-                                    "\n**<new-contents-messageID> is optional and is what the contents of the message will be replaced with (must be a message in the channel this command is used in). If omitted, the previously sent message will be used.",
+                                    "\n**<new-contents-messageID>** is optional and is what the contents of the message will be replaced with (must be a message in the channel this command is used in). If omitted, the previously sent message will be used.",
                             new Role[]{Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]},
                             new TextChannel[]{},
+                            new Category[]{},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -906,6 +966,7 @@ public class Command {
                                     "\n**[message]** is the contents of the message and must be under 1500 characters.",
                             new Role[]{},
                             new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -913,9 +974,10 @@ public class Command {
                             "changes the nickname of a given user.",
                             "`!nick [member] [nickname]`",
                             "**[member]** is the member who's nickname you want to change." +
-                                    "**[nickname]** is the new nickname between 2 and 32 characters.",
+                                    "\n**[nickname]** is the new nickname between 2 and 32 characters.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -925,6 +987,7 @@ public class Command {
                             "**[suggestion]** is your suggestion.",
                             new Role[]{},
                             new TextChannel[]{Main.SUGGESTIONS_CHANNEL},
+                            new Category[] {},
                             new String[]{"!suggestion [suggestion]"},
                             event.getChannel(), false);
 
@@ -934,6 +997,7 @@ public class Command {
                             "**[bug]** is the bug report. Please try to include steps to reproduce this bug.",
                             new Role[]{},
                             new TextChannel[]{Main.BUG_CHANNEL},
+                            new Category[] {},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -941,18 +1005,21 @@ public class Command {
                             "submits a given code.",
                             "`!submit <code>`",
                             "**<code>** is the code you want to submit, minus the brackets of course. If omitted, there must be **one**" +
-                                    "image attached, otherwise, this embed will send.",
+                                    "image attached, otherwise, this embed will be sent.",
                             new Role[] {},
                             new TextChannel[] {},
+                            new Category[] {},
                             new String[] {},
                             event.getChannel(), false);
 
                     case MISC_CLUE -> buildHelpEmbed("Clue",
                             "allows you to edit the clue, which is the response given when using `!powerup clue buy`.",
                             "`!clue <clue>`",
-                            "**<clue>** is, well, the clue. It must contain between 1 and 1000 characters.",
+                            "**<clue>** is, well, the clue. It must contain between 1 and 1000 characters. If omitted, the " +
+                                    "clue is set to nothing.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[] {},
                             new String[] {},
                             event.getChannel(), false);
                 }
@@ -963,30 +1030,32 @@ public class Command {
                 switch (commandType) {
                     case POWERUP_KAMIKAZE -> buildHelpEmbed("Powerup Kamikaze",
                             "**takes away " + Kamikaze.damage + " of your target's points** but **costs " + Kamikaze.cost + " of your points/Guilded**. But beware: " +
-                                    "if your target has an **active shield** your kamikaze will be deflected, dealing an additional " + (int)(Kamikaze.damage * .75) + " damage to you. " +
+                                    "if your target has an **active shield** your kamikaze will be deflected, deducting an additional " + (int)(Kamikaze.damage * .75) + " points from your team. " +
                                     "This powerup can only be bought **during weekdays**. After using a kamikaze on a team, you can't kamikaze that team for" +
                                     " 24 hours. You can't use the kamikaze powerup if you have an active shield.",
                             "!powerup kamikaze [team]",
                             "**[team]** is the name of team you wish to kamikaze.",
                             new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[]{"!powerups kamikaze"},
                             event.getChannel(), true);
 
                     case POWERUP_SHIELD -> buildHelpEmbed("Powerup Shield",
                             "**costs " + Kamikaze.cost + " of your points/Guilded** and protects you from kamikazes. However, " +
-                                    "if you have an active shield you can't kamikaze others and the shield doesn't deactivate until midnight. " +
+                                    "if you have an active shield you can't kamikaze or freeze others and the shield doesn't deactivate until midnight. " +
                                     "This powerup can only be bought **during weekdays** between 7:15AM and 10:00PM" +
                                     " and will expire at midnight.",
                             "!powerup shield buy",
                             "No syntax info",
                             new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[]{"!powerups shield"},
                             event.getChannel(), true);
 
                     case POWERUP_GIFT -> buildHelpEmbed("Powerup Gift",
-                            "allows you to give another team one to three points and **can't** be purchased with Guilded. However, " +
+                            "allows you to give another team one to three (of your own) points and **can't** be purchased with Guilded. However, " +
                                     "you can only gift one team per-day, which means until midnight. This powerup can only be bought " +
                                     "**during weekdays**.",
                             "!powerup gift [team] [amount]",
@@ -994,18 +1063,20 @@ public class Command {
                                     "\n**[amount]** is the amount of points you want to gift the team ranging from one to three.",
                             new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[]{"!powerups gift"},
                             event.getChannel(), true);
 
                     case POWERUP_CLUE -> buildHelpEmbed("Powerup Clue",
                             "gives you the clue, if it exists, for the current quest. Purchasing a clue" +
-                                    " cost 2 points/guilded and can only be bought from **7:45AM to 2:00PM**, **during weekdays**." +
+                                    " cost 2 points/guilded and can only be bought from **7:45AM to 2:30PM**, **during weekdays**." +
                                     " *Clues may not provide information helpful for your certain circumstances and are only designed to provide key info for" +
-                                    " solving the quest. Clues are designed to be as helpful as they can be and are non refundable.*",
+                                    " solving the quest. Clues are designed to be as helpful as they can be and are non-refundable.*",
                             "!powerup clue buy",
                             "No syntax info",
                             new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[]{"!powerups clue"},
                             event.getChannel(), true);
                     case POWERUP_VAULT -> buildHelpEmbed("Powerup Vault",
@@ -1016,7 +1087,20 @@ public class Command {
                             "**[amount]** is the amount of points to vault.",
                             new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
                             new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[]{"!powerups Vault"},
+                            event.getChannel(), true);
+                    case POWERUP_FREEZE -> buildHelpEmbed("Powerup Freeze",
+                            "**freezes a team**, which means they can't buy powerups or submit codes, for **two hours**" +
+                                    "However, if your target has an **active shield**, your team will be froze for **one hour**. " +
+                                    "This powerup can only be bought once a day between **Mondays and Thursdays** from **7:45AM to 2:30PM** for **5 points/guilded**. " +
+                                    "Note: You can't buy a freeze if you have an active shield.",
+                            "!powerup freeze [team]",
+                            "**[team]** is the name of team you wish to freeze.",
+                            new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
+                            new TextChannel[]{},
+                            new Category[] {Main.TEAMS_CATEGORY},
+                            new String[]{"!powerups freeze"},
                             event.getChannel(), true);
                 }
             }
@@ -1030,6 +1114,7 @@ public class Command {
                             "**[member]** is the member who's information you want to get. It can be a mention to or the nickname of the member.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!members get", "!user get", "!users get"},
                             event.getChannel(), true);
 
@@ -1039,26 +1124,29 @@ public class Command {
                             "**[member]** is the member who's code you want to regenerate. It can be a mention to or the nickname of the member.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!members regenerate", "!user regenerate", "!users regenerate"},
                             event.getChannel(), true);
 
                     case MEMBER_CHANGE -> buildHelpEmbed("Member Change",
                             "forces the member to change their email address.",
                             "!member change [member]",
-                            "**[member]** is the member that you want to change their email. It can be a mention to or the nickname of the member.",
+                            "**[member]** is the member who you want to change their email. It can be a mention to or the nickname of the member.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!members change", "!user change", "!users change"},
                             event.getChannel(), true);
 
                     case MEMBER_EDIT -> buildHelpEmbed("Member Edit",
                             "allows you to change a members email and verification step.",
                             "!member edit [member] [container] [new-value]",
-                            "**[member]** is the member that you want to edit. It can be a mention to or the nickname of the member and spaces must be replaced by hyphens." +
+                            "**[member]** is the member that you want to edit. It can be a mention to or the nickname of the member. Also, spaces must be replaced by hyphens." +
                                     "\n**[container]** is the value you are editing and is either 'email' or 'step'." +
-                                    "\n**[new-value]** is the new value for that container.",
+                                    "\n**[new-value]** is the new value for the specified container.",
                             new Role[]{Main.adminIds[0]},
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!members edit", "!user edit", "!users edit"},
                             event.getChannel(), true);
                 }
@@ -1071,9 +1159,10 @@ public class Command {
                             "**verifies** an image submission.",
                             "!image verify [ID] [code]",
                             "**[ID]** is the unique ID for the image submission. You can view unchecked images with `!image unchecked`. " +
-                                    "**[code]** is the *image code* to verify the image as. To view valid image codes, use `!image codes`.",
+                                    "\n**[code]** is the *image code* to verify the image as. To view valid image codes, use `!image codes`.",
                             Main.adminIds,
                             new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
+                            new Category[] {},
                             new String[]{"!images verify","!verify", "!image accept", "!images accept", "!accept"},
                             event.getChannel(), true);
 
@@ -1081,10 +1170,11 @@ public class Command {
                             "**denies** an image submission.",
                             "!image deny [ID] [reason]",
                             "**[ID]** is the unique ID for the image submission. You can view unchecked images with `!image unchecked`. " +
-                                    "**[reason]** is why the image was denied. If your reason is one word and a pre-scripted response exists with that key, " +
-                                    "it will use that response.",
+                                    "\n**[reason]** is why the image was denied. If your reason is one word and a pre-scripted response exists with that key, " +
+                                    "it will use the pre-scripted response.",
                             Main.adminIds,
                             new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
+                            new Category[] {},
                             new String[]{"!images deny", "!deny"},
                             event.getChannel(), true);
 
@@ -1094,25 +1184,26 @@ public class Command {
                             "No syntax info",
                             Main.adminIds,
                             new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
+                            new Category[] {},
                             new String[]{"!images codes", "!image code", "!image code", "!codes", "!code"},
                             event.getChannel(), true);
 
                     case IMAGE_UNCHECKED -> buildHelpEmbed("Image Unchecked",
                             "*lists* all the IDs of image submissions that haven't been verified or denied.",
                             "!image unchecked",
-                            "**[member]** is the member that you want to edit. It can be a mention to or the nickname of the member and spaces must be replaced by hyphens." +
-                                    "\n**[container]** is the value you are editing and is either 'email' or 'step'." +
-                                    "\n**[new-value]** is the new value for that container.",
+                            "No syntax info",
                             Main.adminIds,
                             new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
+                            new Category[] {},
                             new String[]{"!images unchecked", "!unchecked"},
                             event.getChannel(), true);
                     case IMAGE_GET -> buildHelpEmbed("Image Get",
-                            "*gets* the image that corresponds to an ID.",
+                            "*gets* the image that corresponds to the ID.",
                             "!image get [ID]",
                             "**[ID]** is the unique ID for the image submission. You can view unchecked images with `!image unchecked`. ",
                             Main.adminIds,
                             new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
+                            new Category[] {},
                             new String[]{"!images get", "!get"},
                             event.getChannel(), true);
                 }
@@ -1128,6 +1219,7 @@ public class Command {
                                     "**[response]** is what will be used when the key is called. It must contain 1 to 1000 characters.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!responses create"},
                             event.getChannel(), true);
 
@@ -1137,6 +1229,7 @@ public class Command {
                             "**[key]** is the 'key' of the response to delete",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!responses delete"},
                             event.getChannel(), true);
 
@@ -1146,6 +1239,7 @@ public class Command {
                             "**[key]** is the 'key' of the response to get.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!responses get"},
                             event.getChannel(), true);
 
@@ -1155,6 +1249,7 @@ public class Command {
                             "No syntax info",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!responses list"},
                             event.getChannel(), true);
 
@@ -1167,6 +1262,7 @@ public class Command {
                                     "a 1-1000 character string for the response.",
                             Main.adminIds,
                             new TextChannel[]{},
+                            new Category[] {},
                             new String[]{"!responses edit"},
                             event.getChannel(), true);
                 }
@@ -1182,6 +1278,7 @@ public class Command {
                                     "\n**[amount]** is the value you to set the Guilded to.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[] {},
                             new String[]{"None"},
                             event.getChannel(), true);
 
@@ -1192,6 +1289,7 @@ public class Command {
                                     "\n**[amount]** is the value you want to modify the Guilded by. Can be positive or negative.",
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[] {},
                             new String[]{"None"},
                             event.getChannel(), true);
 
@@ -1201,6 +1299,7 @@ public class Command {
                             "**<team-name>** is the name of the team. It can be omitted if sent in a team channel.",
                             new Role[] {},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[] {},
                             new String[]{"None"},
                             event.getChannel(), true);
 
@@ -1210,6 +1309,7 @@ public class Command {
                             "**[points]** is the amount of points to convert your guilded to.",
                             new Role[] {},
                             new TextChannel[] {},
+                            new Category[] {},
                             new String[]{"None"},
                             event.getChannel(), true);
 
@@ -1230,7 +1330,8 @@ public class Command {
         int addedFields = 0;
 
         EmbedBuilder b = Main.buildEmbed("Help for Channel " + channel.getName() + (cat != null ? " and Category " + cat.getName() : "" ),
-                "These are all the commands you can use in this channel/category based on your role. Use the arrow reactions to change the page. ",
+                "These are all the commands you can use in this channel/category based on your role. Use the arrow reactions to change the page. If you " +
+                        "want to get detailed information about a command, type the command without arguments.",
                 Main.BLUE,
                 new EmbedField[] {});
 
@@ -1272,7 +1373,7 @@ public class Command {
             return;
 
         EmbedBuilder b = Main.buildEmbed(topic.substring(0,1).toUpperCase() + topic.substring(1) + " Help",
-                "What do you need help with?",
+                "What do you need help with? Note: If you want to get detailed information about a command, type the command without arguments.",
                 Main.BLUE,
                 new EmbedField[] {});
 
@@ -1350,122 +1451,125 @@ public class Command {
         helpFields = new HelpField[] {
                 // ---------- MODERATION ----------
                 new HelpField("Moderation","Swear Detection Toggle",
-                        "The `!sweardetection` command changes the status of auto swear detection based on the input. Type `!sweardetection` to learn more.",
+                        "The `!sweardetection` command changes the status of auto swear detection based on the input",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Moderation","Mute",
-                        "The `!mute` command adds the muted role to the specified user. Use `!mute` to learn more.",
+                        "The `!mute` command adds the muted role to the specified user.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Moderation","Unmute",
-                        "The `!unmute` command removes the muted role from the specified user. Use `!unmute` to learn more.",
+                        "The `!unmute` command removes the muted role from the specified user.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Moderation","Kick",
-                        "The `!kick` command kicks the specified user from the server. Use `!kick` to learn more.",
+                        "The `!kick` command kicks the specified user from the server.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Moderation","Ban",
-                        "The `!ban` command bans the specified user from the server. Use `!ban` to learn more.",
+                        "The `!ban` command bans the specified user from the server.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Moderation","Clear",
-                        "The `!clear` command removes a specified amount of messages from the specified user. Use `!clear` to learn more.",
+                        "The `!clear` command removes a specified number of messages from the specified user.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Moderation","Purge",
-                        "The `!purge` command removes a specified amount of messages from the channel it was used in. Use `!purge` to learn more.",
+                        "The `!purge` command removes a specified number of messages from the channel it was used in.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Moderation","Warn",
-                        "The `!warn` command warns a given user for a specified reason. Use `!warn` to learn more.",
+                        "The `!warn` command warns a given user for a specified reason.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
 
                 // ---------- TEAM ----------
                 new HelpField("Team","Creating a Team",
-                        "To create a team and bypass verification, use `!team create [team-name] <members>`. Use `!team create` to learn more.",
+                        "To create a team and bypass verification, use `!team create [team-name] <members>`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Requesting a Team",
-                        "To request a team, use `!team request [team-name]`. This requires verification. Use `!team request` to learn more.",
+                        "To request a team, use `!team request [team-name]`. This requires verification.",
                         new Role[] {Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Accepting a Team Request",
-                        "To accept a team request, use `!team accept [team-name]`. Use `!team accept` to learn more.",
+                        "To accept a team request, use `!team accept [team-name]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Denying a Team Request",
-                        "To deny a team request, use `!team deny [team-name] [reason]`. Use `!team deny` to learn more.",
+                        "To deny a team request, use `!team deny [team-name] [reason]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Deleting a Team",
-                        "To delete a team, use `!team delete [team-name]`. Use `!team delete` to learn more.",
+                        "To delete a team, use `!team delete [team-name]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Joining a Team",
-                        "To request to join a team, use `!team join [team-name]`. Use `!team join` to learn more.",
+                        "To request to join a team, use `!team join [team-name]`.",
                         new Role[] {Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL, Main.TEAMS_REQUEST_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Adding Players to a Team",
-                        "To force add players to a team, use `!team add [team-name] [member]`. Use `!team add` to learn more.",
+                        "To force add players to a team, use `!team add [team-name] [member]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Kicking Players from Teams",
-                        "To kick players from a team, use `!team kick [team-name] [member]`. Use `!team kick` to learn more.",
+                        "To kick players from a team, use `!team kick [team-name] [member]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Listing All Teams or Team Requests",
-                        "To list all the current teams use `!team list teams`. For all team requests, `!team list requests`. Use `!team list` to learn more.",
+                        "To list all the current teams use `!team list teams`. For all team requests, `!team list requests`.",
                         new Role[] {}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Changing a Team's Color",
-                        "To change the color of a team, use `!team color [team-name] [hex-code]`. Use `!team color` to learn more.",
+                        "To change the color of a team, use `!team color [team-name] [hex-code]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Changing Max Team Members",
-                        "To change the max amount of members in a team, use `!team maxmembers [value]`. Use `!team maxmembers` to learn more.",
+                        "To change the max amount of members in a team, use `!team maxmembers [value]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Team","Eliminating a Team",
-                        "To eliminate a team, use `!team eliminate [team-name]`. Use `!team eliminate` to learn more.",
+                        "To eliminate a team, use `!team eliminate [team-name]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Team","Qualifying a Team",
-                        "To qualify a team, use `!team qualify [team-name]`. Use `!team qualify` to learn more.",
+                        "To qualify a team, use `!team qualify [team-name]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL}, new Category[] {Main.TEAMS_CATEGORY}),
 
                 // ---------- CODE ----------
                 new HelpField("Code","Creating a Code",
-                        "To create a code, you must use `!code create [code] [points] [maxsubmits]`. Type `!code create` to learn more.",
+                        "To create a code, use `!code create [code] [points] [maxsubmits]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Code","Deleting a Code",
-                        "To delete a code, you must use `!code delete [code]`. Type `!code delete` to learn more.",
+                        "To delete a code, you use `!code delete [code]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Code","Listing all Codes",
                         "To list all codes, use `!code list`. This will return the 'names' of all codes.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Code","Getting Information about a Code",
-                        "To get a code, use `!code get [code]`. This will return all info about the given code. Use `!code get` to learn more.",
+                        "To get info about a code, use `!code get [code]`. This will return all the info about the given code.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Code","Editing a Code",
-                        "To edit a code, use `!code edit [code-name] [container] [value]`. This will allow you to edit any value in the code, use `!code edit` to learn more.",
+                        "To edit a code, use `!code edit [code-name] [container] [value]`. This will allow you to edit any value in the code.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- POINT ----------
                 new HelpField("Point","Setting a Team's Points",
-                        "To set a team's points, use `!points set [team] [points]`. Use `!points set` to learn more.",
+                        "To set a team's points, use `!points set [team] [points]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Point","Modifying a Team's Points",
-                        "To modify a team's points by a value, use `!points modify [team] [points]`. Use `!points modify` to learn more.",
+                        "To modify a team's points by a value, use `!points modify [team] [points]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Point","Modifying Incorrect Code Point Deduction",
-                        "To modify the amount of points a team loses for submitting an incorrect code, use `!points incorrect [amount]`. Use `!points incorrect` to learn more.",
+                        "To modify the amount of points a team loses for submitting an incorrect code, use `!points incorrect [amount]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- COOLDOWN ----------
                 new HelpField("Cooldown","Setting a CoolDown",
-                        "To set a cooldown for a team, use `!cooldown set [team] [duration]`. Use `!cooldown set` to learn more.",
+                        "To set a cooldown for a team, use `!cooldown set [team] [duration]` where duration is in seconds.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Cooldown","Removing a CoolDown",
-                        "To remove a cooldown for a team, use `!cooldown remove [team]`. Use `!cooldown remove` to learn more.",
+                        "To remove a cooldown from a team, use `!cooldown remove [team]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Cooldown","Modifying a CoolDown",
-                        "To modify an existing cooldown, use `!cooldown modify [team] [duration]` where [duration] can be positive or negative. Use `!cooldown modify` to learn more.",
+                        "To modify an existing cooldown, use `!cooldown modify [team] [duration]` where [duration] can be positive or negative and is measured in seconds.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Cooldown","Setting the Cooldown for Incorrect Codes",
-                        "To modify the cooldown for incorrect codes, use `!cooldown incorrect [duration]`. Note: [duration] is in seconds. Use `!cooldown incorrect` to learn more.",
+                        "To modify the cooldown for incorrect codes, use `!cooldown incorrect [duration]`. Note: [duration] is in seconds.",
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
+                new HelpField("Cooldown","Getting a Cooldown",
+                        "To get a team's cooldown, use `!cooldown incorrect [team]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- QUEST ----------
                 new HelpField("Quest","Creating a Quest",
-                        "To create a quest, use `!quest create [quest-name]`. Type `!quest create` to learn more.",
+                        "To create a quest, use `!quest create [quest-name]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Deleting a Quest",
-                        "To delete a quest, use `!quest delete [quest-name]`. Type `!quest delete` to learn more.",
+                        "To delete a quest, use `!quest delete [quest-name]`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Editing a Quest",
-                        "To edit a quest, use `!quest edit [quest-name]`. Only one person can edit a quest at a time. Type `!quest edit` to learn more.",
+                        "To edit a quest, use `!quest edit [quest-name]`. Only one person can edit a quest at a time.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Getting a Quest",
                         "To get the information about a quest without editing it, use `!quest get [quest-name]`.",
@@ -1474,10 +1578,10 @@ public class Command {
                         "To list all quests, use `!quest list`.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Loading Quests",
-                        "To load quests, or run a quest, use `!quest load [quest-name]`. It can also be used to manually send quest fields. To learn more, use `!quest load`.",
+                        "To load quests, or run a quest, use `!quest load [quest-name]`. It can also be used to manually send quest fields.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Halting Loaded Quests",
-                        "To halt the loaded quest, use `!quest halt`. This will stop the quest from sending quest fields.",
+                        "To halt the loaded quest, use `!quest halt`. This will stop the quest from sending quest fields and set modified variables to their defaults.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Quest","Getting Loaded Quests",
                         "To get the loaded quest, use `!quest loaded`.",
@@ -1485,57 +1589,57 @@ public class Command {
 
                 // ---------- MISC ----------
                 new HelpField("Misc","DMing a user",
-                        "To DM a user, use `!dm [member] [message]`. Use `!dm` to learn more.",
+                        "To DM a user, use `!dm [member] [message]`.",
                         Main.adminIds, new TextChannel[] {Main.DM_HELP_CHANNEL}, new Category[] {}),
-                new HelpField("Misc","Toggling Number of Remaining Codes",
-                        "To toggle if the number of remaining submittable codes are shown to the user after a successful !submit, use `!remainingcodes [on/off/get]`. Use `!remainingcodes` to learn more.",
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {}, new Category[] {}),
+                new HelpField("Misc","Toggling the Number of Remaining Codes",
+                        "To toggle if the number of remaining submittable codes are shown to the user after a successful !submit, use `!remainingcodes [on/off/get]`.",
+                        new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Misc","Sending a Message with the Bot",
-                        "To send an existing message to a specified channel, use `!send [messageID] [Channel ID/Name/Mention]`. Use `!send` to learn more.",
+                        "To send an existing message to a specified channel, use `!send [messageID] [Channel ID/Name/Mention]`.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Misc","Editing the Bot's Message",
-                        "To edit a message the bot sent, use `!edit [message-channel] [old-messageID] [new-contents-messageID]`. Use `!edit` to learn more.",
+                        "To edit a message the bot sent, use `!edit [message-channel] [old-messageID] [new-contents-messageID]`.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Misc","Messaging Teams",
-                        "To send a message to another team, use `!message [team] [message]` in your team channel. Use `!message` to learn more.",
+                        "To send a message to another team, use `!message [team] [message]` in your team channel.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1], Main.adminIds[2], Main.CONTESTANT_ROLE}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {Main.TEAMS_CATEGORY}),
-                new HelpField("Misc","Changing user's Nicknames",
-                        "To change the nickname of a user, use `!nick [member] [nickname]`. Use `!nick` to learn more.",
+                new HelpField("Misc","Changing a User's Nickname",
+                        "To change the nickname of a user, use `!nick [member] [nickname]`.",
                         new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Misc","Making a Suggestion",
-                        "To create a suggestion for the HHG, use `!suggest [suggestion]` in " + Main.mentionChannel(Main.SUGGESTIONS_CHANNEL.getIdLong()) + ". Use `!suggest` to learn more.",
+                        "To create a suggestion for the HHG, use `!suggest [suggestion]` in " + Main.mentionChannel(Main.SUGGESTIONS_CHANNEL.getIdLong()) + ".",
                         new Role[] {}, new TextChannel[] {Main.SUGGESTIONS_CHANNEL}, new Category[] {}),
                 new HelpField("Misc","Reporting a Bug",
-                        "To report a bug about anything in the HHG, use `!bug [bug]` in " + Main.mentionChannel(Main.BUG_CHANNEL.getIdLong()) + ". Use `!bug` to learn more.",
+                        "To report a bug about anything in the HHG, use `!bug [bug]` in " + Main.mentionChannel(Main.BUG_CHANNEL.getIdLong()) + ".",
                         new Role[]{}, new TextChannel[]{Main.BUG_CHANNEL}, new Category[] {}),
                 new HelpField("Misc","Getting the HHG Trello",
-                        "The Trello is a giant TO-DO list for the HHG. To get the link to it, use `!trello.",
+                        "The Trello is a giant TO-DO list for the HHG. To get the link to it, use `!trello`.",
                         new Role[] {}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Misc","Submitting a Code/Image",
-                        "To submit a code, use `!submit <code>`. To submit an image, add an image attachment and use `submit`. Use `!submit` to learn more.",
+                        "To submit a code, use `!submit <code>`. To submit an image, add an image attachment and use `!submit`.",
                         new Role[] {}, new TextChannel[] {}, new Category[] {Main.TEAMS_CATEGORY}),
-                new HelpField("Misc","Interacting with Image Submissions",
-                        "To interact with submissions, use `!image`.",
-                        new Role[] {}, new TextChannel[] {Main.IMAGE_SUBMISSIONS_CHANNEL}, new Category[] {}),
                 new HelpField("Misc","Changing the Clue",
                         "To change the clue, use `!clue <clue>`. **<clue>** can be left blank to set the clue to nothing.",
                         new Role[] {}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- POWERUP ----------
                 new HelpField("Powerup","Kamikaze",
-                        "Kamikaze allows you to deal damage(take away points) to opposing team at the cost of some of your points by using `!powerup kamikaze [team]`. Use `!powerup kamikaze` to learn more.",
+                        "Kamikaze allows you to deal damage (take away points) to opposing team at the cost of some of your points by using `!powerup kamikaze [team]`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Shield",
-                        "Shield protects you from kamikazes but also prevents you from using kamikazes. To activate a shield use `!powerup shield buy`. To learn more, use `!powerup shield`.",
+                        "Shield protects you from kamikazes but also prevents you from buying kamikazes. To activate a shield use `!powerup shield buy`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Gift",
                         "Gifts allows you to give teams 1 to 3 of your *own* points. To do this, use `!powerup gift [team] [points]`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Clue",
-                        "Clues can provide helpful information for quests. To purchase one, use `!powerup clue buy` and `!powerup clue` to learn more.",
+                        "Clues can provide helpful information for quests. To purchase one, use `!powerup clue buy`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Powerup","Vault",
-                        "Vaults allow you to store points for a 50% return after one week (rounded down). To vault points, use `!powerup vault [amount]`. Or, use `!powerup vault` to learn more.",
+                        "Vaults allow you to store points for a 50% return after one week (rounded down). To vault points, use `!powerup vault [amount]`.",
+                        new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
+                new HelpField("Powerup","Freeze",
+                        "The freeze powerup causes stops a team from submitting codes and using powerups for two hours. To purchase one, use `!powerup freeze [team]`.",
                         new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[] {Main.TEAMS_CATEGORY}),
 
                 // ---------- MEMBER ----------
@@ -1543,61 +1647,61 @@ public class Command {
                         "To get information about a member, use `!member get [member]`. Use `!member get` to learn more.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Member","Regenerating a Member's Verification Code",
-                        "To regenerate a member's verification code, use `!member regenerate [member]`. Use `!member regenerate` to learn more.",
+                        "To regenerate a member's verification code, use `!member regenerate [member]`.",
                         new Role[]{Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Member","Resetting a Member's Email",
-                        "To make a member change their email, use `!member change [member]`. Use `!member change` to learn more.",
+                        "To make a member change their email, use `!member change [member]`.",
                         new Role[]{Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Member","Editing Member Data",
-                        "To edit a member's data, use `!member edit [member] [container] [new-value]`. Use `!member edit` to learn more.",
+                        "To edit a member's data, use `!member edit [member] [container] [new-value]`.",
                         new Role[]{Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
 
                 // ---------- IMAGE ----------
                 new HelpField("Image","Verifying an Image",
-                        "To verify an image submission, use `!image verify [ID] [code]`. Use `!image verify` to learn more.",
+                        "To verify an image submission, use `!image verify [ID] [code]`.",
                         Main.adminIds, new TextChannel[] {Main.IMAGE_SUBMISSIONS_CHANNEL}, new Category[] {}),
                 new HelpField("Image","Denying an Image",
-                        "To deny an image submission, use `!image deny [ID] [reason]`. Use `!image deny` to learn more.",
+                        "To deny an image submission, use `!image deny [ID] [reason]`.",
                         Main.adminIds, new TextChannel[] {Main.IMAGE_SUBMISSIONS_CHANNEL}, new Category[] {}),
                 new HelpField("Image","Listing Image Codes",
                         "To list image codes, use `!image codes`.",
                         Main.adminIds, new TextChannel[] {Main.IMAGE_SUBMISSIONS_CHANNEL}, new Category[] {}),
                 new HelpField("Image","Listing Unchecked Image ID",
-                        "To view the unverified/denied images, use `!image unchecked`.",
+                        "To view the unverified/un-denied images, use `!image unchecked`.",
                         Main.adminIds, new TextChannel[] {Main.IMAGE_SUBMISSIONS_CHANNEL}, new Category[] {}),
                 new HelpField("Image","Getting an ID's Image",
-                        "To see the image that corresponds to an ID, use `!image get [ID]`. Use `!image get` to learn more.",
+                        "To see the image that corresponds to an ID, use `!image get [ID]`.",
                         Main.adminIds, new TextChannel[] {Main.IMAGE_SUBMISSIONS_CHANNEL}, new Category[] {}),
 
                 // ---------- RESPONSE ----------
                 new HelpField("Response","Creating a Response",
-                        "To create a response, use `!response create [key] [response]`. Use `!response create` to learn more.",
+                        "To create a response, use `!response create [key] [response]`.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Response","Deleting a Response",
-                        "To delete a response, use `!response create [key]`. Use `!response delete` to learn more.",
+                        "To delete a response, use `!response create [key]`.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Response","Getting a Response",
-                        "To get a response's information, use `!response get [key]`. Use `!response get` to learn more.",
+                        "To get a response's information, use `!response get [key]`.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Response","Listing Response Keys",
                         "To list the keys of all responses, use `!response list`.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Response","Editing a Response",
-                        "To edit a response's key or response, use `!response edit [key] [container] [new-value]`. Use `!response edit` to learn more.",
+                        "To edit a response's key or response, use `!response edit [key] [container] [new-value]`.",
                         Main.adminIds, new TextChannel[] {}, new Category[] {}),
 
                 // ---------- GUILDED ----------
                 new HelpField("Guilded","Setting a Team's Guilded",
-                        "To set a team's Guilded, use `!guilded set [team-name] [amount]`. Use `!guilded set` to learn more.",
+                        "To set a team's Guilded, use `!guilded set [team-name] [amount]`.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Guilded","Modifying a Team's Guilded",
-                        "To modify a team's Guilded, use `!guilded modify [team-name] [amount]`. Use `!guilded modify` to learn more.",
+                        "To modify a team's Guilded, use `!guilded modify [team-name] [amount]`.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Guilded","Getting a Team's Guilded",
                         "To get a team's Guilded, use `!guilded get <team-name>`. If used in a team channel, <team-name> can be ignored.",
                         new Role[] {}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Guilded","Converting Guilded to Points",
-                        "To convert three Guilded to one point, use `!guilded convert [points]]`. Use `!guilded convert` to learn more.",
+                        "To convert three Guilded to one point, use `!guilded convert [points]`.",
                         new Role[] {}, new TextChannel[] {}, new Category[] {Main.TEAMS_CATEGORY}),
         };
     }

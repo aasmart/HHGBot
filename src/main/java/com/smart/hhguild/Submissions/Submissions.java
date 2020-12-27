@@ -23,6 +23,7 @@
 package com.smart.hhguild.Submissions;
 
 import com.smart.hhguild.Commands.Command;
+import com.smart.hhguild.Commands.Powerups.Freeze;
 import com.smart.hhguild.Main;
 import com.smart.hhguild.Templates.Guild.GuildTeam;
 import com.smart.hhguild.Templates.Other.EmbedField;
@@ -88,6 +89,10 @@ public class Submissions extends Command {
                 // Check if the team has an active cooldown
                 if(hasCoolDown(event, team))
                     return;
+                else if(Freeze.isFrozen(team)) {
+                    genericFail(event, "Submit", "You can't do this since your team is frozen.", 0);
+                    return;
+                }
 
                 // Retrieve valid codes
                 JSONObject validCodesObj;
@@ -354,7 +359,8 @@ public class Submissions extends Command {
 
                 return false;
             } else {
-                genericFail(event, "Submit", "You must wait **" + ChronoUnit.SECONDS.between(date.toInstant(), coolDown.toInstant()) + " seconds ** to submit a code", 0);
+                long cooldown = ChronoUnit.SECONDS.between(date.toInstant(), coolDown.toInstant());
+                genericFail(event, "Submit", "You must wait **" + cooldown + (cooldown == 1 ? " second" : " seconds") + "** to submit a code.", 0);
                 return true;
             }
 

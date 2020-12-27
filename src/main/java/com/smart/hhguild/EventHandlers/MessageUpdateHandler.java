@@ -49,6 +49,9 @@ public class MessageUpdateHandler extends ListenerAdapter {
         if(event.getChannel().getIdLong() == Main.LEADERBOARD_CHANNEL.getIdLong())
             event.getMessage().delete().queue();
 
+        if(rawMsg.toLowerCase().contains("periods") || rawMsg.toLowerCase().contains("period"))
+            event.getMessage().addReaction("\uD83D\uDE20").queue();
+
         // Check if the message contains swearwords
         new Thread(() -> {
             // Checks to see if the user has a moderator+ role

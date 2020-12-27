@@ -129,7 +129,7 @@ public class ImageCommands extends Command {
             default -> {
                 if (!shortened) {
                     event.getMessage().delete().queueAfter(5, TimeUnit.SECONDS);
-                    event.getChannel().sendMessage("Sorry. I do not understand that command, try typing `!help image`").queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
+                    event.getChannel().sendMessage("Sorry. I do not understand that command, try typing `!help image`.").queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
                 }
                 return false;
             }
@@ -188,7 +188,7 @@ public class ImageCommands extends Command {
 
                     // Save the pending images
                     if (!saveSubmits()) {
-                        genericFail(event, "Image Verify", "Encountered an error saving image submissions", 0);
+                        genericFail(event, "Image Verify", "Encountered an error saving image submissions.", 0);
                         return;
                     }
                     return;
@@ -196,7 +196,7 @@ public class ImageCommands extends Command {
             }
 
             // If the loop completes without finding a valid code, tell the user the code doesn't exist
-            genericFail(event.getChannel(), "Image Verify", "There is no image code: " + (args[3].length() > 200 ? args[3].substring(0, 200) + "..." : args[3]), 0);
+            genericFail(event.getChannel(), "Image Verify", "There is no image code: " + (args[3].length() > 200 ? args[3].substring(0, 200) + "..." : args[3] + "."), 0);
         } else
             individualCommandHelp(CommandType.IMAGE_VERIFY, event);
     }
@@ -233,7 +233,7 @@ public class ImageCommands extends Command {
             Main.pendingImages.remove(imageId);
 
             if (!saveSubmits()) {
-                genericFail(event, "Image Deny", "Encountered an error saving image submissions", 0);
+                genericFail(event, "Image Deny", "Encountered an error saving image submissions.", 0);
                 return;
             }
 
@@ -270,7 +270,7 @@ public class ImageCommands extends Command {
         validCodesObj = Main.readJSONObject(Main.VALID_CODES_FILE);
 
         if (validCodesObj == null) {
-            event.getChannel().sendMessage("There are currently no codes").queue();
+            event.getChannel().sendMessage("There are currently no codes.").queue();
             return;
         }
 
@@ -296,7 +296,7 @@ public class ImageCommands extends Command {
             });
 
         } else {
-            event.getChannel().sendMessage("There are currently no image codes").queue();
+            event.getChannel().sendMessage("There are currently no image codes.").queue();
         }
     }
 
@@ -313,7 +313,7 @@ public class ImageCommands extends Command {
             });
 
         } else {
-            event.getChannel().sendMessage("There are currently no unchecked images").queue();
+            event.getChannel().sendMessage("There are currently no unchecked images.").queue();
         }
     }
 
@@ -327,10 +327,9 @@ public class ImageCommands extends Command {
             }
             Message imageMessage = event.getChannel().retrieveMessageById(imageInfo.split("-")[1]).complete();
 
-            event.getMessage().reply("**The image for that code is:** " + imageMessage.getJumpUrl()).queue();
+            event.getMessage().reply("**The image for that code is:** " + imageMessage.getJumpUrl() + ".").queue();
         } else
             individualCommandHelp(CommandType.IMAGE_GET, event);
-
     }
 
     // --- OTHER METHODS ---

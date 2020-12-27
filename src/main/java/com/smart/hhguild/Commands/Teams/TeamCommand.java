@@ -25,6 +25,7 @@ package com.smart.hhguild.Commands.Teams;
 import com.smart.hhguild.Commands.Command;
 import com.smart.hhguild.Commands.ImageSubmissions.ImageCommands;
 import com.smart.hhguild.Commands.ImageSubmissions.ResponseCommands;
+import com.smart.hhguild.Commands.Powerups.PowerUp;
 import com.smart.hhguild.EventHandlers.GuildStartupHandler;
 import com.smart.hhguild.EventHandlers.MessageReactionHandler;
 import com.smart.hhguild.Main;
@@ -70,10 +71,10 @@ public class TeamCommand extends Command {
         Matcher matcher = nameRegex.matcher(name);
 
         if (matcher.find() || name.length() > 16 || name.length() < 2)
-            genericFail(event, cmd, "Team name must be between 2 & 16 characters and can only contain lowercase letters and hyphens", 10);
+            genericFail(event, cmd, "Team name must be between 2 & 16 characters and can only contain lowercase letters and hyphens.", 10);
 
         else if (GuildTeam.getTeamByName(name) != null || Main.teamNames.contains(name))
-            genericFail(event, cmd, "No two teams can have the same name", 10);
+            genericFail(event, cmd, "No two teams can have the same name.", 10);
 
         else
             return name;
@@ -285,7 +286,7 @@ public class TeamCommand extends Command {
             }
 
             if (members.size() > Main.MAX_TEAM_SIZE)
-                genericFail(event, "Team Create", "Please make sure the number of members in the team are **below " + Main.MAX_TEAM_SIZE + "**", 0);
+                genericFail(event, "Team Create", "Please make sure the number of members in the team are **below " + Main.MAX_TEAM_SIZE + "**.", 0);
 
             else {
                 try {
@@ -313,7 +314,7 @@ public class TeamCommand extends Command {
                             JSONObject temp = (JSONObject)o;
 
                             if(temp.get("name").equals(teamName)) {
-                                genericFail(event, "Team Create", "There is already a team request with the name: " + teamName + ". Consider using `!team accept/deny " + teamName + "`", 0);
+                                genericFail(event, "Team Create", "There is already a team request with the name: " + teamName + ". Consider using `!team accept/deny " + teamName + "`.", 0);
                                 return;
                             }
                         }
@@ -340,15 +341,15 @@ public class TeamCommand extends Command {
                     }).start();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    genericFail(event, "Team Create", "I was unable to create the team due to an error", 0);
+                    genericFail(event, "Team Create", "I was unable to create the team due to an error.", 0);
                 }
 
             }
 
-        } else {
+        } else
             // Create the help embed for '!team create'
             individualCommandHelp(CommandType.TEAM_CREATE, event);
-        }
+
     }
 
     /**
@@ -382,7 +383,7 @@ public class TeamCommand extends Command {
                         // Gets the name & id and make sure they don't already exist
                         if (team.get("name").equals(teamName) || team.get("id").equals(Objects.requireNonNull(event.getMember()).getId())) {
                             genericFail(event, "Team Request", "There is already a team request with the name " + teamName + " or you already " +
-                                    "have a pending team request", 10);
+                                    "have a pending team request.", 10);
 
                             return;
                         }
@@ -486,7 +487,7 @@ public class TeamCommand extends Command {
 
                             b = Main.buildEmbed(
                                     ":white_check_mark: Team Request Verified!",
-                                    "Hey " + member.getAsMention() + ", your team request for `" + teamName + "` was verified!.",
+                                    "Hey " + member.getAsMention() + ", your team request for `" + teamName + "` was verified!",
                                     Main.GREEN,
                                     new EmbedField[] {}
                             );
@@ -496,16 +497,17 @@ public class TeamCommand extends Command {
                     }
                 }
                 // Tell the user if the team was not found
-                genericFail(event, "Team Accept", "I couldn't find a team request with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list requests` to see all the requests", 0);
+                genericFail(event, "Team Accept", "I couldn't find a team request with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list requests` to see all the requests.", 0);
 
             } catch (Exception e) {
-                genericFail(Main.TEAM_COMMANDS_CHANNEL, "Team Accept", "Sorry, we encountered an unknown error", 0);
+                e.printStackTrace();
+                genericFail(Main.TEAM_COMMANDS_CHANNEL, "Team Accept", "Sorry, we encountered an unknown error.", 0);
             }
 
-        } else {
+        } else
             // Create the help embed for '!team accept'
             individualCommandHelp(CommandType.TEAM_ACCEPT, event);
-        }
+
     }
 
     /**
@@ -532,7 +534,7 @@ public class TeamCommand extends Command {
                 String denyReason = ResponseCommands.response(Main.compressArray(Arrays.copyOfRange(args, 3, args.length)));
 
                 if(denyReason.length() > 200) {
-                    genericFail(event, "Team Deny", "**[reason]** can't be longer than 200 characters", 0);
+                    genericFail(event, "Team Deny", "**[reason]** can't be longer than 200 characters.", 0);
                     return;
                 }
 
@@ -573,10 +575,10 @@ public class TeamCommand extends Command {
                     }
                 }
                 // Tell the user if the team was not found
-                genericFail(Main.TEAM_COMMANDS_CHANNEL , "Team Deny", "I couldn't find a team request with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list requests` to see all the requests", 0);
+                genericFail(Main.TEAM_COMMANDS_CHANNEL , "Team Deny", "I couldn't find a team request with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list requests` to see all the requests.", 0);
 
             } catch (Exception e) {
-                genericFail(Main.TEAM_COMMANDS_CHANNEL, "Team Deny", "Sorry, we encountered an unknown error", 0);
+                genericFail(Main.TEAM_COMMANDS_CHANNEL, "Team Deny", "Sorry, we encountered an unknown error.", 0);
 
             }
 
@@ -603,16 +605,16 @@ public class TeamCommand extends Command {
                     JSONObject teamReqs = Main.readJSONObject(Main.PENDING_TEAMS_FILE);
 
                     if(Main.teams.size() == 0 && teamName.equals("ALL_TEAMS")) {
-                        genericFail(event, "Team Delete", "There are no teams to delete", 0);
+                        genericFail(event, "Team Delete", "There are no teams to delete.", 0);
                         return;
                     } else if(((JSONArray)teamReqs.get("teams")).size() == 0 && teamName.equals("ALL_REQUESTS")) {
-                        genericFail(event, "Team Delete", "There are no team requests to delete", 0);
+                        genericFail(event, "Team Delete", "There are no team requests to delete.", 0);
                         return;
                     }
 
                         // Creates the message and adds a bunch of stuff to the message
                     event.getChannel().sendMessage(Objects.requireNonNull(event.getMember()).getAsMention() + ", you're about to delete `" + teamName + "`. Once deleted, it can't be undone. " +
-                        "React to this message with :white_check_mark: to confirm, or :x: to cancel. This delete request will delete in 30 seconds")
+                        "React to this message with :white_check_mark: to confirm, or :x: to cancel. This delete request will delete in 30 seconds.")
                         .queue(message -> {
                             // Add the reactions to the message and call finish removal
                             message.addReaction("U+2705").queue();
@@ -625,7 +627,7 @@ public class TeamCommand extends Command {
                 }
 
                 // Tell the user if the team was not found
-                genericFail(event , "Team Delete", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams", 0);
+                genericFail(event , "Team Delete", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams.", 0);
             } catch (Exception ignore) { }
         } else {
             // Create the help embed for '!team delete'
@@ -653,7 +655,7 @@ public class TeamCommand extends Command {
                     assert team != null;
                     if (team.getTeamMembers().size() >= Main.MAX_TEAM_SIZE) {
                         // Sends embed if the team already has the max amount of members
-                        genericFail(event , "Team Join", "Sorry, `" + teamName + "` already has the max amount of contestants", 10);
+                        genericFail(event , "Team Join", "Sorry, `" + teamName + "` already has the max amount of contestants.", 10);
                         return;
                     }
 
@@ -687,7 +689,7 @@ public class TeamCommand extends Command {
                         Main.guild.addRoleToMember(joinerMember, Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
 
                         // Welcome user to team
-                        Objects.requireNonNull(Main.guild.getTextChannelById(team.getChannelId())).sendMessage("Welcome " + joinerMember.getAsMention() + " to **" + team.getName() + "**").queue();
+                        Objects.requireNonNull(Main.guild.getTextChannelById(team.getChannelId())).sendMessage("Welcome " + joinerMember.getAsMention() + " to **" + team.getName() + "**.").queue();
 
                         // Rewrite team to file
                         GuildTeam.writeTeam(team);
@@ -697,7 +699,7 @@ public class TeamCommand extends Command {
                     // Creates the message and sends it to the team
                     assert teamChannel != null;
                     teamChannel.sendMessage("Hi " + Objects.requireNonNull(Main.guild.getMemberById(leaderId)).getAsMention() + ", " + Objects.requireNonNull(event.getMember()).getAsMention() +
-                            " would like to join your team. React with :white_check_mark: to accept, or :x: to deny")
+                            " would like to join your team. React with :white_check_mark: to accept, or :x: to deny.")
                             .queue(message -> {
                                 // Add the reactions to the message
                                 message.addReaction("U+2705").queue();
@@ -715,7 +717,7 @@ public class TeamCommand extends Command {
                 }
 
                 // Tell the user if the team was not found
-                genericFail(event, "Team Join", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams", 10);
+                genericFail(event, "Team Join", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 10);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -744,9 +746,9 @@ public class TeamCommand extends Command {
 
             // Go through ifs to make sure the team exists and the member is in the team
             if(team == null)
-                genericFail(event , "Team Kick", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams", 0);
+                genericFail(event , "Team Kick", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams.", 0);
             else if(!Main.containsRole(m, Main.guild.getRoleById(team.getRoleId())))
-                genericFail(event , "Team Kick", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`", 0);
+                genericFail(event , "Team Kick", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`.", 0);
             else {
                 Main.guild.removeRoleFromMember(m, Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
                 team.removeMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong())));
@@ -763,10 +765,9 @@ public class TeamCommand extends Command {
                 );
                 event.getChannel().sendMessage(b.build()).queue();
             }
-        } else {
+        } else
             // Create the help embed for '!team kick'
             individualCommandHelp(CommandType.TEAM_KICK, event);
-        }
     }
 
     /**
@@ -789,7 +790,7 @@ public class TeamCommand extends Command {
 
             // Go through ifs to make sure the team exists and the member is not in the team
             if(team == null)
-                genericFail(event , "Team Add", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams", 0);
+                genericFail(event , "Team Add", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
             else if(Main.containsRole(m, Main.guild.getRoleById(team.getRoleId()))) {
                 if(retry) {
                     try {
@@ -798,9 +799,9 @@ public class TeamCommand extends Command {
                         return;
                     } catch (Exception ignore) {}
                 }
-                genericFail(event , "Team Add",  m.getAsMention() + " is already in `" + teamName + "`", 0);
+                genericFail(event , "Team Add",  m.getAsMention() + " is already in `" + teamName + "`.", 0);
             } else if(!team.addMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong()))))
-                genericFail(event , "Team Add", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`", 0);
+                genericFail(event , "Team Add", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`.", 0);
             else {
                 GuildTeam.writeTeam(team);
                 Main.guild.addRoleToMember(m.getId(), Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
@@ -809,7 +810,7 @@ public class TeamCommand extends Command {
                         ":white_check_mark: Player Added!",
                         "Added by " + event.getAuthor().getName(),
                         event.getAuthor().getAvatarUrl(),
-                        "Successfully added " + m.getAsMention() + " to `" + team.getName() + "`",
+                        "Successfully added " + m.getAsMention() + " to `" + team.getName() + "`.",
                         Main.GREEN,
                         new EmbedField[] {}
                 );
@@ -898,27 +899,26 @@ public class TeamCommand extends Command {
             GuildTeam team = GuildTeam.getTeamByName(teamName);
 
             if(team == null)
-                genericFail(event , "Team Color", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams", 0);
+                genericFail(event , "Team Color", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
             else {
                 try {
                     Role r = Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()));
                     r.getManager().setColor(Color.decode(args[3])).queue();
                     EmbedBuilder b = Main.buildEmbed(
                             ":white_check_mark: Color Changed!",
-                            "Successfully updated the color of team `" + teamName + "` to **" + args[3] + "**",
+                            "Successfully updated the color of team `" + teamName + "` to **" + args[3] + "**.",
                             Color.decode(args[3]),
                             new EmbedField[] {}
                     );
                     event.getChannel().sendMessage(b.build()).queue();
                 } catch (Exception e) {
-                    genericFail(event, "Team Color", "`" + (args[3].length() > 200 ? args[3].substring(0, 200) + "..." : args[3]) + "` is an invalid hex code. Please check it and try again", 0);
+                    genericFail(event, "Team Color", "`" + (args[3].length() > 200 ? args[3].substring(0, 200) + "..." : args[3]) + "` is an invalid hex code. Please check it and try again.", 0);
                 }
             }
 
-        } else {
+        } else
             // Create the help embed for '!team color'
             individualCommandHelp(CommandType.TEAM_COLOR, event);
-        }
     }
 
     /**
@@ -930,28 +930,25 @@ public class TeamCommand extends Command {
     public static void teamMaxMembers(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the command has the proper parameters
         if (args.length == 3) {
-            try {
-                int max = Integer.parseInt(args[2]);
+            Integer max = Main.convertInt(args[2]);
 
-                if(max < 1)
-                    throw new Exception();
-                else if(max == Main.MAX_TEAM_SIZE) {
-                    genericFail(event, "Team MaxMembers", "Max members is already " + Main.MAX_TEAM_SIZE, 0);
-                    return;
-                }
-
-                Main.MAX_TEAM_SIZE = max;
-
-                GuildStartupHandler.writeProperties();
-                genericSuccess(event, "Team MaxMembers", "Updated max members to " + max, true);
-            } catch (Exception e) {
-                genericFail(event, "Team MaxMembers", "`" + args[2] + "` is an invalid input. It must be greater than 0 and an **integer** less than 2,147,483,647", 0);
+            if(max == null || max < 1) {
+                genericFail(event, "Team MaxMembers", "`" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "` is an invalid input. It must be an **integer** greater than 0 and less than 2,147,483,647.", 0);
+                return;
+            } else if(max == Main.MAX_TEAM_SIZE) {
+                genericFail(event, "Team MaxMembers", "Max members is already " + Main.MAX_TEAM_SIZE + ".", 0);
+                return;
             }
 
-        } else {
+            Main.MAX_TEAM_SIZE = max;
+
+            GuildStartupHandler.writeProperties();
+            genericSuccess(event, "Team MaxMembers", "Updated max members to " + max + ".", true);
+
+        } else
             // Create the help embed for '!team maxmembers'
             individualCommandHelp(CommandType.TEAM_MAX_MEMBERS, event);
-        }
+
     }
 
     /**
@@ -992,9 +989,16 @@ public class TeamCommand extends Command {
                         } catch (Exception ignore) {}
                     }
 
+                    // Delete the team's powerups
+                    for(int i = PowerUp.activePowerUps.size()-1; i >=0; i--) {
+                        if(PowerUp.activePowerUps.get(i).getSender().getName().equals(team.getName()))
+                            PowerUp.activePowerUps.remove(i);
+                    }
+
                     ImageCommands.deleteTeamSubmits(teamName);
                     ImageCommands.saveSubmits();
                     GuildTeam.writeTeam(team);
+                    PowerUp.writePowerUps();
 
                     // Send various messages
                     genericSuccess(event, "Team Eliminate", "**" + teamName + "** has been eliminated.", false);
@@ -1008,10 +1012,9 @@ public class TeamCommand extends Command {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else {
+        } else
             // Create the help embed for '!team delete'
             individualCommandHelp(CommandType.TEAM_ELIMINATE, event);
-        }
     }
 
     /**
@@ -1066,10 +1069,9 @@ public class TeamCommand extends Command {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else {
+        } else
             // Create the help embed for '!team delete'
             individualCommandHelp(CommandType.TEAM_QUALIFY, event);
-        }
     }
 
     // --- OTHER METHODS ---
@@ -1239,6 +1241,7 @@ public class TeamCommand extends Command {
                         // Clear the teams arraylist
                         Main.teams.clear();
                         Main.teamNames.clear();
+                        PowerUp.activePowerUps.clear();
 
                         // Reset submits
                         Main.pendingImages = new HashMap<>();
@@ -1246,6 +1249,9 @@ public class TeamCommand extends Command {
 
                         // Write an empty arraylist back to the teams file
                         GuildTeam.writeTeams(new ArrayList<>());
+
+                        // Write powerups
+                        PowerUp.writePowerUps();
 
                         // Create and send the success embed
                         EmbedBuilder b = Main.buildEmbed(
@@ -1271,6 +1277,13 @@ public class TeamCommand extends Command {
                     ImageCommands.deleteTeamSubmits(teamName.toString());
                     GuildTeam.deleteTeam(teamName.toString(), event.getGuild());
                     ImageCommands.saveSubmits();
+
+                    // Delete the team's powerups
+                    for(int i = PowerUp.activePowerUps.size()-1; i >=0; i--) {
+                        if(PowerUp.activePowerUps.get(i).getSender().getName().equals(teamName.toString()))
+                            PowerUp.activePowerUps.remove(i);
+                    }
+                    PowerUp.writePowerUps();
 
                     // Create the success embed and sent it
                     EmbedBuilder b = Main.buildEmbed(

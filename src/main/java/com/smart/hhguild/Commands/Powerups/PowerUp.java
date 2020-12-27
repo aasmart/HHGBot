@@ -80,6 +80,11 @@ public class PowerUp extends Command implements Serializable {
         logPowerup(p);
     }
 
+    public static void removePowerUp(PowerUp p) {
+        activePowerUps.remove(p);
+        writePowerUps();
+    }
+
     /**
      * Writes the arraylist activePowerUps to the ACTIVE_POWER_UPS file
      */

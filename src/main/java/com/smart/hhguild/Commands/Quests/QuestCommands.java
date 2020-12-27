@@ -172,19 +172,19 @@ public class QuestCommands extends Command {
             String name = args[2].trim().toLowerCase();
             Quest.syncQuestData(name);
 
-            Pattern nameRegex = Pattern.compile("[^\\w-]|[A-Z]");
+            Pattern nameRegex = Pattern.compile("[_]|[^\\w-]|[A-Z]");
             Matcher matcher = nameRegex.matcher(name);
 
             // Make sure 'name' doesn't contain invalid characters, no more than MAX_QUEST_NAME_SIZE characters, it doesn't exist,
             // and the quest limit hasn't been reached
             if(matcher.find()) {
-                genericFail(event, "Quest Create", "Name contains invalid characters. It can only contain lowercase letters, numbers, hyphens, and underscores.", 0);
+                genericFail(event, "Quest Create", "Name contains invalid characters. It can only contain lowercase letters, numbers, and hyphens.", 0);
                 return;
             } else if(name.length() > MAX_QUEST_NAME_SIZE) {
-                genericFail(event, "Quest Create", "Name can not contain more than **" + MAX_QUEST_NAME_SIZE + "** characters", 0);
+                genericFail(event, "Quest Create", "Name can not contain more than **" + MAX_QUEST_NAME_SIZE + "** characters.", 0);
                 return;
             } else if(Main.questNames.contains(name)) {
-                genericFail(event, "Quest Create", "A quest called **" + name + "** already exists", 0);
+                genericFail(event, "Quest Create", "A quest called **" + name + "** already exists.", 0);
                 return;
             } else if(Main.questNames.size() > MAX_QUESTS) {
                 genericFail(event, "Quest Create", "Maximum limit of **" + MAX_QUESTS + "** reached.", 0);
@@ -203,13 +203,13 @@ public class QuestCommands extends Command {
                 // Create a new quest object in the new file
                 Quest.writeQuest(new Quest(name));
             } catch (Exception e) {
-                genericFail(event, "Quest Create", "Encountered unknown error resulting in a failed or partial creation", 0);
+                genericFail(event, "Quest Create", "Encountered unknown error resulting in a failed or partial creation.", 0);
                 System.out.println("Failed to write quest names file");
             }
 
             // Success method
             genericSuccess(event, "Quest Created!","Created a new quest called **" + name + "**. To edit this quest, use " +
-                    "`!quest edit " + name + "`", false);
+                    "`!quest edit " + name + "`.", false);
         } else {
             individualCommandHelp(CommandType.QUEST_CREATE, event);
         }
@@ -233,10 +233,10 @@ public class QuestCommands extends Command {
                 if(name.equals("and"))
                     genericFail(event, "Quest Delete", "__And__ is not a quest; it's a FANBOYS.", 0);
                 else
-                    genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**", 0);
+                    genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**.", 0);
                 return;
             } else if(Main.questNames.size() <= 0) {
-                genericFail(event, "Quest Delete", "There are no quests to delete", 0);
+                genericFail(event, "Quest Delete", "There are no quests to delete.", 0);
                 return;
             }
 
@@ -265,7 +265,7 @@ public class QuestCommands extends Command {
 
                         // Check if the quest is running, and if so stop the deletion process
                         if (q.isRunning()) {
-                            genericFail(event, "Quest Delete", "You can't delete all quests while a quest is loaded. Halt it first using `!quest halt`", 0);
+                            genericFail(event, "Quest Delete", "You can't delete all quests while a quest is loaded. Halt it first using `!quest halt`.", 0);
                             return;
                         } else if(Main.editors.stream().map(Editor::getEditing).collect(Collectors.toList()).contains("QUEST:"+q.getName())) {
                             genericFail(event, "Quest Delete", "You can't delete a quest while it's being edited.", 0);
@@ -289,7 +289,7 @@ public class QuestCommands extends Command {
                 } else {
                     // Make sure the quest isn't loaded
                     if (Quest.readQuest(name).isRunning()) {
-                        genericFail(event, "Quest Delete", "You can't delete a quest while it loaded. Halt it first using `!quest halt`", 0);
+                        genericFail(event, "Quest Delete", "You can't delete a quest while it loaded. Halt it first using `!quest halt`.", 0);
                         return;
                     }else if(Main.editors.stream().map(Editor::getEditing).collect(Collectors.toList()).contains("QUEST:"+name)) {
                         genericFail(event, "Quest Delete", "You can't delete a quest while it's being edited.", 0);
@@ -305,7 +305,7 @@ public class QuestCommands extends Command {
                     questFile.delete();
                 }
             } catch (Exception e) {
-                genericFail(event, "Quest Delete", "Encountered unknown error resulting in a failed or partial deletion", 0);
+                genericFail(event, "Quest Delete", "Encountered unknown error resulting in a failed or partial deletion.", 0);
                 System.out.println("Failed to delete quest");
             }
 
@@ -335,9 +335,9 @@ public class QuestCommands extends Command {
                 if(editorIds.contains(Objects.requireNonNull(event.getMember()).getId()) && Main.editors.get(editorIds.indexOf(event.getMember().getId())).getEditing().contains("QUEST")) {
                     Editor e = Main.editors.remove(editorIds.indexOf(event.getMember().getId()));
                     e.timer.shutdownNow();
-                    genericSuccess(event, "Quest Edit", "You are no longer editing **" + e.getEditing() + "**", false);
+                    genericSuccess(event, "Quest Edit", "You are no longer editing **" + e.getEditing() + "**.", false);
                 } else {
-                    genericFail(event, "Quest Edit", "You are not editing a quest", 0);
+                    genericFail(event, "Quest Edit", "You are not editing a quest.", 0);
                 }
                 return;
             } else {
@@ -353,10 +353,10 @@ public class QuestCommands extends Command {
 
             // Determine if the user is already editing something
             if(editorIds.contains(Objects.requireNonNull(event.getMember()).getId())) {
-                genericFail(event, "Quest Edit", "You are already editing **" + Main.editors.get(editorIds.indexOf(event.getMember().getId())).getEditing() + "**", 0);
+                genericFail(event, "Quest Edit", "You are already editing **" + Main.editors.get(editorIds.indexOf(event.getMember().getId())).getEditing() + "**.", 0);
                 return;
             } else if(Main.editors.stream().anyMatch(editor -> editor.getEditing().equals("QUEST:"+questName))) {
-                genericFail(event, "Quest Edit", "Someone is already editing **" + questName + "**", 0);
+                genericFail(event, "Quest Edit", "Someone is already editing **" + questName + "**.", 0);
                 return;
             }
 
@@ -368,7 +368,7 @@ public class QuestCommands extends Command {
                 if(quest == null)
                     throw new Exception();
                 else if(quest.isRunning()) {
-                    genericFail(event, "Quest Edit", "You can't edit a quest while it loaded. Halt it first using `!quest halt`", 0);
+                    genericFail(event, "Quest Edit", "You can't edit a quest while it loaded. Halt it first using `!quest halt`.", 0);
                     return;
                 }
 
@@ -384,7 +384,7 @@ public class QuestCommands extends Command {
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Encountered error reading quest file");
-                genericFail(event, "Quest Edit", "Failed to read quest file. Please consult a Developer", 0);
+                genericFail(event, "Quest Edit", "Failed to read quest file. Please consult a Developer.", 0);
             }
             // Delete the user's message
             event.getMessage().delete().queue();
@@ -414,7 +414,7 @@ public class QuestCommands extends Command {
             });
 
         } else {
-            event.getChannel().sendMessage("There are currently no quests").queue();
+            event.getChannel().sendMessage("There are currently no quests.").queue();
         }
     }
 
@@ -435,7 +435,7 @@ public class QuestCommands extends Command {
                 genericFail(event, "Quest Load", "Quest **" + Main.runningQuestName + "** is already loaded.", 0);
                 return;
             } else if(!Main.questNames.contains(name)) {
-                genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**", 0);
+                genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**.", 0);
                 return;
             }
 
@@ -456,11 +456,11 @@ public class QuestCommands extends Command {
 
                 // Runs the quest
                 Quest.run(quest);
-                genericSuccess(event, "Quest Load", "**" + name + "** is now loaded. To stop, use `!quest halt`", false);
+                genericSuccess(event, "Quest Load", "**" + name + "** is now loaded. To stop, use `!quest halt`.", false);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Encountered error reading quest file");
-                genericFail(event, "Quest Load", "Failed to read quest file. Please consult a Developer", 0);
+                genericFail(event, "Quest Load", "Failed to read quest file. Please consult a Developer.", 0);
             }
         // If the argument length is 4, attempt to run a quest field
         } else if(args.length == 4) {
@@ -469,7 +469,7 @@ public class QuestCommands extends Command {
             Quest.syncQuestData(name);
             // Make sure the quest exists
             if(!Main.questNames.contains(name)) {
-                genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**", 0);
+                genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**.", 0);
                 return;
             }
 
@@ -486,12 +486,8 @@ public class QuestCommands extends Command {
                 }
 
                 // Get fieldIndex, the index of the field. It must be an integer between the size constraints of quest.getQuestFields()
-                int fieldIndex;
-                try {
-                   fieldIndex = Integer.parseInt(args[3]);
-                   if(fieldIndex >= quest.getQuestFields().size() || fieldIndex < 0)
-                       throw new Exception();
-                } catch (Exception e) {
+                Integer fieldIndex = Main.convertInt(args[3]);
+                if(fieldIndex == null || fieldIndex >= quest.getQuestFields().size() || fieldIndex < 0) {
                     genericFail(event, "Quest Load", "Field index must be an integer between 0 and " + (quest.getQuestFields().size()-1) + ", inclusive.", 0);
                     return;
                 }
@@ -522,13 +518,13 @@ public class QuestCommands extends Command {
         //quest halt
         // Make sure a quest is running
         if(!Quest.isQuestRunning()) {
-            genericFail(event, "Quest Halt", "There is no quest to halt", 0);
+            genericFail(event, "Quest Halt", "There is no quest to halt.", 0);
             return;
         }
 
         String runningName = Main.runningQuestName;
         Quest.shutdown();
-        Command.genericSuccess(event, "Quest Halt", "**" + runningName + "** was halted", false);
+        Command.genericSuccess(event, "Quest Halt", "**" + runningName + "** was halted.", false);
     }
 
     /**
@@ -538,7 +534,7 @@ public class QuestCommands extends Command {
     public static void loadedQuest(GuildMessageReceivedEvent event) {
         String loadedQuest = Main.runningQuestName;
         EmbedBuilder b = Main.buildEmbed("Loaded Quest",
-                (!loadedQuest.equals("") ? "The quest loaded currently is **" + loadedQuest + "**" : "There is no loaded quest"),
+                (!loadedQuest.equals("") ? "The quest loaded currently is **" + loadedQuest + "**." : "There is no loaded quest."),
                 Main.BLUE,
                 new EmbedField[] {}
                 );
@@ -579,7 +575,7 @@ public class QuestCommands extends Command {
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Encountered error reading quest file");
-                genericFail(event, "Quest Get", "Failed to read quest file. Please consult a Developer", 0);
+                genericFail(event, "Quest Get", "Failed to read quest file. Please consult a Developer.", 0);
             }
             event.getMessage().delete().queue();
         } else {

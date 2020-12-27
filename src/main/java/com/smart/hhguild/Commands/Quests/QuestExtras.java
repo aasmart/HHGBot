@@ -50,7 +50,8 @@ import java.util.stream.Collectors;
 public class QuestExtras extends Command {
     /**
      * This method is for determining which actions to perform for the main quest builder embed.
-     * @param event The event
+     *
+     * @param event   The event
      * @param message The message to get the embed from and edit
      */
     public static void questBuilder(GuildMessageReactionAddEvent event, Message message) {
@@ -65,7 +66,7 @@ public class QuestExtras extends Command {
         String questName = Objects.requireNonNull(b.getTitle()).split(" ")[1];
 
         // Make sure the person performing this action is the editor of the quest
-        if(!Main.isEditing(event.getMember(), Editor.EditType.QUEST, questName)) {
+        if (!Main.isEditing(event.getMember(), Editor.EditType.QUEST, questName)) {
             event.getChannel().sendMessage(
                     event.getMember().getAsMention() + ", you can't do this because you're not the editor!")
                     .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
@@ -77,36 +78,36 @@ public class QuestExtras extends Command {
 
         // Get the editor object and return if null
         Editor editor = Main.getEditor(event.getMember());
-        if(editor == null)
+        if (editor == null)
             return;
 
         // Get the quest object and return if null
         Quest quest = Quest.readQuest(questName);
-        if(quest == null)
+        if (quest == null)
             return;
 
         // If the emoji is the leftarrow emoji, change the main embed's page to -1
-        if(reaction.contains("leftarrow")) {
+        if (reaction.contains("leftarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
             int newPage = Integer.parseInt(splitFooter[1]) - 1;
 
-            if(newPage > 0) {
+            if (newPage > 0) {
                 message.editMessage(quest.getAsEmbed(newPage, true).build()).queue();
             }
 
-        // If the emoji is the rightarrow emoji, change the main embed's page to +1
-        } else if(reaction.contains("rightarrow")) {
+            // If the emoji is the rightarrow emoji, change the main embed's page to +1
+        } else if (reaction.contains("rightarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
             int newPage = Integer.parseInt(splitFooter[1]) + 1;
             int maxPage = Integer.parseInt(splitFooter[3]);
 
-            if(newPage <= maxPage) {
+            if (newPage <= maxPage) {
                 message.editMessage(quest.getAsEmbed(newPage, true).build()).queue();
             }
 
-        // If the emoji is the add emoji, preparing adding
-        } else if(reaction.contains("add")) {
-            if(editor.getEditAction() != Editor.EditAction.NONE) {
+            // If the emoji is the add emoji, preparing adding
+        } else if (reaction.contains("add")) {
+            if (editor.getEditAction() != Editor.EditAction.NONE) {
                 event.getChannel().sendMessage(
                         event.getMember().getAsMention() + ", you can't do this because you are already performing an action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
@@ -116,14 +117,14 @@ public class QuestExtras extends Command {
             editor.updateTimer();
             quest.sendAddEmbed(event.getChannel(), 1);
 
-        // If the emoji is the remove emoji, prepare removing
-        } else if(reaction.contains("remove")) {
-            if(editor.getEditAction() != Editor.EditAction.NONE) {
+            // If the emoji is the remove emoji, prepare removing
+        } else if (reaction.contains("remove")) {
+            if (editor.getEditAction() != Editor.EditAction.NONE) {
                 event.getChannel().sendMessage(
                         event.getMember().getAsMention() + ", you can't do this because you are already performing an action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
-            } else if(quest.getCodes().size() + quest.getQuestFields().size() == 0) {
+            } else if (quest.getCodes().size() + quest.getQuestFields().size() == 0) {
                 event.getChannel().sendMessage(
                         event.getMember().getAsMention() + ", there is nothing to remove, so you can't perform this action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
@@ -134,9 +135,9 @@ public class QuestExtras extends Command {
             editor.updateTimer();
             quest.sendRemoveEmbed(event.getChannel(), 1);
 
-        // If the emoji is the edit emoji, prepare editing
-        } else if(reaction.contains("edit")) {
-            if(editor.getEditAction() != Editor.EditAction.NONE) {
+            // If the emoji is the edit emoji, prepare editing
+        } else if (reaction.contains("edit")) {
+            if (editor.getEditAction() != Editor.EditAction.NONE) {
                 event.getChannel().sendMessage(
                         event.getMember().getAsMention() + ", you can't do this because you are already performing an action!")
                         .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
@@ -147,25 +148,27 @@ public class QuestExtras extends Command {
             editor.updateTimer();
             quest.sendEditEmbed(event.getChannel(), 1);
 
-        // If the emoji is the x_emoji, delete the main quest-builder embed
-        } else if(reaction.contains("x_emoji")) {
+            // If the emoji is the x_emoji, delete the main quest-builder embed
+        } else if (reaction.contains("x_emoji")) {
             editor.timer.shutdownNow();
             Main.editors.remove(editor);
 
-            if(editor.getEditType() == Editor.EditType.QUEST) {
+            if (editor.getEditType() == Editor.EditType.QUEST) {
                 try {
                     quest.clearRelatedMessages(event.getChannel(), quest.getRelatedMessages().size());
-                    genericSuccess(event.getChannel(), "Quest Edit", "You are no longer editing **" + editor.getEditing() + "**", false);
-                } catch (Exception ignore) {}
+                    genericSuccess(event.getChannel(), "Quest Edit", "You are no longer editing **" + editor.getEditing() + "**.", false);
+                } catch (Exception ignore) {
+                }
             }
         }
     }
 
     /**
      * This method is for determining which action to perform based on the main embed's sub-embeds, which are add, remove, and edit.
-     * @param event The event
+     *
+     * @param event   The event
      * @param message The message to get the embed from and edit
-     * @param type The type of sub embed, consisting of add, remove, and edit.
+     * @param type    The type of sub embed, consisting of add, remove, and edit.
      */
     public static void questBuilderOptions(GuildMessageReactionAddEvent event, Message message, String type) {
         // Remove the reaction
@@ -178,7 +181,7 @@ public class QuestExtras extends Command {
         String questName = Objects.requireNonNull(b.getTitle()).split(" ")[1].replaceAll(":", "");
 
         // Make sure the reactor is an editor
-        if(!Main.isEditing(event.getMember(), Editor.EditType.QUEST, questName)) {
+        if (!Main.isEditing(event.getMember(), Editor.EditType.QUEST, questName)) {
             event.getChannel().sendMessage(
                     event.getMember().getAsMention() + ", you can't do this because you're not the editor!")
                     .queue(message1 -> message1.delete().queueAfter(5, TimeUnit.SECONDS));
@@ -187,7 +190,7 @@ public class QuestExtras extends Command {
 
         // Get the editor
         Editor editor = Main.getEditor(event.getMember());
-        if(editor == null)
+        if (editor == null)
             return;
 
         // Sync data
@@ -195,15 +198,15 @@ public class QuestExtras extends Command {
 
         // Get the quest
         Quest quest = Quest.readQuest(questName);
-        if(quest == null)
+        if (quest == null)
             return;
 
         // Determine which action to run depending on the reaction emote
-        if(reaction.contains("leftarrow")) {
+        if (reaction.contains("leftarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
             int newPage = Integer.parseInt(splitFooter[1]) - 1;
 
-            if(newPage > 0) {
+            if (newPage > 0) {
                 // Figure out the type and which embed to show based on the page
                 switch (type.toLowerCase()) {
                     case "add" -> message.editMessage(quest.addEmbed(newPage).build()).queue();
@@ -212,49 +215,49 @@ public class QuestExtras extends Command {
                 }
 
                 // Determine which edit action the editor is performing based on the page
-                switch(newPage) {
+                switch (newPage) {
                     case 1 -> editor.setEditAction(Editor.EditAction.NONE);
                     case 2 -> {
-                        if(type.equalsIgnoreCase("add"))
+                        if (type.equalsIgnoreCase("add"))
                             editor.setEditAction(Editor.EditAction.QUEST_FIELD_ADD);
-                        else if(type.equalsIgnoreCase("remove"))
+                        else if (type.equalsIgnoreCase("remove"))
                             editor.setEditAction(Editor.EditAction.QUEST_FIELD_REMOVE);
-                        else if(type.equalsIgnoreCase("edit"))
+                        else if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_FIELD_EDIT);
                     }
                     case 3 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_CODE_EDIT);
                     }
                     case 4 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_METHOD_EDIT);
                     }
                     case 5 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_COOLDOWN_EDIT);
                     }
                     case 6 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_POINT_EDIT);
                     }
                     case 7 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_REMAINING_EDIT);
                     }
                     case 8 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_CLUE_EDIT);
                     }
                 }
             }
 
-        } else if(reaction.contains("rightarrow")) {
+        } else if (reaction.contains("rightarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
             int newPage = Integer.parseInt(splitFooter[1]) + 1;
             int maxPage = Integer.parseInt(splitFooter[3]);
 
-            if(newPage <= maxPage) {
+            if (newPage <= maxPage) {
                 // Figure out the type and which embed to show based on the page
                 switch (type.toLowerCase()) {
                     case "add" -> message.editMessage(quest.addEmbed(newPage).build()).queue();
@@ -263,51 +266,51 @@ public class QuestExtras extends Command {
                 }
 
                 // Determine which edit action the editor is performing based on the page
-                switch(newPage) {
+                switch (newPage) {
                     case 2 -> {
-                        if(type.equalsIgnoreCase("add"))
+                        if (type.equalsIgnoreCase("add"))
                             editor.setEditAction(Editor.EditAction.QUEST_FIELD_ADD);
-                        else if(type.equalsIgnoreCase("remove"))
+                        else if (type.equalsIgnoreCase("remove"))
                             editor.setEditAction(Editor.EditAction.QUEST_FIELD_REMOVE);
-                        else if(type.equalsIgnoreCase("edit"))
+                        else if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_FIELD_EDIT);
                     }
-                    case 3-> {
-                        if(type.equalsIgnoreCase("add"))
+                    case 3 -> {
+                        if (type.equalsIgnoreCase("add"))
                             editor.setEditAction(Editor.EditAction.QUEST_CODE_ADD);
-                        else if(type.equalsIgnoreCase("remove"))
+                        else if (type.equalsIgnoreCase("remove"))
                             editor.setEditAction(Editor.EditAction.QUEST_CODE_REMOVE);
-                        else if(type.equalsIgnoreCase("edit"))
+                        else if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_CODE_EDIT);
                     }
                     case 4 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_METHOD_EDIT);
                     }
                     case 5 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_COOLDOWN_EDIT);
                     }
                     case 6 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_POINT_EDIT);
                     }
                     case 7 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_REMAINING_EDIT);
                     }
                     case 8 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_CLUE_EDIT);
                     }
                     case 9 -> {
-                        if(type.equalsIgnoreCase("edit"))
+                        if (type.equalsIgnoreCase("edit"))
                             editor.setEditAction(Editor.EditAction.QUEST_NAME_EDIT);
                     }
                 }
             }
 
-        } else if(reaction.contains("x_emoji")) {
+        } else if (reaction.contains("x_emoji")) {
             message.delete().queue();
             editor.setEditAction(Editor.EditAction.NONE);
 
@@ -321,16 +324,17 @@ public class QuestExtras extends Command {
 
     /**
      * This method is for adding codes/fields while in edit mode and determining which command to use based on the editAction
-     * @param event The event
-     * @param args The command arguments
-     * @param editor The quest's editor
+     *
+     * @param event      The event
+     * @param args       The command arguments
+     * @param editor     The quest's editor
      * @param editAction The type of edit action
      */
     public static void questAddCommand(GuildMessageReceivedEvent event, String[] args, Editor editor, Editor.EditAction editAction) {
-        if(!editor.getEditAction().toString().contains("ADD"))
+        if (!editor.getEditAction().toString().contains("ADD"))
             return;
 
-        if(editor.getEditAction() == Editor.EditAction.QUEST_BASIC_ADD) {
+        if (editor.getEditAction() == Editor.EditAction.QUEST_BASIC_ADD) {
             event.getMessage().delete().queue();
             event.getMessage().reply("You must select page 2 or 3 to add items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
@@ -342,7 +346,7 @@ public class QuestExtras extends Command {
         Quest quest = Quest.readQuest(questName);
 
         // Make sure quest isn't null
-        if(quest == null) {
+        if (quest == null) {
             genericFail(event, "Quest Edit", "Failed to retrieve quest.", 10);
             return;
         }
@@ -350,15 +354,15 @@ public class QuestExtras extends Command {
         // Update the editor's time because they're performing an edit action
         editor.updateTimer();
         // If the action is for adding a quest field, try to add it
-        if(editAction == Editor.EditAction.QUEST_FIELD_ADD) {
-            if(quest.getQuestFields().size() >= QuestCommands.MAX_QUEST_FIELDS) {
+        if (editAction == Editor.EditAction.QUEST_FIELD_ADD) {
+            if (quest.getQuestFields().size() >= QuestCommands.MAX_QUEST_FIELDS) {
                 genericFail(event, "Quest Field Add", "Maximum number of " + QuestCommands.MAX_QUEST_FIELDS + " quest fields reached.", 10);
                 return;
             }
 
             // If the user had invalid parameters, stop
-            if(args.length == 0) {
-                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+            if (args.length == 0) {
+                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
 
@@ -371,26 +375,26 @@ public class QuestExtras extends Command {
             int textStartIndex = 0;
 
             // Check first parameter
-            if(args[0].startsWith("TIME:")) {
+            if (args[0].startsWith("TIME:")) {
                 // Get the date and make sure it is valid
                 time = QuestField.getDate(args[0].replace("TIME:", "") + ":00");
 
                 // Make sure the time is formatted correctly and hasn't already occurred
-                if(time == null) {
-                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
+                if (time == null) {
+                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
                     return;
-                } else if(time.before(new Date())) {
-                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** has already occurred, so you can't use it...", 10);
+                } else if (time.before(new Date())) {
+                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** has already occurred, so you can't use it...", 10);
                     return;
                 }
                 textStartIndex++;
-            } else if(args[0].startsWith("CHANNEL:")) {
+            } else if (args[0].startsWith("CHANNEL:")) {
                 // Get the channel and make sure it is valid
                 args[0] = args[0].replace("CHANNEL:", "");
                 channel = Main.getChannel(event, args, 0, "Quest Field Add", true, true);
 
                 // If channel is null, stop because Main.getChannel() will send an error message
-                if(channel == null)
+                if (channel == null)
                     return;
                 textStartIndex++;
             }
@@ -405,24 +409,24 @@ public class QuestExtras extends Command {
                 if (channel == null)
                     return;
                 textStartIndex++;
-            } else if(args.length > 1 && args[1].startsWith("TIME:")) {
+            } else if (args.length > 1 && args[1].startsWith("TIME:")) {
                 // Get the date and make sure it is valid
                 time = QuestField.getDate(args[1].replace("TIME:", "") + ":00");
 
                 // Make sure the time is formatted correctly and hasn't already occurred
-                if(time == null) {
-                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
+                if (time == null) {
+                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
                     return;
-                } else if(time.before(new Date())) {
-                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
+                } else if (time.before(new Date())) {
+                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
                     return;
                 }
                 textStartIndex++;
             }
 
             // Because you can't have just a time and no channel, return with an error message
-            if(channel == null && time != null) {
-                genericFail(event, "Quest Field Add", "Quest must contain a channel if it has a time.",10);
+            if (channel == null && time != null) {
+                genericFail(event, "Quest Field Add", "Quest must contain a channel if it has a time.", 10);
                 return;
             }
 
@@ -431,11 +435,11 @@ public class QuestExtras extends Command {
                     "Quest Field Added",
                     "Quest: " + questName,
                     Main.DARK_RED,
-                    new EmbedField[] {
+                    new EmbedField[]{
                             new EmbedField("Quest Field Parameters",
                                     (time != null ? "\n - **Time:** " + time : "") +
-                                        (channel != null ? "\n - **Channel:** " + Main.mentionChannel(channel.getIdLong()) : "") +
-                                        "\n- To see text contents, check the main embed", false)
+                                            (channel != null ? "\n - **Channel:** " + Main.mentionChannel(channel.getIdLong()) : "") +
+                                            "\n- To see text contents, check the main embed", false)
                     });
 
             try {
@@ -446,7 +450,7 @@ public class QuestExtras extends Command {
                             // Clear previous message
                             quest.clearRelatedMessages(event.getChannel(), 1);
 
-                            if(message.getContentRaw().trim().length() == 0) {
+                            if (message.getContentRaw().trim().length() == 0) {
                                 genericFail(event, "Quest Field Add", "Quest field must contain text contents!", 10);
                                 return;
                             }
@@ -466,11 +470,12 @@ public class QuestExtras extends Command {
                             })).start();
                         });
                 return;
-            } catch (Exception ignore) { }
+            } catch (Exception ignore) {
+            }
 
             // If it didn't have a message simply add the quest field
             String text = Main.compressArray(Arrays.copyOfRange(args, textStartIndex, args.length));
-            if(text.trim().length() == 0) {
+            if (text.trim().length() == 0) {
                 genericFail(event, "Quest Field Add", "Quest field must contain text contents!", 10);
                 return;
             }
@@ -492,15 +497,15 @@ public class QuestExtras extends Command {
                 editor.setEditAction(editAction);
                 quest.sendAddEmbed(event.getChannel(), editor.getEditAction() == Editor.EditAction.QUEST_FIELD_ADD ? 2 : 3);
             })).start();
-        } else if(editAction == Editor.EditAction.QUEST_CODE_ADD) {
-            if(quest.getCodes().size() >= QuestCommands.MAX_QUEST_CODES) {
+        } else if (editAction == Editor.EditAction.QUEST_CODE_ADD) {
+            if (quest.getCodes().size() >= QuestCommands.MAX_QUEST_CODES) {
                 genericFail(event, "Quest Code Add", "Maximum number of " + QuestCommands.MAX_QUEST_CODES + " codes reached.", 10);
                 return;
             }
 
             // Make sure the parameter size is correct
-            if(args.length < 3) {
-                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 3 or more").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+            if (args.length < 3) {
+                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 3 or more.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
 
@@ -508,41 +513,38 @@ public class QuestExtras extends Command {
             event.getMessage().delete().queueAfter(10, TimeUnit.SECONDS);
 
             String name = args[0];  // The code's name
-            int points;             // The code's point value
-            int maxSubmits;         // The code's maximum submissions
+            Integer points;             // The code's point value
+            Integer maxSubmits;         // The code's maximum submissions
             boolean isImage;        // If the code is an image code
 
             Pattern p = Pattern.compile("[_]|[^\\w\\d-]");
             Matcher matcher = p.matcher(name);
 
             // Make sure the length is not more than 200, it doesn't contain invalid characters, and the code doesn't exist
-            if(name.length() > 200) {
-                 genericFail(event, "Quest Code Add", "The code, " + name.substring(0,200) + "... must be under 200 characters.", 10);
+            if (name.length() > 200) {
+                genericFail(event, "Quest Code Add", "The code, " + name.substring(0, 200) + "... must be under 200 characters.", 10);
                 return;
-            } else if(matcher.find()) {
+            } else if (matcher.find()) {
                 genericFail(event, "Quest Code Add", "The code, " + name + " must not contain any special characters, excluding hyphens.", 10);
                 return;
-            } else if(quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).contains(name)) {
+            } else if (quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).contains(name)) {
                 genericFail(event, "Quest Code Add", "The code,`" + name + "` already exists.", 10);
                 return;
             }
 
             // Attempt to get the code's points, will throw an exception if it's not an integer
-            try {
-                points = Integer.parseInt(args[1]);
-            } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Add", "Points value must be an **integer** between +/-2,147,483,647.", 10);
+            points = Main.convertInt(args[1]);
+
+            if (points == null) {
+                genericFail(event.getChannel(), "Quest Code Add", "Points value must be an **integer** between \u00B12,147,483,647.", 10);
                 return;
             }
 
             // Attempt to get the code's max submits, will throw an exception if it's not an integer or less than 1
-            try {
-                maxSubmits = Integer.parseInt(args[2]);
+            maxSubmits = Main.convertInt(args[2]);
 
-                if(maxSubmits < 1)
-                    throw new Exception();
-            } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Add", "Max submits must be an **integer** between 1 and 2,147,483,647", 10);
+            if (maxSubmits == null || maxSubmits < 1) {
+                genericFail(event.getChannel(), "Quest Code Add", "Max submits must be an **integer** between 1 and 2,147,483,647.", 10);
                 return;
             }
 
@@ -561,12 +563,12 @@ public class QuestExtras extends Command {
                     "Quest Code Added",
                     "Quest: " + questName,
                     Main.DARK_RED,
-                    new EmbedField[] {
+                    new EmbedField[]{
                             new EmbedField("Code Values",
                                     "\n- **Name:** " + name +
-                                        "\n- **Points:** " + points +
-                                        "\n- **Maximum Submissions:** " + maxSubmits +
-                                        "\n- **Is Image Code:** " + Boolean.toString(isImage).toUpperCase(), false)
+                                            "\n- **Points:** " + points +
+                                            "\n- **Maximum Submissions:** " + maxSubmits +
+                                            "\n- **Is Image Code:** " + Boolean.toString(isImage).toUpperCase(), false)
                     });
 
             // Clear previous message
@@ -588,15 +590,16 @@ public class QuestExtras extends Command {
 
     /**
      * This method is for removing codes/fields while in edit mode and determining which command to use based on the editAction
-     * @param event The event
-     * @param args The command arguments
-     * @param editor The quest's editor
+     *
+     * @param event      The event
+     * @param args       The command arguments
+     * @param editor     The quest's editor
      * @param editAction The edit action being performed
      */
     public static void questRemoveCommand(GuildMessageReceivedEvent event, String[] args, Editor editor, Editor.EditAction editAction) {
-        if(!editor.getEditAction().toString().contains("REMOVE"))
+        if (!editor.getEditAction().toString().contains("REMOVE"))
             return;
-        if(editor.getEditAction() == Editor.EditAction.QUEST_BASIC_REMOVE) {
+        if (editor.getEditAction() == Editor.EditAction.QUEST_BASIC_REMOVE) {
             event.getMessage().delete().queue();
             event.getMessage().reply("You must select page 2 or 3 to remove items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
@@ -608,7 +611,7 @@ public class QuestExtras extends Command {
         Quest quest = Quest.readQuest(questName);
 
         // Make sure quest isn't null
-        if(quest == null) {
+        if (quest == null) {
             genericFail(event, "Quest Edit", "Failed to retrieve quest.", 10);
             return;
         }
@@ -616,21 +619,18 @@ public class QuestExtras extends Command {
         // Update editor's timer since they performed an action
         editor.updateTimer();
         // If the edit type is QUEST_FIELD_REMOVE, run the code for that
-        if(editAction == Editor.EditAction.QUEST_FIELD_REMOVE) {
-            if(args.length != 1) {
-                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+        if (editAction == Editor.EditAction.QUEST_FIELD_REMOVE) {
+            if (args.length != 1) {
+                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
 
             event.getMessage().delete().queueAfter(10, TimeUnit.SECONDS);
 
             // Figure out the index and make sure it is within the size of the arraylist
-            int removeIndex;
-            try {
-                removeIndex = Integer.parseInt(args[0]);
-                if(removeIndex < 0 || removeIndex >= quest.getQuestFields().size())
-                    throw new Exception();
-            } catch (Exception e) {
+            Integer removeIndex = Main.convertInt(args[0]);
+
+            if (removeIndex == null || removeIndex < 0 || removeIndex >= quest.getQuestFields().size()) {
                 genericFail(event, "Quest Field Remove",
                         "Index is invalid. It must be a positive integer less than the maximum amount of quest fields, " +
                                 "which is currently " + quest.getQuestFields().size() + ".", 10);
@@ -645,8 +645,8 @@ public class QuestExtras extends Command {
                     "Quest Field Added",
                     "Quest: " + questName,
                     Main.DARK_RED,
-                    new EmbedField[] {
-                            new EmbedField("Quest Field Parameters", "Removed the quest field at index " + removeIndex,false)
+                    new EmbedField[]{
+                            new EmbedField("Quest Field Parameters", "Removed the quest field at index " + removeIndex + ".", false)
                     }
             );
 
@@ -658,15 +658,17 @@ public class QuestExtras extends Command {
                 quest.addRelatedMessage(message1);
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e) { e.printStackTrace(); }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 editor.setEditAction(editAction);
                 quest.sendRemoveEmbed(event.getChannel(), editor.getEditAction() == Editor.EditAction.QUEST_FIELD_ADD ? 2 : 3);
             })).start();
 
-        // If the edit type is QUEST_CODE_REMOVE, run the code to remove the code
-        } else if(editAction == Editor.EditAction.QUEST_CODE_REMOVE) {
-            if(args.length != 1) {
-                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+            // If the edit type is QUEST_CODE_REMOVE, run the code to remove the code
+        } else if (editAction == Editor.EditAction.QUEST_CODE_REMOVE) {
+            if (args.length != 1) {
+                event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                 return;
             }
 
@@ -676,8 +678,8 @@ public class QuestExtras extends Command {
             String name = args[0];
 
             // Return if removing the code was unsuccessful
-            if(!quest.removeCode(name)) {
-                genericFail(event, "Remove Quest Code", "Could not find code with the name **" + name + "**", 10);
+            if (!quest.removeCode(name)) {
+                genericFail(event, "Remove Quest Code", "Could not find code with the name **" + name + "**.", 10);
                 return;
             }
             editor.setEditAction(Editor.EditAction.NONE);
@@ -687,7 +689,7 @@ public class QuestExtras extends Command {
                     "Quest Code Removed",
                     "Quest: " + questName,
                     Main.DARK_RED,
-                    new EmbedField[] {
+                    new EmbedField[]{
                             new EmbedField("Removed Code", name, false)
                     });
 
@@ -699,7 +701,9 @@ public class QuestExtras extends Command {
                 quest.addRelatedMessage(message1);
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e) { e.printStackTrace(); }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 editor.setEditAction(editAction);
                 quest.sendRemoveEmbed(event.getChannel(), 3);
             })).start();
@@ -709,15 +713,16 @@ public class QuestExtras extends Command {
     /**
      * This method is for editing various things in the quest while in edit mode and determining which command to use based on
      * the editAction
-     * @param event The event
-     * @param args The command arguments
-     * @param editor The quest's editor
+     *
+     * @param event      The event
+     * @param args       The command arguments
+     * @param editor     The quest's editor
      * @param editAction The edit action being performed
      */
     public static void questEditCommand(GuildMessageReceivedEvent event, String[] args, Editor editor, Editor.EditAction editAction) {
-        if(!editor.getEditAction().toString().contains("EDIT"))
+        if (!editor.getEditAction().toString().contains("EDIT"))
             return;
-        if(editor.getEditAction() == Editor.EditAction.QUEST_BASIC_EDIT) {
+        if (editor.getEditAction() == Editor.EditAction.QUEST_BASIC_EDIT) {
             event.getMessage().delete().queue();
             event.getMessage().reply("You must select pages and 2 above to edit items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
         }
@@ -728,7 +733,7 @@ public class QuestExtras extends Command {
         Quest quest = Quest.readQuest(questName);
 
         // Make sure quest isn't null
-        if(quest == null) {
+        if (quest == null) {
             genericFail(event, "Quest Edit", "Failed to retrieve quest.", 10);
             return;
         }
@@ -741,8 +746,8 @@ public class QuestExtras extends Command {
         switch (editAction) {
             // If the edit type is QUEST_NAME_EDIT, run the method for editing the name
             case QUEST_NAME_EDIT -> {
-                if(args.length != 1) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length != 1) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -750,8 +755,8 @@ public class QuestExtras extends Command {
             }
             // If the edit type is QUEST_METHOD_EDIT, run the method for editing the method
             case QUEST_METHOD_EDIT -> {
-                if(args.length != 1) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length != 1) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -759,8 +764,8 @@ public class QuestExtras extends Command {
             }
             // If the edit type is QUEST_FIELD_EDIT, run the method for editing the quest fields
             case QUEST_FIELD_EDIT -> {
-                if(args.length < 2) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 2").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length < 2) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 2.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -768,8 +773,8 @@ public class QuestExtras extends Command {
             }
             // If the edit type is QUEST_CODE_EDIT, run the method for editing the quest's codes
             case QUEST_CODE_EDIT -> {
-                if(args.length < 2) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 2").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length < 2) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 2.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -777,8 +782,8 @@ public class QuestExtras extends Command {
             }
             // If the edit type is QUEST_COOLDOWN_EDIT, run the method for editing the quest's cooldown
             case QUEST_COOLDOWN_EDIT -> {
-                if(args.length != 1) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length != 1) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -786,8 +791,8 @@ public class QuestExtras extends Command {
             }
             // If the edit type is QUEST_POINT_EDIT, run the method for editing the quest's point loss
             case QUEST_POINT_EDIT -> {
-                if(args.length != 1) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length != 1) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -795,16 +800,16 @@ public class QuestExtras extends Command {
             }
             // If the edit type is QUEST_REMAINING_EDIT, run the method for editing if the number of remaining codes is shown
             case QUEST_REMAINING_EDIT -> {
-                if(args.length != 1) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length != 1) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
                 editRemaining(event, editor, quest, args);
             }
             case QUEST_CLUE_EDIT -> {
-                if(args.length < 1) {
-                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 1").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+                if (args.length < 1) {
+                    event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 1.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
                     return;
                 }
 
@@ -818,9 +823,10 @@ public class QuestExtras extends Command {
 
     /**
      * This method is for editing the quest's name and is called by questEditCommand() when the edit type is QUEST_NAME_EDIT
-     * @param event The event
-     * @param editor The quest's editor
-     * @param quest The quest
+     *
+     * @param event   The event
+     * @param editor  The quest's editor
+     * @param quest   The quest
      * @param newName The new name of the quest
      */
     @SuppressWarnings("all")
@@ -828,17 +834,17 @@ public class QuestExtras extends Command {
         Quest.syncQuestData(newName.toLowerCase()); // Sync quest data for the quest
 
         // Regex for valid name
-        Pattern nameRegex = Pattern.compile("[^\\w-]|[A-Z_]");
+        Pattern nameRegex = Pattern.compile("[_]|[^\\w-]|[A-Z_]");
         Matcher matcher = nameRegex.matcher(newName.toLowerCase());
 
         // Make sure name doesn't have any invalid characters, doesn't already exist, or have more than MAX_QUEST_NAME_SIZE characters
-        if(matcher.find()) {
+        if (matcher.find()) {
             genericFail(event, "Quest Edit Name", "Name contains invalid characters. It can only contain lowercase letters, numbers, and hyphens.", 10);
             return;
-        } else if(newName.length() > QuestCommands.MAX_QUEST_NAME_SIZE) {
-            genericFail(event, "Quest Edit Name", "Name can not contain more than **" + QuestCommands.MAX_QUEST_NAME_SIZE + "** characters", 10);
+        } else if (newName.length() > QuestCommands.MAX_QUEST_NAME_SIZE) {
+            genericFail(event, "Quest Edit Name", "Name can not contain more than **" + QuestCommands.MAX_QUEST_NAME_SIZE + "** characters.", 10);
             return;
-        } else if(Main.questNames.contains(newName)) {
+        } else if (Main.questNames.contains(newName)) {
             genericFail(event, "Quest Edit Name", "A quest already has the name **" + newName + "**.", 10);
             return;
         }
@@ -851,7 +857,7 @@ public class QuestExtras extends Command {
                 "Updated Name",
                 "Quest: " + oldName,
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("New Name", newName, false)
                 });
 
@@ -883,14 +889,15 @@ public class QuestExtras extends Command {
                 });
             }).start();
         } catch (Exception e) {
-            genericFail(event, "Quest Edit Name", "Encountered error attempting to update the name of **" + oldName + "** to **" + newName + "**", 10);
+            genericFail(event, "Quest Edit Name", "Encountered error attempting to update the name of **" + oldName + "** to **" + newName + "**.", 10);
         }
     }
 
     /**
      * This method is for editing the quest's submit method and is called by questEditCommand() when the edit type is QUEST_METHOD_EDIT
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      * @param quest The quest
      */
     public static void editSubmissionMethod(GuildMessageReceivedEvent event, String[] args, Editor editor, Quest quest) {
@@ -900,14 +907,14 @@ public class QuestExtras extends Command {
             submissionMethod = Submissions.submissionMethods.valueOf(args[0]);
         } catch (Exception e) {
             genericFail(event, "Quest Submit Method Edit",
-                    "**" + (args[0].length() > 200 ? args[0].substring(0,200) : args[0]) + "** does not exist. Please check the submit method embed." +
+                    "**" + (args[0].length() > 200 ? args[0].substring(0, 200) : args[0]) + "** does not exist. Please check the submit method embed." +
                             " to view valid submit methods",
                     10);
             return;
         }
 
         // If the quest already has the same submit method, return
-        if(quest.getSubmissionMethod() == submissionMethod) {
+        if (quest.getSubmissionMethod() == submissionMethod) {
             genericFail(event, "Quest Submit Method Edit",
                     "Quest's value is already **" + submissionMethod + "**.",
                     10);
@@ -919,7 +926,7 @@ public class QuestExtras extends Command {
                 "Quest Submit Method Edited",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("Updated Submit Method", quest.getSubmissionMethod() + " -> " + submissionMethod, false)
                 });
 
@@ -943,25 +950,27 @@ public class QuestExtras extends Command {
 
     /**
      * This method is for editing the quest's quest fields and is called by questEditCommand() when the edit type is QUEST_FIELD_EDIT
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      * @param quest The quest
      */
     public static void editField(GuildMessageReceivedEvent event, String[] args, Editor editor, Quest quest) {
         // Make sure the parameter size is valid
-        if(args.length < 2) {
-            event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 2").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+        if (args.length < 2) {
+            event.getChannel().sendMessage("Invalid parameter size of " + args.length + ". Must be at least 2.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
         }
 
         // Get the questField the user is trying to edit
-        QuestField questField;
-        try {
-            questField = quest.getQuestFields().get(Integer.parseInt(args[0]));
-        } catch (Exception e) {
-            genericFail(event, "Quest Field Edit", "**" + (args[0].length() > 200 ? args[0].substring(0,200) + "..." : args[0]) + "** is an invalid index. Make sure it is a positive integer less than or equal to 2,147,483,647", 10);
+        Integer fieldIndex = Main.convertInt(args[0]);
+
+        if (fieldIndex == null) {
+            genericFail(event, "Quest Field Edit", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** is an invalid index. Make sure it is a positive integer less than or equal to 2,147,483,647.", 10);
             return;
         }
+
+        QuestField questField = quest.getQuestFields().get(fieldIndex);
 
         // Create instance variables
         Date time = null;
@@ -969,24 +978,24 @@ public class QuestExtras extends Command {
         int textStartIndex = 1;
 
         // Check first parameter
-        if(args[1].startsWith("TIME:")) {
+        if (args[1].startsWith("TIME:")) {
             // Get the date and make sure it is valid
             time = QuestField.getDate(args[1].replace("TIME:", "") + ":00");
 
-            if(time == null) {
-                genericFail(event, "Quest Field Edit", "**" + args[1] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
+            if (time == null) {
+                genericFail(event, "Quest Field Edit", "**" + args[1] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
                 return;
-            } else if(time.before(new Date())) {
-                genericFail(event, "Quest Field Edit", "**" + (args[1].length() > 200 ? args[1].substring(0,200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
+            } else if (time.before(new Date())) {
+                genericFail(event, "Quest Field Edit", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
                 return;
             }
             textStartIndex++;
-        } else if(args[1].startsWith("CHANNEL:")) {
+        } else if (args[1].startsWith("CHANNEL:")) {
             // Get the channel and make sure it is valid
             args[1] = args[1].replace("CHANNEL:", "");
             channel = Main.getChannel(event, args, 1, "Quest Field Edit", true, true);
 
-            if(channel == null)
+            if (channel == null)
                 return;
             textStartIndex++;
         }
@@ -1000,23 +1009,23 @@ public class QuestExtras extends Command {
             if (channel == null)
                 return;
             textStartIndex++;
-        } else if(args.length > 2 && args[1].startsWith("TIME:")) {
+        } else if (args.length > 2 && args[1].startsWith("TIME:")) {
             // Get the date and make sure it is valid
             time = QuestField.getDate(args[2].replace("TIME:", "") + ":00");
 
-            if(time == null) {
-                genericFail(event, "Quest Field Edit", "**" + args[2] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**", 10);
+            if (time == null) {
+                genericFail(event, "Quest Field Edit", "**" + args[2] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
                 return;
-            } else if(time.before(new Date())) {
-                genericFail(event, "Quest Field Edit", "**" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "** has already occurred, so you can't use it...", 10);
+            } else if (time.before(new Date())) {
+                genericFail(event, "Quest Field Edit", "**" + (args[2].length() > 200 ? args[2].substring(0, 200) + "..." : args[2]) + "** has already occurred, so you can't use it...", 10);
                 return;
             }
             textStartIndex++;
         }
 
         // If the quest field has a time but not a channel, return
-        if(questField.getChannel() == null && channel == null && time != null) {
-            genericFail(event, "Quest Field Edit", "Quest must contain a channel if it has a time.",10);
+        if (questField.getChannel() == null && channel == null && time != null) {
+            genericFail(event, "Quest Field Edit", "Quest must contain a channel if it has a time.", 10);
             return;
         }
 
@@ -1025,8 +1034,8 @@ public class QuestExtras extends Command {
                 "Quest Field Edited",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {}
-                );
+                new EmbedField[]{}
+        );
 
         // Clear previous message
         quest.clearRelatedMessages(event.getChannel(), 1);
@@ -1034,11 +1043,11 @@ public class QuestExtras extends Command {
         // Get the old values before updating them to show in the edit embed
         Date oldTime = null;
         TextChannel oldChannel = null;
-        if(time != null) {
+        if (time != null) {
             oldTime = questField.getTime();
             questField.setTime(time);
         }
-        if(channel != null) {
+        if (channel != null) {
             oldChannel = questField.getChannel();
             questField.setChannel(channel);
         }
@@ -1047,7 +1056,7 @@ public class QuestExtras extends Command {
         // Create the string for the time
         String timeString = " - **Time:** " + (oldTime != null ? oldTime + " -> " : "") + time + "\n";
         // If the edit does have text, attempt to get it
-        if(textStartIndex < args.length) {
+        if (textStartIndex < args.length) {
             // Firstly, attempt to get the message based on an ID
             try {
                 // Instance variables
@@ -1062,12 +1071,12 @@ public class QuestExtras extends Command {
                             // Add field depending on updated values
                             successEmbed.addField("Updated Quest Field Parameters",
                                     (finalTime != null ? " - **Time:** " + (finalOldTime != null ? finalOldTime + " -> " : "") + finalTime + "\n" : "")
-                                    + (finalChannel != null ? " - **Channel:** " + (finalOldChannel != null ? Main.mentionChannel(finalOldChannel.getIdLong()) + " -> " : "") + Main.mentionChannel(finalChannel.getIdLong()) + "\n" : "")
-                                    + "- See main embed for updated contents",
+                                            + (finalChannel != null ? " - **Channel:** " + (finalOldChannel != null ? Main.mentionChannel(finalOldChannel.getIdLong()) + " -> " : "") + Main.mentionChannel(finalChannel.getIdLong()) + "\n" : "")
+                                            + "- See main embed for updated contents",
                                     false
-                                    );
+                            );
 
-                            if(message.getContentRaw().trim().length() == 0) {
+                            if (message.getContentRaw().trim().length() == 0) {
                                 genericFail(event, "Quest Field Edit", "Quest field must contain text contents!", 10);
                                 return;
                             }
@@ -1087,7 +1096,8 @@ public class QuestExtras extends Command {
                             })).start();
                         });
                 return;
-            } catch (Exception ignore) { }
+            } catch (Exception ignore) {
+            }
 
             // If getting a message was unsuccessful, get the plain text
             // Add field based on updated values
@@ -1124,8 +1134,9 @@ public class QuestExtras extends Command {
 
     /**
      * This method is for editing the quest's codes and is called by questEditCommand() when the edit type is QUEST_CODE_EDIT
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      * @param quest The quest
      */
     public static void editCode(GuildMessageReceivedEvent event, String[] args, Editor editor, Quest quest) {
@@ -1142,25 +1153,25 @@ public class QuestExtras extends Command {
             return;
         }
 
-        for(int i = 1; i < args.length; i++) {
+        for (int i = 1; i < args.length; i++) {
             String element = args[i];
-            if(element.contains("CODE:")) {
+            if (element.contains("CODE:")) {
                 args[i] = element.replace("CODE:", "");
                 nameIndex = i;
-            } else if(element.contains("POINTS:")) {
+            } else if (element.contains("POINTS:")) {
                 args[i] = element.replace("POINTS:", "");
                 pointsIndex = i;
-            } else if(element.contains("MAXSUBMITS:")) {
+            } else if (element.contains("MAXSUBMITS:")) {
                 args[i] = element.replace("MAXSUBMITS:", "");
                 maxSubmitsIndex = i;
-            } else if(element.contains("IMAGE:")) {
+            } else if (element.contains("IMAGE:")) {
                 args[i] = element.replace("IMAGE:", "");
                 imageIndex = i;
             }
         }
 
         editor.setEditAction(Editor.EditAction.NONE);
-        if(nameIndex != -1) {
+        if (nameIndex != -1) {
             String name = args[nameIndex];
             Pattern p = Pattern.compile("[_]|[^\\w\\d-]");
             Matcher matcher = p.matcher(name);
@@ -1178,29 +1189,25 @@ public class QuestExtras extends Command {
 
             code.setCode(name);
         }
-        if(pointsIndex != -1) {
-            try {
-                int points = Integer.parseInt(args[pointsIndex]);
-                code.setPoints(points);
-            } catch (Exception e) {
-                genericFail(event.getChannel(), "Quest Code Edit", "Points value must be an **integer** between +/-2,147,483,647.", 10);
+        if (pointsIndex != -1) {
+            Integer points = Main.convertInt(args[pointsIndex]);
+
+            if (points == null) {
+                genericFail(event.getChannel(), "Quest Code Edit", "Points value must be an **integer** between \u00B12,147,483,647.", 10);
                 return;
             }
+            code.setPoints(points);
         }
-        if(maxSubmitsIndex != -1) {
-            try {
-                int maxSubmits = Integer.parseInt(args[maxSubmitsIndex]);
+        if (maxSubmitsIndex != -1) {
+            Integer maxSubmits = Main.convertInt(args[maxSubmitsIndex]);
 
-                if(maxSubmits < 1)
-                    throw new Exception();
-
-                code.setMaxSubmits(maxSubmits);
-            } catch (Exception e) {
+            if (maxSubmits == null || maxSubmits < 1) {
                 genericFail(event.getChannel(), "Quest Code Edit", "Max submits must be an **integer** between 1 and 2,147,483,647.", 10);
                 return;
             }
+            code.setMaxSubmits(maxSubmits);
         }
-        if(imageIndex != -1) {
+        if (imageIndex != -1) {
             try {
                 boolean isImage = Boolean.parseBoolean(args[maxSubmitsIndex]);
                 code.setImage(isImage);
@@ -1215,12 +1222,12 @@ public class QuestExtras extends Command {
                 "Quest Code Edited",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("Updated Code Values",
                                 (nameIndex != -1 ? "\n- **Name:** " + args[nameIndex] : "") +
-                                    (pointsIndex != -1 ? "\n- **Points:** " + args[pointsIndex] : "") +
-                                    (maxSubmitsIndex != -1 ? "\n- **Maximum Submissions:** " + args[maxSubmitsIndex] : "") +
-                                    (imageIndex != -1 ? "\n- **Is Image Code:** " + args[imageIndex] : ""), false)
+                                        (pointsIndex != -1 ? "\n- **Points:** " + args[pointsIndex] : "") +
+                                        (maxSubmitsIndex != -1 ? "\n- **Maximum Submissions:** " + args[maxSubmitsIndex] : "") +
+                                        (imageIndex != -1 ? "\n- **Is Image Code:** " + args[imageIndex] : ""), false)
                 });
 
         // Clear previous message
@@ -1240,19 +1247,16 @@ public class QuestExtras extends Command {
 
     /**
      * This method is for editing the quest's incorrect code cooldown and is called by questEditCommand() when the edit type is QUEST_COOLDOWN_EDIT
-     * @param event The event
+     *
+     * @param event  The event
      * @param editor The quest's editor
-     * @param quest The quest
-     * @param args The arguments
+     * @param quest  The quest
+     * @param args   The arguments
      */
     public static void editCooldown(GuildMessageReceivedEvent event, Editor editor, Quest quest, String[] args) {
-        int newCooldown;
-        try {
-            newCooldown = Integer.parseInt(args[0]);
-            if(newCooldown < 0)
-                throw new Exception();
+        Integer newCooldown = Main.convertInt(args[0]);
 
-        } catch (Exception e) {
+        if (newCooldown == null || newCooldown < 0) {
             genericFail(event.getChannel(), "Quest Cooldown Edit", "Cooldown must be an **integer** between 0 and 2,147,483,647.", 10);
             return;
         }
@@ -1266,7 +1270,7 @@ public class QuestExtras extends Command {
                 "Updated Cooldown",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("New Cooldown", "**" + oldCooldown + "** -> **" + newCooldown + "**", false)
                 });
 
@@ -1291,19 +1295,16 @@ public class QuestExtras extends Command {
     /**
      * This method is for editing the quest's incorrect code point loss and is called by questEditCommand() when the edit type
      * is QUEST_POINT_EDIT
-     * @param event The event
+     *
+     * @param event  The event
      * @param editor The quest's editor
-     * @param quest The quest
-     * @param args The arguments
+     * @param quest  The quest
+     * @param args   The arguments
      */
     public static void editPoints(GuildMessageReceivedEvent event, Editor editor, Quest quest, String[] args) {
-        int newPoints;
-        try {
-            newPoints = Integer.parseInt(args[0]);
-            if(newPoints < 0)
-                throw new Exception();
+        Integer newPoints = Main.convertInt(args[0]);
 
-        } catch (Exception e) {
+        if (newPoints == null || newPoints < 0) {
             genericFail(event.getChannel(), "Quest Point Deduction Edit", "Points must be an **integer** between 0 and 2,147,483,647.", 10);
             return;
         }
@@ -1317,7 +1318,7 @@ public class QuestExtras extends Command {
                 "Updated Incorrect Code Points",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("New Point Deduction", "**" + oldPoints + "** -> **" + newPoints + "**", false)
                 });
 
@@ -1342,10 +1343,11 @@ public class QuestExtras extends Command {
     /**
      * This method is for editing if upon a correct submission, the number of remaining submittable codes is shown. This is called by
      * questEditCommand() if commandType is QUEST_REMAINING_EDIT
-     * @param event The event
+     *
+     * @param event  The event
      * @param editor The quest's editor
-     * @param quest The quest
-     * @param args The arguments
+     * @param quest  The quest
+     * @param args   The arguments
      */
     public static void editRemaining(GuildMessageReceivedEvent event, Editor editor, Quest quest, String[] args) {
         boolean newValue;
@@ -1354,8 +1356,8 @@ public class QuestExtras extends Command {
         // Get the old point deduction of the quest and set it to the new one
         boolean oldValue = quest.isNumRemainingCodes();
 
-        if(oldValue == newValue) {
-            genericFail(event, "Edit Number of Remaining Codes", "Current value is " + String.valueOf(newValue).toUpperCase(), 10);
+        if (oldValue == newValue) {
+            genericFail(event, "Edit Number of Remaining Codes", "Current value is " + String.valueOf(newValue).toUpperCase() + ".", 10);
             return;
         }
         quest.setNumRemainingCodes(newValue);
@@ -1365,7 +1367,7 @@ public class QuestExtras extends Command {
                 "Updated Number of Remaining Codes",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("New Value", "**" + oldValue + "** -> **" + newValue + "**", false)
                 });
 
@@ -1387,11 +1389,20 @@ public class QuestExtras extends Command {
         })).start();
     }
 
+    /**
+     * This method is for editing the clue for a quest. This is displayed when a team buys a clue powerup. This is called by
+     * questEditCommand() if commandType is QUEST_CLUE_EDIT
+     *
+     * @param event  The event
+     * @param editor The quest's editor
+     * @param quest  The quest
+     * @param args   The arguments
+     */
     public static void editClue(GuildMessageReceivedEvent event, Editor editor, Quest quest, String[] args) {
         String clue = Main.compressArray(Arrays.copyOfRange(args, 0, args.length));
 
-        if(clue.length() > 1000) {
-            genericFail(event, "Quest Clue Edit", "Clue can't contain more than 1000 characters", 10);
+        if (clue.length() > 1000) {
+            genericFail(event, "Quest Clue Edit", "Clue can't contain more than 1000 characters.", 10);
             return;
         }
         quest.setClue(clue);
@@ -1401,7 +1412,7 @@ public class QuestExtras extends Command {
                 "Updated Clue",
                 "Quest: " + quest.getName(),
                 Main.DARK_RED,
-                new EmbedField[] {
+                new EmbedField[]{
                         new EmbedField("New Value", clue, false)
                 });
 
@@ -1428,7 +1439,8 @@ public class QuestExtras extends Command {
     /**
      * This method is called by determineQuestAction() and is used for paging through the quest list embed
      * using the arrow reactions
-     * @param event The event
+     *
+     * @param event   The event
      * @param message The message
      */
     public static void questListPaging(GuildMessageReactionAddEvent event, Message message) {
@@ -1438,20 +1450,20 @@ public class QuestExtras extends Command {
         MessageEmbed b = message.getEmbeds().get(0);
 
         // Determine which action to run depending on the reaction emote
-        if(reaction.contains("leftarrow")) {
+        if (reaction.contains("leftarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
-            int newPage = Integer.parseInt(splitFooter[1])-2;
+            int newPage = Integer.parseInt(splitFooter[1]) - 2;
 
-            if(newPage >= 0) {
+            if (newPage >= 0) {
                 message.editMessage(QuestCommands.questListEmbed(newPage).build()).queue();
             }
 
-        } else if(reaction.contains("rightarrow")) {
+        } else if (reaction.contains("rightarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
             int newPage = Integer.parseInt(splitFooter[1]);
             int maxPage = Integer.parseInt(splitFooter[3]);
 
-            if(newPage <= maxPage) {
+            if (newPage <= maxPage) {
                 message.editMessage(QuestCommands.questListEmbed(newPage).build()).queue();
             }
 
@@ -1461,7 +1473,8 @@ public class QuestExtras extends Command {
     /**
      * This method is called by determineQuestAction() and is used for paging through the quest embed sent
      * by the quest get command using the arrow reactions
-     * @param event The event
+     *
+     * @param event   The event
      * @param message The message
      */
     public static void questGetPaging(GuildMessageReactionAddEvent event, Message message) {
@@ -1475,28 +1488,28 @@ public class QuestExtras extends Command {
 
         // Get the quest
         Quest quest = Quest.readQuest(questName);
-        if(quest == null)
+        if (quest == null)
             return;
 
         // Determine which action to run depending on the reaction emote
-        if(reaction.contains("leftarrow")) {
+        if (reaction.contains("leftarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
-            int newPage = Integer.parseInt(splitFooter[1])-1;
+            int newPage = Integer.parseInt(splitFooter[1]) - 1;
 
-            if(newPage > 0) {
+            if (newPage > 0) {
                 message.editMessage(quest.getAsEmbed(newPage, false).build()).queue();
             }
 
-        } else if(reaction.contains("rightarrow")) {
+        } else if (reaction.contains("rightarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
-            int newPage = Integer.parseInt(splitFooter[1])+1;
+            int newPage = Integer.parseInt(splitFooter[1]) + 1;
             int maxPage = Integer.parseInt(splitFooter[3]);
 
-            if(newPage <= maxPage) {
+            if (newPage <= maxPage) {
                 message.editMessage(quest.getAsEmbed(newPage, false).build()).queue();
             }
 
-        } else if(reaction.contains("x_emoji")) {
+        } else if (reaction.contains("x_emoji")) {
             message.delete().queue();
         }
     }

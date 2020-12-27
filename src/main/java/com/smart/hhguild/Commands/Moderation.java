@@ -257,29 +257,30 @@ public class Moderation extends Command {
             return;
 
         if(args.length >= 3) {
-            Member m;
-            m = Main.getMember(event, "Ban", event.getMessage(), args[1]);
+            Member m = Main.getMember(event, "Ban", event.getMessage(), args[1]);
             if(m == null)
                 return;
 
-            int days = Integer.parseInt(args[2]);
+            Integer days = Main.convertInt(args[2]);
+            if(days == null || days < 1) {
+                genericFail(event, "Ban", "Days must be an **integer** between 1 and 2,147,483,647.", 0);
+                return;
+            }
 
             // Get the reason
             String reason = args.length >= 4 ? Main.compressArray(Arrays.copyOfRange(args, 3, args.length)) : "Not Given";
             reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event, "Ban", "<reason> must be under 1000 characters", 5);
+                genericFail(event, "Ban", "<reason> must be under 1000 characters.", 5);
                 return;
             }
 
             boolean targetIsMod = Main.isGuildMaster(m);
 
-            if (targetIsMod) {
+            if (targetIsMod)
                 modLogFail(m, "Ban", "You can't ban this role!", event, event.getChannel());
-            } else if (days > 0) {
-                modLogFail(m, "Ban", "Days must be positive!", event, event.getChannel());
-            } else {
+            else {
                 Main.guild.ban(m, days, reason).queue();
                 modLogSuccess(m,
                         Objects.requireNonNull(event.getMember()),
@@ -291,7 +292,7 @@ public class Moderation extends Command {
                         reason,
                         Main.MOD_LOG_CHANNEL
                 );
-                genericSuccess(event, "Ban", "Banned user " + m.getAsMention(), true);
+                genericSuccess(event, "Ban", "Banned user " + m.getAsMention() + ".", true);
                 event.getMessage().delete().queue();
             }
         } else {
@@ -309,26 +310,18 @@ public class Moderation extends Command {
             return;
 
         if(args.length >= 3) {
-            Member m;
-            m = Main.getMember(event, "Clear", event.getMessage(), args[1]);
+            Member m = Main.getMember(event, "Clear", event.getMessage(), args[1]);
             if(m == null)
                 return;
 
-            int amount; // Amount of messages to delete
-
-            try {
-                amount = Integer.parseInt(args[2]);
-            } catch(Exception e) {
-                genericFail(event, "Clear", "Amount must be an integer", 5);
-                return;
-            }
+            Integer amount = Main.convertInt(args[2]); // Amount of messages to delete
 
             // Get the reason
             String reason = args.length >= 4 ? Main.compressArray(Arrays.copyOfRange(args, 3, args.length)) : "Not Given";
             reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event, "Clear", "**<reason>** must be under 1000 characters", 5);
+                genericFail(event, "Clear", "**<reason>** must be under 1000 characters.", 5);
                 return;
             }
 
@@ -347,11 +340,11 @@ public class Moderation extends Command {
             boolean targetIsAdmin = Main.isGuildMaster(m);
             boolean senderIsAdmin = Main.isGuildMaster(event.getMember());
 
-            if (targetIsAdmin && !senderIsAdmin) {
+            if (targetIsAdmin && !senderIsAdmin)
                 modLogFail(m, "Clear", "You can't clear messages from this role!", event, event.getChannel());
-            } else if (amount > maxAmount || amount <= 0) {
-                modLogFail(m, "Clear", "Your value can only be between 1 & " + maxAmount, event, event.getChannel());
-            } else {
+            else if (amount == null || amount > maxAmount)
+                modLogFail(m, "Clear", "Your value can only be between 1 & " + maxAmount + ".", event, event.getChannel());
+            else {
                 String finalReason = reason;
                 new Thread(() -> {
                     event.getChannel().getHistory().retrievePast(100).queue(messages -> {
@@ -369,7 +362,7 @@ public class Moderation extends Command {
 
                     });
                     modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Clear", null, finalReason, Main.MOD_LOG_CHANNEL);
-                    genericSuccess(event, "Clear", "Cleared messages from user " + m.getAsMention(), true);
+                    genericSuccess(event, "Clear", "Cleared messages from user " + m.getAsMention() + ".", true);
                     event.getMessage().delete().queue();
                 }).start();
             }
@@ -388,25 +381,18 @@ public class Moderation extends Command {
         if(!validSendState(event, new Role[] {Main.adminIds[0]}, new TextChannel[] {}, "Purge"))
             return;
 
-        int amount; // Amount of messages to purge
-
-        try {
-            amount = Integer.parseInt(args[1]);
-        } catch(Exception e) {
-            individualCommandHelp(CommandType.MOD_PURGE, event);
-            return;
-        }
+        Integer amount = Main.convertInt(args[1]); // Amount of messages to purge
 
         String reason = args.length >= 3 ? Main.compressArray(Arrays.copyOfRange(args, 2, args.length)) : "Not Given";
         reason = ResponseCommands.response(reason);
 
         if(reason.length() > 1000) {
-            genericFail(event, "Purge", "<reason> must be under 1000 characters", 5);
+            genericFail(event, "Purge", "<reason> must be under 1000 characters.", 5);
             return;
         }
 
-        if (amount > 100|| amount <= 0) {
-            modLogFail(null, "Purge", "Amount invalid!", event, event.getChannel());
+        if (amount == null || amount > 100 || amount < 1) {
+            modLogFail(null, "Purge", "Amount must be between 1 and 100!", event, event.getChannel());
         } else {
             String finalReason = reason;
             new Thread(() -> event.getChannel().getHistory().retrievePast(amount).queue(messages -> {
@@ -427,7 +413,7 @@ public class Moderation extends Command {
 
                 Main.MOD_LOG_CHANNEL.sendMessage(b.build()).queue();
 
-                genericSuccess(event, "Purge", "Deleted " + deleted + " messages", true);
+                genericSuccess(event, "Purge", "Deleted " + deleted + " messages.", true);
                 event.getMessage().delete().queue();
             })).start();
         }
@@ -438,8 +424,7 @@ public class Moderation extends Command {
             return;
 
         if(args.length >= 3) {
-            Member m;
-            m = Main.getMember(event, "Warn", event.getMessage(), args[1]);
+            Member m = Main.getMember(event, "Warn", event.getMessage(), args[1]);
             if(m == null)
                 return;
 
@@ -448,7 +433,7 @@ public class Moderation extends Command {
             reason = ResponseCommands.response(reason);
 
             if (reason.length() > 1000) {
-                genericFail(event, "Mute", "<warning> must be under 1000 characters", 5);
+                genericFail(event, "Mute", "<warning> must be under 1000 characters.", 5);
                 return;
             }
 
@@ -468,12 +453,11 @@ public class Moderation extends Command {
                 Main.sendPrivateMessage(m.getUser(), b);
                 // Success messages
                 modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Warn", null, reason, Main.MOD_LOG_CHANNEL);
-                genericSuccess(event, "Warn", "Warned " + m.getAsMention() + " with \"" + reason + "\"", true);
+                genericSuccess(event, "Warn", "Warned " + m.getAsMention() + " with \"" + reason + "\".", true);
                 event.getMessage().delete().queue();
             }
-        } else {
+        } else
             individualCommandHelp(CommandType.MOD_WARN, event);
-        }
     }
 
     /*public static void silence(GuildMessageReceivedEvent event, String[] args) {
