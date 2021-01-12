@@ -41,6 +41,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class MessageReceivedHandler extends ListenerAdapter {
@@ -114,7 +115,6 @@ public class MessageReceivedHandler extends ListenerAdapter {
     }
 
     private static void genericCommands(GuildMessageReceivedEvent event, String[] args, String rawMsg, String type) {
-        Message msg = event.getMessage();
         MessageChannel channel = event.getChannel();
 
         // Allows for image verification commands to be shortened
@@ -122,12 +122,21 @@ public class MessageReceivedHandler extends ListenerAdapter {
             String[] newArgs = new String[args.length + 1];
             newArgs[0] = "image";
             System.arraycopy(args, 0, newArgs, 1, newArgs.length-1);
-            if(ImageCommands.image(event, newArgs, true))
+            if(ImageCommands.image(event, newArgs, true, false))
                 return;
+        }
+
+        // If the type is !help, attempt to do help
+        if((type.equals("help") || type.equals("info"))) {
+            if(args.length != 1)
+                args = Arrays.copyOfRange(args, 1, args.length);
+            commandHelp(event, args[0], args);
+            return;
         }
 
         // Switches through all possible commands
         switch (type.toLowerCase()) {
+            // --- Single Commands ---
             case "sweardetection" -> Moderation.toggleSwearDetection(event, args);
             case "mute" -> Moderation.mute(event, args);
             case "unmute" -> Moderation.unMute(event, args);
@@ -137,62 +146,84 @@ public class MessageReceivedHandler extends ListenerAdapter {
             case "purge" -> Moderation.purge(event, args);
             case "warn" -> Moderation.warn(event, args);
             case "dm" -> MiscCommand.privateMessage(event, args);
-            case "team", "teams" -> TeamCommand.team(event, args, rawMsg);
             case "submit" -> Submissions.determineSubmitMethod(event, args);
-            case "code", "codes" -> CodeCommand.code(event, args);
-            case "cooldown", "cooldowns" -> CooldownCmds.cooldown(event, args);
-            case "points", "point" -> PointCommands.points(event, args);
-            case "remainingcodes", "remainingcode" -> MiscCommand.toggleRemainingCodes(event, args);
             case "send" -> MiscCommand.send(event, args);
             case "edit" -> MiscCommand.edit(event, args);
             case "message" -> MiscCommand.message(event, args);
-            case "nick" -> MiscCommand.nickname(event, args);
             case "suggest", "suggestion" -> MiscCommand.suggest(event, args);
             case "bug" -> MiscCommand.bug(event, args);
-            case "member", "members", "user", "users" -> MemberCmds.member(event, args);
             case "trello" -> MiscCommand.trello(event);
-            case "chess?" -> {
-                MiscCommand.chess(event);
-                event.getMessage().delete().queue();
-            }
+            case "chess?" -> MiscCommand.chess(event);
             case "test" -> MiscCommand.test(event);
-            case "image", "images" -> ImageCommands.image(event, args, false);
             case "clue" -> MiscCommand.clue(event, args);
-            case "quests", "quest" -> QuestCommands.quest(event, args);
-            case "powerup", "powerups" -> PowerupCommands.powerup(event, args);
-            case "response", "responses" -> ResponseCommands.response(event, args);
-            case "guilded" -> GuildedCommands.guilded(event, args);
-            case "help", "info" -> {
-                if (args.length < 2 || args[1].equals("[topic]")) {
-                    msg.reply("You can get help with following topics: **Moderation, Codes, Teams, Cooldowns, Points, Member. Quest, Powerup, Image, Response, Guilded, and Miscellaneous**. You can also" +
-                            " do **here** to get all commands you can use in this channel. Use `!help [topic]`").queue(message -> message.delete().queueAfter(15, TimeUnit.SECONDS));
-                    break;
-                }
+            case "color" -> MiscCommand.color(event, args);
 
-                switch (args[1].toLowerCase()) {
-                    case "here" -> Command.sendAnyHelpEmbed(event, 1);
-                    case "moderation" -> Command.topicHelpEmbed(event, "moderation");
-                    case "team", "teams" -> Command.topicHelpEmbed(event, "team");
-                    case "code", "codes" -> Command.topicHelpEmbed(event, "code");
-                    case "cooldown", "cooldowns" -> Command.topicHelpEmbed(event, "cooldown");
-                    case "points", "point" -> Command.topicHelpEmbed(event, "point");
-                    case "misc", "miscellaneous" -> Command.topicHelpEmbed(event, "misc");
-                    case "quest", "quests" -> Command.topicHelpEmbed(event, "quest");
-                    case "member", "members" -> Command.topicHelpEmbed(event, "member");
-                    case "image", "images" -> Command.topicHelpEmbed(event, "image");
-                    case "response", "responses" -> Command.topicHelpEmbed(event, "response");
-                    case "powerup", "powerups" -> Command.topicHelpEmbed(event, "powerup");
-                    case "guilded" -> Command.topicHelpEmbed(event, "guilded");
-                    case "help" -> event.getMessage().reply("No").queue();
-                    default -> msg.reply("You can get help with following topics: **Moderation, Codes, Teams, Cooldowns, Points, Member. Quest, and Miscellaneous**. You can also" +
-                            " do **here** to get all commands you can use in this channel. Use `!help [topic]`").queue(message -> message.delete().queueAfter(15, TimeUnit.SECONDS));
+            // --- Nested Commands ---
+            case "team", "teams" -> TeamCommand.team(event, args, rawMsg, false);
+            case "code", "codes" -> CodeCommand.code(event, args, false);
+            case "cooldown", "cooldowns" -> CooldownCmds.cooldown(event, args, false);
+            case "points", "point" -> PointCommands.points(event, args, false);
+            case "member", "members", "user", "users" -> MemberCmds.member(event, args, false);
+            case "image", "images" -> ImageCommands.image(event, args, false, false);
+            case "quests", "quest" -> QuestCommands.quest(event, args, false);
+            case "powerup", "powerups" -> PowerupCommands.powerup(event, args, false);
+            case "response", "responses" -> ResponseCommands.response(event, args, false);
+            case "guilded" -> GuildedCommands.guilded(event, args, false);
 
-                }
-            }
-            default -> event.getMessage().reply("Sorry, I do not understand that command. Try using `!help`").queue(message -> {
+            // --- Help ---
+            case "here" -> Command.sendAnyHelpEmbed(event, 1);
+            case "moderation" -> Command.topicHelpEmbed(event, "moderation");
+            case "misc", "miscellaneous" -> Command.topicHelpEmbed(event, "misc");
+
+            default -> event.getMessage().reply("Sorry, I do not understand that command. Try using `!help`.").queue(message -> {
                 message.delete().queueAfter(10, TimeUnit.SECONDS);
                 event.getMessage().delete().queueAfter(10, TimeUnit.SECONDS);
             });
+        }
+    }
+
+    private static void commandHelp(GuildMessageReceivedEvent event, String type, String[] args) {
+        switch (type.toLowerCase()) {
+            // --- Single Commands ---
+            case "sweardetection" -> Command.individualCommandHelp(Command.CommandType.MOD_TOGGLE_SWEAR_DETECTION, event);
+            case "mute" -> Command.individualCommandHelp(Command.CommandType.MOD_MUTE, event);
+            case "unmute" -> Command.individualCommandHelp(Command.CommandType.MOD_UNMUTE, event);
+            case "kick" -> Command.individualCommandHelp(Command.CommandType.MOD_KICK, event);
+            case "ban" -> Command.individualCommandHelp(Command.CommandType.MOD_BAN, event);
+            case "clear" -> Command.individualCommandHelp(Command.CommandType.MOD_CLEAR, event);
+            case "purge" -> Command.individualCommandHelp(Command.CommandType.MOD_TOGGLE_SWEAR_DETECTION, event);
+            case "warn" -> Command.individualCommandHelp(Command.CommandType.MOD_WARN, event);
+            case "dm" -> Command.individualCommandHelp(Command.CommandType.MISC_DM, event);
+            case "submit" -> Command.individualCommandHelp(Command.CommandType.MISC_SUBMIT, event);
+            case "send" -> Command.individualCommandHelp(Command.CommandType.MISC_SEND, event);
+            case "edit" -> Command.individualCommandHelp(Command.CommandType.MISC_EDIT, event);
+            case "message" -> Command.individualCommandHelp(Command.CommandType.MISC_MESSAGE, event);
+            case "suggest", "suggestion" -> Command.individualCommandHelp(Command.CommandType.MISC_SUGGEST, event);
+            case "bug" -> Command.individualCommandHelp(Command.CommandType.MISC_BUG, event);
+            case "clue" -> Command.individualCommandHelp(Command.CommandType.MISC_CLUE, event);
+            //case "trello" -> Command.individualCommandHelp(Command.CommandType., event);
+            //case "chess?" -> MiscCommand.chess(event);
+            //case "test" -> MiscCommand.test(event);
+
+            // --- Nested Commands ---
+            case "team", "teams" -> TeamCommand.team(event, args, "", true);
+            case "code", "codes" -> CodeCommand.code(event, args, true);
+            case "cooldown", "cooldowns" -> CooldownCmds.cooldown(event, args, true);
+            case "points", "point" -> PointCommands.points(event, args, true);
+            case "member", "members", "user", "users" -> MemberCmds.member(event, args, true);
+            case "image", "images" -> ImageCommands.image(event, args, false, true);
+            case "quests", "quest" -> QuestCommands.quest(event, args, true);
+            case "powerup", "powerups" -> PowerupCommands.powerup(event, args, true);
+            case "response", "responses" -> ResponseCommands.response(event, args, true);
+            case "guilded" -> GuildedCommands.guilded(event, args, true);
+
+            // --- Help ---
+            case "here" -> Command.sendAnyHelpEmbed(event, 1);
+            case "moderation" -> Command.topicHelpEmbed(event, "moderation");
+            case "misc", "miscellaneous" -> Command.topicHelpEmbed(event, "misc");
+            default -> event.getMessage().reply("You can get help with following topics: **Moderation, Codes, Teams, Cooldowns, Points, Member. Quest, Powerup, Image, Response, Guilded, and Miscellaneous**. You can also" +
+                    " do **here** to get all commands you can use in this channel or a command to get info on a command. Use `!help [topic/command]`").queue(message -> message.delete().queueAfter(15, TimeUnit.SECONDS));
+
         }
     }
 

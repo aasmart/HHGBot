@@ -80,6 +80,10 @@ public class PowerUp extends Command implements Serializable {
         logPowerup(p);
     }
 
+    /**
+     * Attempts to remove a powerup from the active powerups
+     * @param p The powerup to remove
+     */
     public static void removePowerUp(PowerUp p) {
         activePowerUps.remove(p);
         writePowerUps();

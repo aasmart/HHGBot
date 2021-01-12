@@ -49,10 +49,11 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for determining which subcommand of quest to call
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
-    public static void quest(GuildMessageReceivedEvent event, String[] args) {
+    public static void quest(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !team
         if (args.length < 2) {
             // Create & send the help embed for the team command
@@ -65,10 +66,12 @@ public class QuestCommands extends Command {
 
         switch (type) {
             case "create", "new", "add" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_CREATE, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Create")) {
                     questCreate(event, args);
                 } else {
@@ -76,10 +79,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "delete", "remove" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_DELETE, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Delete")) {
                     questDelete(event, args);
                 } else {
@@ -87,10 +92,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "edit" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_EDIT, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Edit")) {
                     questEdit(event, args);
                 } else {
@@ -98,10 +105,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_GET, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Get")) {
                     questGet(event, args);
                 } else {
@@ -109,10 +118,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "list" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_LIST, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest List")) {
                     questList(event);
                 } else {
@@ -120,10 +131,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "load" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_LOAD, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Load")) {
                     questLoad(event, args);
                 } else {
@@ -131,10 +144,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "halt", "stop" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_HALT, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Halt")) {
                     questHalt(event);
                 } else {
@@ -142,10 +157,12 @@ public class QuestCommands extends Command {
                 }
             }
             case "loaded" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.QUEST_LOADED, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
                         "Quest Loaded Quest")) {
                     loadedQuest(event);
                 } else {
@@ -162,31 +179,32 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest create` command and creates a quest
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     @SuppressWarnings("all")
     public static void questCreate(GuildMessageReceivedEvent event, String[] args) {
         //quest create [quest-name]
-        if(args.length == 3) {
+        if (args.length == 3) {
             String name = args[2].trim().toLowerCase();
             Quest.syncQuestData(name);
 
-            Pattern nameRegex = Pattern.compile("[_]|[^\\w-]|[A-Z]");
+            Pattern nameRegex = Pattern.compile("[_ ]|[^\\w-]|[A-Z_]");
             Matcher matcher = nameRegex.matcher(name);
 
             // Make sure 'name' doesn't contain invalid characters, no more than MAX_QUEST_NAME_SIZE characters, it doesn't exist,
             // and the quest limit hasn't been reached
-            if(matcher.find()) {
+            if (matcher.find()) {
                 genericFail(event, "Quest Create", "Name contains invalid characters. It can only contain lowercase letters, numbers, and hyphens.", 0);
                 return;
-            } else if(name.length() > MAX_QUEST_NAME_SIZE) {
+            } else if (name.length() > MAX_QUEST_NAME_SIZE) {
                 genericFail(event, "Quest Create", "Name can not contain more than **" + MAX_QUEST_NAME_SIZE + "** characters.", 0);
                 return;
-            } else if(Main.questNames.contains(name)) {
+            } else if (Main.questNames.contains(name)) {
                 genericFail(event, "Quest Create", "A quest called **" + name + "** already exists.", 0);
                 return;
-            } else if(Main.questNames.size() > MAX_QUESTS) {
+            } else if (Main.questNames.size() > MAX_QUESTS) {
                 genericFail(event, "Quest Create", "Maximum limit of **" + MAX_QUESTS + "** reached.", 0);
                 return;
             }
@@ -194,7 +212,7 @@ public class QuestCommands extends Command {
             // Attempt to create the file for the quest and save a quest object in the newly created file
             try {
                 Quest.writeQuestName(name);
-                File questFile = new File(Main.GUILD_FOLDER+"Quests\\"+name+".quest");
+                File questFile = new File(Main.GUILD_FOLDER + "Quests\\" + name + ".quest");
 
                 // Create the file
                 questFile.getParentFile().mkdirs();
@@ -208,7 +226,7 @@ public class QuestCommands extends Command {
             }
 
             // Success method
-            genericSuccess(event, "Quest Created!","Created a new quest called **" + name + "**. To edit this quest, use " +
+            genericSuccess(event, "Quest Created!", "Created a new quest called **" + name + "**. To edit this quest, use " +
                     "`!quest edit " + name + "`.", false);
         } else {
             individualCommandHelp(CommandType.QUEST_CREATE, event);
@@ -217,25 +235,26 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest delete` command and deletes a quest
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     @SuppressWarnings("all")
     public static void questDelete(GuildMessageReceivedEvent event, String[] args) {
         //quest delete [quest-name]
-        if(args.length == 3) {
+        if (args.length == 3) {
             String name = args[2];
             String parsedQuestName = name.length() > 200 ? name.substring(0, 200) + "..." : name;
             Quest.syncQuestData(name);
 
             // Make sure the quest exists, or any quest for that matter of fact, and is not ALL_QUESTS, which is dealt with later
-            if(!Main.questNames.contains(name) && !name.equals("ALL_QUESTS")) {
-                if(name.equals("and"))
+            if (!Main.questNames.contains(name) && !name.equals("ALL_QUESTS")) {
+                if (name.equals("and"))
                     genericFail(event, "Quest Delete", "__And__ is not a quest; it's a FANBOYS.", 0);
                 else
                     genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**.", 0);
                 return;
-            } else if(Main.questNames.size() <= 0) {
+            } else if (Main.questNames.size() <= 0) {
                 genericFail(event, "Quest Delete", "There are no quests to delete.", 0);
                 return;
             }
@@ -243,7 +262,7 @@ public class QuestCommands extends Command {
             // Delete the quest
             try {
                 // Run if ALL_QUESTS
-                if(name.equals("ALL_QUESTS")) {
+                if (name.equals("ALL_QUESTS")) {
                     ArrayList<File> files = new ArrayList<>();  // The array of files to delete
 
                     // Sync Data
@@ -252,11 +271,11 @@ public class QuestCommands extends Command {
                     Quest q;    // Quest Object
 
                     // Loop through the quest names and add them to files
-                    for(int i = 0; i < Main.questNames.size(); i++) {
+                    for (int i = 0; i < Main.questNames.size(); i++) {
                         // Get the quest, and if null just add it to files
                         try {
                             q = Quest.readQuest(Main.questNames.get(i));
-                            if(q == null)
+                            if (q == null)
                                 throw new Exception();
                         } catch (Exception e) {
                             files.add(new File(Main.GUILD_FOLDER + "Quests\\" + Main.questNames.get(i) + ".quest"));
@@ -267,9 +286,12 @@ public class QuestCommands extends Command {
                         if (q.isRunning()) {
                             genericFail(event, "Quest Delete", "You can't delete all quests while a quest is loaded. Halt it first using `!quest halt`.", 0);
                             return;
-                        } else if(Main.editors.stream().map(Editor::getEditing).collect(Collectors.toList()).contains("QUEST:"+q.getName())) {
-                            genericFail(event, "Quest Delete", "You can't delete a quest while it's being edited.", 0);
-                            return;
+                        } else {
+                            Quest finalQ = q;
+                            if (Main.editors.stream().anyMatch(editor -> editor.getEditing().equals("QUEST:" + finalQ.getName()))) {
+                                genericFail(event, "Quest Delete", "You can't delete a quest while it's being edited.", 0);
+                                return;
+                            }
                         }
 
                         // Add the quest to files
@@ -285,13 +307,13 @@ public class QuestCommands extends Command {
                             f.delete();
                         }
                     }).start();
-                // If deleting a single quest, run this
+                    // If deleting a single quest, run this
                 } else {
                     // Make sure the quest isn't loaded
                     if (Quest.readQuest(name).isRunning()) {
                         genericFail(event, "Quest Delete", "You can't delete a quest while it loaded. Halt it first using `!quest halt`.", 0);
                         return;
-                    }else if(Main.editors.stream().map(Editor::getEditing).collect(Collectors.toList()).contains("QUEST:"+name)) {
+                    } else if (Main.editors.stream().anyMatch(editor -> editor.getEditing().equals("QUEST:" + name))) {
                         genericFail(event, "Quest Delete", "You can't delete a quest while it's being edited.", 0);
                         return;
                     }
@@ -310,7 +332,7 @@ public class QuestCommands extends Command {
             }
 
             // Send success message
-            genericSuccess(event, "Quest Deleted!","Successfully deleted **" + name + "**", false);
+            genericSuccess(event, "Quest Deleted!", "Successfully deleted **" + name + "**", false);
         } else {
             individualCommandHelp(CommandType.QUEST_DELETE, event);
         }
@@ -318,12 +340,13 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest edit` command and it enters the caller into edit mode
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     public static void questEdit(GuildMessageReceivedEvent event, String[] args) {
         //quest edit [questname]
-        if(args.length == 3) {
+        if (args.length == 3) {
             String questName = args[2];
 
             Quest.syncQuestData(questName); // Sync data
@@ -331,8 +354,8 @@ public class QuestCommands extends Command {
             List<String> editorIds = Main.editors.stream().map(editor -> editor.getEditor().getId()).collect(Collectors.toList());
 
             // Check if the questNames arraylist does not contain the quest. If so, it will check to see if the file exists
-            if(questName.equals("CANCEL")) {
-                if(editorIds.contains(Objects.requireNonNull(event.getMember()).getId()) && Main.editors.get(editorIds.indexOf(event.getMember().getId())).getEditing().contains("QUEST")) {
+            if (questName.equals("CANCEL")) {
+                if (editorIds.contains(Objects.requireNonNull(event.getMember()).getId()) && Main.editors.get(editorIds.indexOf(event.getMember().getId())).getEditing().contains("QUEST")) {
                     Editor e = Main.editors.remove(editorIds.indexOf(event.getMember().getId()));
                     e.timer.shutdownNow();
                     genericSuccess(event, "Quest Edit", "You are no longer editing **" + e.getEditing() + "**.", false);
@@ -342,8 +365,8 @@ public class QuestCommands extends Command {
                 return;
             } else {
                 String parsedQuestName = questName.length() > 200 ? questName.substring(0, 200) + "..." : questName;
-                if(!Main.questNames.contains(questName)) {
-                    if(questName.equals("and"))
+                if (!Main.questNames.contains(questName)) {
+                    if (questName.equals("and"))
                         genericFail(event, "Quest Edit", "__And__ is not a quest; it's a FANBOYS.", 0);
                     else
                         genericFail(event, "Quest Edit", "`" + parsedQuestName + "` does not exist. Use `!quest list` to view existing quests.", 0);
@@ -352,10 +375,10 @@ public class QuestCommands extends Command {
             }
 
             // Determine if the user is already editing something
-            if(editorIds.contains(Objects.requireNonNull(event.getMember()).getId())) {
+            if (editorIds.contains(Objects.requireNonNull(event.getMember()).getId())) {
                 genericFail(event, "Quest Edit", "You are already editing **" + Main.editors.get(editorIds.indexOf(event.getMember().getId())).getEditing() + "**.", 0);
                 return;
-            } else if(Main.editors.stream().anyMatch(editor -> editor.getEditing().equals("QUEST:"+questName))) {
+            } else if (Main.editors.stream().anyMatch(editor -> editor.getEditing().equals("QUEST:" + questName))) {
                 genericFail(event, "Quest Edit", "Someone is already editing **" + questName + "**.", 0);
                 return;
             }
@@ -365,9 +388,9 @@ public class QuestCommands extends Command {
             try {
                 // Read quest and make sure it's not null
                 quest = Quest.readQuest(questName);
-                if(quest == null)
+                if (quest == null)
                     throw new Exception();
-                else if(quest.isRunning()) {
+                else if (quest.isRunning()) {
                     genericFail(event, "Quest Edit", "You can't edit a quest while it loaded. Halt it first using `!quest halt`.", 0);
                     return;
                 }
@@ -395,19 +418,20 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest list` command and it created a page based embed listing all quests
+     *
      * @param event The event
      */
     public static void questList(GuildMessageReceivedEvent event) {
         // Sync data
         Quest.syncQuestData();
         // Make sure there are quests, if not, send a message saying so
-        if(Main.questNames.size() > 0) {
+        if (Main.questNames.size() > 0) {
             // Get the list embed
             EmbedBuilder b = questListEmbed(0);
 
             // Send the embed with the arrow reactions if there is more than 1 page (based on footer)
             event.getChannel().sendMessage(b.build()).queue(message -> {
-                if(Integer.parseInt(Objects.requireNonNull(Objects.requireNonNull(b.build().getFooter()).getText()).split(" ")[3]) != 1) {
+                if (Integer.parseInt(Objects.requireNonNull(Objects.requireNonNull(b.build().getFooter()).getText()).split(" ")[3]) != 1) {
                     message.addReaction(Main.ARROW_LEFT_EMOJI).queue();
                     message.addReaction(Main.ARROW_RIGHT_EMOJI).queue();
                 }
@@ -420,21 +444,22 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest load` command and it sets a quest as loaded. It also can send quest fields in the embed
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     public static void questLoad(GuildMessageReceivedEvent event, String[] args) {
         //quest load [quest-name] <questfield-index>
 
-        if(args.length == 3) {
+        if (args.length == 3) {
             String name = args[2];
             String parsedQuestName = name.length() > 200 ? name.substring(0, 200) + "..." : name;
             Quest.syncQuestData(name);
             // Check if any other quest is currently running and if so, return. Also checks and make sure the quest exists
-            if(Quest.isQuestRunning()) {
+            if (Quest.isQuestRunning()) {
                 genericFail(event, "Quest Load", "Quest **" + Main.runningQuestName + "** is already loaded.", 0);
                 return;
-            } else if(!Main.questNames.contains(name)) {
+            } else if (!Main.questNames.contains(name)) {
                 genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**.", 0);
                 return;
             }
@@ -444,12 +469,12 @@ public class QuestCommands extends Command {
             try {
                 // Read quest from file and make sure it's not null, it's not loaded, and it's not being edited
                 quest = Quest.readQuest(name);
-                if(quest == null)
+                if (quest == null)
                     throw new Exception();
-                else if(quest.isRunning()) {
+                else if (quest.isRunning()) {
                     genericFail(event, "Quest Load", "That quest is already loaded!", 0);
                     return;
-                } else if(Main.editors.stream().map(Editor::getEditing).collect(Collectors.toList()).contains("QUEST:" + quest.getName())) {
+                } else if (Main.editors.stream().anyMatch(editor -> editor.getEditing().equals("QUEST:" + quest.getName()))) {
                     genericFail(event, "Quest Load", "Someone is editing that quest, meaning you can't load it!", 0);
                     return;
                 }
@@ -462,13 +487,13 @@ public class QuestCommands extends Command {
                 System.out.println("Encountered error reading quest file");
                 genericFail(event, "Quest Load", "Failed to read quest file. Please consult a Developer.", 0);
             }
-        // If the argument length is 4, attempt to run a quest field
-        } else if(args.length == 4) {
+            // If the argument length is 4, attempt to run a quest field
+        } else if (args.length == 4) {
             String name = args[2];
             String parsedQuestName = name.length() > 200 ? name.substring(0, 200) + "..." : name;
             Quest.syncQuestData(name);
             // Make sure the quest exists
-            if(!Main.questNames.contains(name)) {
+            if (!Main.questNames.contains(name)) {
                 genericFail(event, "Quest Delete", "Couldn't find a quest with the name **" + parsedQuestName + "**.", 0);
                 return;
             }
@@ -478,22 +503,22 @@ public class QuestCommands extends Command {
             try {
                 // Read the quest, make sure it's not null and that it's running
                 quest = Quest.readQuest(name);
-                if(quest == null)
+                if (quest == null)
                     throw new Exception();
-                else if(!quest.isRunning()) {
+                else if (!quest.isRunning()) {
                     genericFail(event, "Quest Load", "This quest must be loaded in order to use this command!", 0);
                     return;
                 }
 
                 // Get fieldIndex, the index of the field. It must be an integer between the size constraints of quest.getQuestFields()
                 Integer fieldIndex = Main.convertInt(args[3]);
-                if(fieldIndex == null || fieldIndex >= quest.getQuestFields().size() || fieldIndex < 0) {
-                    genericFail(event, "Quest Load", "Field index must be an integer between 0 and " + (quest.getQuestFields().size()-1) + ", inclusive.", 0);
+                if (fieldIndex == null || fieldIndex >= quest.getQuestFields().size() || fieldIndex < 0) {
+                    genericFail(event, "Quest Load", "Field index must be an integer between 0 and " + (quest.getQuestFields().size() - 1) + ", inclusive.", 0);
                     return;
                 }
 
                 // Make sure the quest field has a channel
-                if(quest.getQuestFields().get(fieldIndex).getChannel() == null) {
+                if (quest.getQuestFields().get(fieldIndex).getChannel() == null) {
                     genericFail(event, "Quest Load", "Quest field must have a channel in order to be sent.", 0);
                     return;
                 }
@@ -512,12 +537,13 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest halt` command and it stops the currently loaded quest
+     *
      * @param event The event
      */
     public static void questHalt(GuildMessageReceivedEvent event) {
         //quest halt
         // Make sure a quest is running
-        if(!Quest.isQuestRunning()) {
+        if (!Quest.isQuestRunning()) {
             genericFail(event, "Quest Halt", "There is no quest to halt.", 0);
             return;
         }
@@ -529,6 +555,7 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for the `quest loaded` command which returns the currently loaded quest
+     *
      * @param event The event
      */
     public static void loadedQuest(GuildMessageReceivedEvent event) {
@@ -536,8 +563,8 @@ public class QuestCommands extends Command {
         EmbedBuilder b = Main.buildEmbed("Loaded Quest",
                 (!loadedQuest.equals("") ? "The quest loaded currently is **" + loadedQuest + "**." : "There is no loaded quest."),
                 Main.BLUE,
-                new EmbedField[] {}
-                );
+                new EmbedField[]{}
+        );
 
         event.getChannel().sendMessage(b.build()).queue();
     }
@@ -545,20 +572,21 @@ public class QuestCommands extends Command {
     /**
      * This command is for the `quest get` command and it returns the quest's main embed showcasing its submit method, if it's running,
      * its codes, and its quest fields. It also features a reaction based page turning system
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     public static void questGet(GuildMessageReceivedEvent event, String[] args) {
         //quest get [questname]
-        if(args.length == 3) {
+        if (args.length == 3) {
             String questName = args[2];
 
             Quest.syncQuestData(questName); // Sync data
 
             String parsedQuestName = questName.length() > 200 ? questName.substring(0, 200) + "..." : questName;
             // Check to see if the quest exists
-            if(!Main.questNames.contains(questName)) {
-                if(questName.equals("and"))
+            if (!Main.questNames.contains(questName)) {
+                if (questName.equals("and"))
                     genericFail(event, "Quest Get", "__And__ is not a quest; it's a FANBOYS.", 0);
                 else
                     genericFail(event, "Quest Get", "`" + parsedQuestName + "` does not exist. Use `!quest list` to view existing quests.", 0);
@@ -587,6 +615,7 @@ public class QuestCommands extends Command {
 
     /**
      * This method is for creating the embed for the `quest list` command and is called by questList()
+     *
      * @param page The page of the embed
      * @return The created embed
      */
@@ -594,23 +623,23 @@ public class QuestCommands extends Command {
         String questsString = Main.oxfordComma(Main.questNames, "and");
         EmbedBuilder b;
 
-        int numPages = questsString.length() > 1000 ? (questsString.length() / 1000) + 1: 1;
+        int numPages = questsString.length() > 1000 ? (questsString.length() / 1000) + 1 : 1;
 
         // The start index of the substring
-        int startIndex = page > 0 ? 1000 * page - 2: 0;
+        int startIndex = page > 0 ? 1000 * page - 2 : 0;
         try {
             b = Main.buildEmbed(
                     "Quests List",
-                    "Page: " + (page + 1) +  " of " + numPages,
+                    "Page: " + (page + 1) + " of " + numPages,
                     "Total Quests: " + Main.questNames.size(),
                     Main.DARK_RED,
                     new EmbedField[]{
-                            new EmbedField("Quests", "`" + questsString.substring(startIndex, 1000 * (page +1)-2) + "...`", false)}
+                            new EmbedField("Quests", "`" + questsString.substring(startIndex, 1000 * (page + 1) - 2) + "...`", false)}
             );
         } catch (Exception e) {
             b = Main.buildEmbed(
                     "Quests List",
-                    "Page: " + (page + 1) +  " of " + numPages,
+                    "Page: " + (page + 1) + " of " + numPages,
                     "Total Quests: " + Main.questNames.size(),
                     Main.DARK_RED,
                     new EmbedField[]{

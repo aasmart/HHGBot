@@ -23,6 +23,7 @@
 package com.smart.hhguild.Commands.Quests;
 
 import com.smart.hhguild.Commands.Command;
+import com.smart.hhguild.EventHandlers.GuildStartupHandler;
 import com.smart.hhguild.EventHandlers.MessageReactionHandler;
 import com.smart.hhguild.Main;
 import com.smart.hhguild.Templates.Other.EmbedField;
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
  * This class contains commands for interacting with codes
  */
 public class CodeCommand extends Command {
-    public static void code(GuildMessageReceivedEvent event, String[] args) {
+    public static void code(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !team
         if (args.length < 2) {
             // Create & send the help embed for the team command
@@ -62,7 +63,9 @@ public class CodeCommand extends Command {
 
         switch (type) {
             case "create" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.CODE_CREATE, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -73,7 +76,9 @@ public class CodeCommand extends Command {
                 }
             }
             case "delete" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.CODE_DELETE, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -84,7 +89,9 @@ public class CodeCommand extends Command {
                 }
             }
             case "list" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.CODE_LIST, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -95,7 +102,9 @@ public class CodeCommand extends Command {
                 }
             }
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.CODE_GET, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -106,12 +115,27 @@ public class CodeCommand extends Command {
                 }
             }
             case "edit" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.CODE_EDIT, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
                         "Code Edit")) {
                     codeEdit(event, args);
+                } else {
+                    event.getMessage().delete().queue();
+                }
+            }
+            case "toggleremaining", "remaining" -> {
+                if(isHelp)
+                    individualCommandHelp(CommandType.CODE_TOGGLE_REMAINING_CODES, event);
+                else if (validSendState(
+                        event,
+                        new Role[] {Main.adminIds[0], Main.adminIds[1]},
+                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                        "Code Toggle Remaining")) {
+                    codeRemaining(event, args);
                 } else {
                     event.getMessage().delete().queue();
                 }
@@ -526,6 +550,32 @@ public class CodeCommand extends Command {
         } else {
             // Create the help embed for '!code edit'
             individualCommandHelp(CommandType.CODE_EDIT, event);
+        }
+    }
+
+    public static void codeRemaining(GuildMessageReceivedEvent event, String[] args) {
+        if (args.length != 3 || !(args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("off") || args[2].equalsIgnoreCase("get"))) {
+            individualCommandHelp(CommandType.CODE_TOGGLE_REMAINING_CODES, event);
+            return;
+        }
+
+        if (args[2].equalsIgnoreCase("get")) {
+            event.getChannel()
+                    .sendMessage("Remaining Codes is currently **" + (Main.numRemainingCodes ? "ON**" : "OFF**."))
+                    .queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
+            return;
+        }
+
+        try {
+            if ((args[2].equalsIgnoreCase("on") && Main.numRemainingCodes) || (args[2].equalsIgnoreCase("off") && !Main.numRemainingCodes)) {
+                genericFail(event, "Remaining Codes", "Remaining Codes is already **" + args[2].toUpperCase() + "**.", 5);
+            } else {
+                Main.numRemainingCodes = args[2].equalsIgnoreCase("on");
+                genericSuccess(event, "Remaining Codes", "Changed Remaining Codes to **" + args[2].toUpperCase() + "**.", false);
+                GuildStartupHandler.writeProperties();
+            }
+        } catch (Exception e) {
+            genericFail(event, "Remaining Codes", "Unknown Error!", 5);
         }
     }
 

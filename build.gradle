@@ -12,12 +12,13 @@ repositories {
 }
 
 dependencies {
-    compile 'net.dv8tion:JDA:4.2.0_223'
-    compile "com.sun.mail:jakarta.mail:1.6.3"
-    compile 'com.google.api-client:google-api-client:1.30.10'
-    compile 'com.google.oauth-client:google-oauth-client-jetty:1.31.0'
-    compile 'com.google.apis:google-api-services-gmail:v1-rev110-1.25.0'
-    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-    compile group: 'com.taskadapter', name: 'trello-java-wrapper', version: '0.14'
-    compile 'ch.qos.logback:logback-classic:1.2.3'
+    implementation 'net.dv8tion:JDA:4.2.0_224'
+    implementation "com.sun.mail:jakarta.mail:1.6.3"
+    implementation 'com.google.api-client:google-api-client:1.30.10'
+    implementation 'com.google.oauth-client:google-oauth-client-jetty:1.31.0'
+    implementation 'com.google.apis:google-api-services-gmail:v1-rev110-1.25.0'
+    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+    implementation group: 'com.taskadapter', name: 'trello-java-wrapper', version: '0.14'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+    implementation 'com.google.code.gson:gson:2.8.6'
 }

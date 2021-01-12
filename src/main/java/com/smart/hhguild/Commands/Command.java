@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -99,7 +100,7 @@ public class Command {
      * @param reason A string containing the reason for the command being ran
      * @param c The channel to send the mod log in
      */
-    public static void modLogSuccess(Member m, Member mod, String type, ArrayList<EmbedField> fields, String reason, TextChannel c) {
+    public static void modLogSuccess(Member m, Member mod, String type, EmbedField[] fields, String reason, TextChannel c) {
         EmbedBuilder b = new EmbedBuilder();
         b.setColor(Main.GREEN);
         b.setTitle(":white_check_mark: Mod Log", null);
@@ -331,10 +332,15 @@ public class Command {
                 EmbedBuilder b = Main.buildEmbed(
                         ":x: " + cmd,
                         "You can only use that command in the following " + (channels.length > 0 ? (channels.length == 1 ? "channel: " : "channels: ") + Main.oxfordComma(Arrays.stream(channels).map(channel -> Main.mentionChannel(channel.getIdLong())).collect(Collectors.toList()), "and") : "") +
-                                (categories.length > 0 ? (channels.length > 0 ? "; and in" : "") + (categories.length == 1 ? "category: " : "categories: ") + Main.oxfordComma(Arrays.stream(categories).map(Category::getName).collect(Collectors.toList()), "and") : ""),
+                                (categories.length > 0 ? (channels.length > 0 ? "; and in " : "") + (categories.length == 1 ? "category: " : "categories: ") + Main.oxfordComma(Arrays.stream(categories).map(Category::getName).collect(Collectors.toList()), "and") : ""),
                         Main.RED,
                         new EmbedField[]{}
                 );
+
+                // Custom response for if the required category is the TEAMS_CATEGORY
+                if(channels.length == 0 && categories.length == 1 && categories[0].equals(Main.TEAMS_CATEGORY))
+                    b.setDescription("You can only use that command in your team channel!");
+
                 event.getChannel().sendMessage(b.build()).queue(message -> message.delete().queueAfter(15, TimeUnit.SECONDS));
                 return false;
             }
@@ -363,7 +369,7 @@ public class Command {
         TEAM_ELIMINATE, TEAM_QUALIFY,
 
         // Code Commands
-        CODE_CREATE, CODE_DELETE, CODE_LIST, CODE_GET, CODE_EDIT,
+        CODE_CREATE, CODE_DELETE, CODE_LIST, CODE_GET, CODE_EDIT, CODE_TOGGLE_REMAINING_CODES,
 
         // Points Commands
         POINT_SET, POINT_MODIFY, POINT_INCORRECT,
@@ -377,7 +383,7 @@ public class Command {
         QUEST_HALT, QUEST_LOADED, QUEST_GET,
 
         // Miscellaneous Commands
-        MISC_DM, MISC_TOGGLE_REMAINING_CODES, MISC_SEND, MISC_MESSAGE, MISC_NICK,
+        MISC_DM, MISC_SEND, MISC_MESSAGE, MISC_COLOR,
         MISC_SUGGEST, MISC_BUG, MISC_EDIT, MISC_SUBMIT, MISC_CLUE,
 
         // Powerup Commands
@@ -385,7 +391,7 @@ public class Command {
         POWERUP_FREEZE,
 
         // Member Commands
-        MEMBER_GET, MEMBER_REGENERATE, MEMBER_CHANGE, MEMBER_EDIT,
+        MEMBER_GET, MEMBER_REGENERATE, MEMBER_CHANGE, MEMBER_EDIT, MEMBER_NICK,
 
         // Image Commands
         IMAGE_VERIFY, IMAGE_DENY, IMAGE_CODES, IMAGE_UNCHECKED, IMAGE_GET,
@@ -682,7 +688,16 @@ public class Command {
                             event.getChannel(), true
                     );
 
-                    case CODE_LIST -> {}
+                    case CODE_LIST -> buildHelpEmbed(
+                            "Code List",
+                            "lists the names of all existing codes.",
+                            "`!code list`",
+                            "No syntax info.",
+                            new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                            new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
+                            new String[] {"!codes list"},
+                            event.getChannel(), true);
 
                     case CODE_GET -> buildHelpEmbed("Code Get",
                             "gets information about a code.",
@@ -710,6 +725,16 @@ public class Command {
                             new String[] {"!codes edit"},
                             event.getChannel(), true
                     );
+
+                    case CODE_TOGGLE_REMAINING_CODES -> buildHelpEmbed("Code ToggleRemaining",
+                            "changes if the number of remaining codes is told to the user when using the `!submit` command . The current status is: " + (Main.numRemainingCodes ? "**ON**" : "**OFF**"),
+                            "`!code toggleremaining [on/off/get]`",
+                            "**[on/off/get]** is simply on/off. Get returns the current status.",
+                            new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                            new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
+                            new String[]{"!codes remaining", "!codes toggleremaining"},
+                            event.getChannel(), true);
                 }
             }
 
@@ -864,7 +889,17 @@ public class Command {
                             true
                     );
 
-                    case QUEST_LIST -> {}
+                    case QUEST_LIST -> buildHelpEmbed(
+                            "Quest List",
+                            "lists the names of all existing quests.",
+                            "`!quest list`",
+                            "No syntax info.",
+                            new Role[]{Main.adminIds[0], Main.adminIds[1]},
+                            new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
+                            new String[] {"!quests list"},
+                            event.getChannel(), true
+                    );
 
                     case QUEST_LOAD -> buildHelpEmbed(
                             "Quest Load",
@@ -892,7 +927,19 @@ public class Command {
                             event.getChannel(), true
                     );
 
-                    //case QUEST_LOADED -> {}
+                    case QUEST_LOADED -> buildHelpEmbed(
+                            "Quest Loaded",
+                            "is used to get the loaded quest.",
+                            "!quest loaded",
+                            "There is no info.",
+                            new Role[] {Main.adminIds[0], Main.adminIds[1]},
+                            new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
+                            new Category[]{},
+                            new String[] {"!quests loaded"},
+                            event.getChannel(),
+                            true
+
+                    );
 
                     case QUEST_GET -> buildHelpEmbed(
                             "Quest Get",
@@ -922,16 +969,6 @@ public class Command {
                             new TextChannel[]{Main.DM_HELP_CHANNEL},
                             new Category[]{},
                             new String[]{},
-                            event.getChannel(), false);
-
-                    case MISC_TOGGLE_REMAINING_CODES -> buildHelpEmbed("Remaining Codes",
-                            "changes if the number of remaining codes is told to the user when using the `!submit` command . The current status is: " + (Main.numRemainingCodes ? "**ON**" : "**OFF**"),
-                            "`!remainingcodes [on/off/get]`",
-                            "**[on/off/get]** is simply on/off. Get returns the current status.",
-                            new Role[]{Main.adminIds[0], Main.adminIds[1]},
-                            new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
-                            new Category[]{},
-                            new String[]{"!remainingcode"},
                             event.getChannel(), false);
 
                     case MISC_SEND -> buildHelpEmbed("Send",
@@ -967,17 +1004,6 @@ public class Command {
                             new Role[]{},
                             new TextChannel[]{},
                             new Category[] {Main.TEAMS_CATEGORY},
-                            new String[]{},
-                            event.getChannel(), false);
-
-                    case MISC_NICK -> buildHelpEmbed("Nickname",
-                            "changes the nickname of a given user.",
-                            "`!nick [member] [nickname]`",
-                            "**[member]** is the member who's nickname you want to change." +
-                                    "\n**[nickname]** is the new nickname between 2 and 32 characters.",
-                            new Role[]{Main.adminIds[0]},
-                            new TextChannel[]{},
-                            new Category[] {},
                             new String[]{},
                             event.getChannel(), false);
 
@@ -1020,6 +1046,16 @@ public class Command {
                             new Role[] {Main.adminIds[0], Main.adminIds[1]},
                             new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
                             new Category[] {},
+                            new String[] {},
+                            event.getChannel(), false);
+
+                    case MISC_COLOR -> buildHelpEmbed("Color",
+                            "creates an image with the given color.",
+                            "!color [color]",
+                            "**[color]** is a hexcode value (ex #123456).",
+                            new Role[] {Main.adminIds[0]},
+                            new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
+                            new Category[] {Main.TEAMS_CATEGORY},
                             new String[] {},
                             event.getChannel(), false);
                 }
@@ -1149,6 +1185,18 @@ public class Command {
                             new Category[] {},
                             new String[]{"!members edit", "!user edit", "!users edit"},
                             event.getChannel(), true);
+
+                    case MEMBER_NICK -> buildHelpEmbed("Member Nickname",
+                            "changes the nickname of a given user.",
+                            "`!member nick [member] [nickname]`",
+                            "**[member]** is the member who's nickname you want to change." +
+                                    "\n**[nickname]** is the new nickname between 2 and 32 characters.",
+                            new Role[]{Main.adminIds[0]},
+                            new TextChannel[]{},
+                            new Category[] {},
+                            new String[]{"!members nick", "!member nickname", "!members nickname"},
+                            event.getChannel(), false);
+
                 }
             }
 
@@ -1321,33 +1369,39 @@ public class Command {
     /**
      * Method for generating a customized command help embed based on the user's role, the channel, and the category.
      * @param m The member
-     * @param cat The category the message is being sent in
+     * @param category The category the message is being sent in
      * @param channel The channel the message is being sent in
      * @param page Which page to show
      * @return The created embed
      */
-    public static EmbedBuilder anyHelpEmbed(@NotNull Member m, Category cat, @NotNull TextChannel channel, int page) {
+    public static EmbedBuilder anyHelpEmbed(@NotNull Member m, Category category, @NotNull TextChannel channel, int page) {
         int addedFields = 0;
 
-        EmbedBuilder b = Main.buildEmbed("Help for Channel " + channel.getName() + (cat != null ? " and Category " + cat.getName() : "" ),
+        EmbedBuilder b = Main.buildEmbed("Help for Channel " + channel.getName() + (category != null ? " and Category " + category.getName() : "" ),
                 "These are all the commands you can use in this channel/category based on your role. Use the arrow reactions to change the page. If you " +
                         "want to get detailed information about a command, type the command without arguments.",
                 Main.BLUE,
                 new EmbedField[] {});
 
+        // Loops through the possible help fields. Has to loop through them all regardless of page because it has to keep
+        // the number of pages constant.
         for (HelpField f : helpFields) {
             TextChannel[] channels = f.getChannels();
             Category[] categories = f.getCategories();
 
+            // Checks for if the member contains the valid role for the help field
             if (Main.containsRole(m, f.getRoles()) || f.getRoles().length == 0) {
+                // Checks if the category or channel match
                 if(channels.length != 0 || (categories.length != 0))
-                    if(cat != null && (Arrays.stream(categories).noneMatch(category -> category.getIdLong() == cat.getIdLong()) && Arrays.stream(channels).noneMatch(channel1 -> channel1.getIdLong() == channel.getIdLong())))
+                    if(category != null && (Arrays.stream(categories).noneMatch(cat -> cat.getIdLong() == category.getIdLong()) && Arrays.stream(channels).noneMatch(channel1 -> channel1.getIdLong() == channel.getIdLong())))
                         continue;
 
+                // Checks for if the 'index' is between the page values
                 if (addedFields >= (page * 10) - 10 && !(addedFields >= (page * 10))) {
                     EmbedField field = f.getAsField(true);
                     b.addField(field.title, field.text, field.inline);
                 }
+                // Increment fields
                 addedFields++;
             }
         }
@@ -1532,6 +1586,9 @@ public class Command {
                 new HelpField("Code","Editing a Code",
                         "To edit a code, use `!code edit [code-name] [container] [value]`. This will allow you to edit any value in the code.",
                         new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
+                new HelpField("Code","Toggling the Number of Remaining Codes",
+                        "To toggle if the number of remaining submittable codes are shown to the user after a **successful !submit**, use `!code toggleremaining [on/off/get]`.",
+                        new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- POINT ----------
                 new HelpField("Point","Setting a Team's Points",
@@ -1591,9 +1648,6 @@ public class Command {
                 new HelpField("Misc","DMing a user",
                         "To DM a user, use `!dm [member] [message]`.",
                         Main.adminIds, new TextChannel[] {Main.DM_HELP_CHANNEL}, new Category[] {}),
-                new HelpField("Misc","Toggling the Number of Remaining Codes",
-                        "To toggle if the number of remaining submittable codes are shown to the user after a successful !submit, use `!remainingcodes [on/off/get]`.",
-                        new Role[] {Main.adminIds[0], Main.adminIds[1]}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
                 new HelpField("Misc","Sending a Message with the Bot",
                         "To send an existing message to a specified channel, use `!send [messageID] [Channel ID/Name/Mention]`.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]}, new TextChannel[] {}, new Category[] {}),
@@ -1603,9 +1657,6 @@ public class Command {
                 new HelpField("Misc","Messaging Teams",
                         "To send a message to another team, use `!message [team] [message]` in your team channel.",
                         new Role[] {Main.adminIds[0], Main.adminIds[1], Main.adminIds[2], Main.CONTESTANT_ROLE}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {Main.TEAMS_CATEGORY}),
-                new HelpField("Misc","Changing a User's Nickname",
-                        "To change the nickname of a user, use `!nick [member] [nickname]`.",
-                        new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
                 new HelpField("Misc","Making a Suggestion",
                         "To create a suggestion for the HHG, use `!suggest [suggestion]` in " + Main.mentionChannel(Main.SUGGESTIONS_CHANNEL.getIdLong()) + ".",
                         new Role[] {}, new TextChannel[] {Main.SUGGESTIONS_CHANNEL}, new Category[] {}),
@@ -1620,6 +1671,9 @@ public class Command {
                         new Role[] {}, new TextChannel[] {}, new Category[] {Main.TEAMS_CATEGORY}),
                 new HelpField("Misc","Changing the Clue",
                         "To change the clue, use `!clue <clue>`. **<clue>** can be left blank to set the clue to nothing.",
+                        new Role[] {}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
+                new HelpField("Misc","Color",
+                        "To create a picture of a certain color, use `!color [color]`.",
                         new Role[] {}, new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL}, new Category[] {}),
 
                 // ---------- POWERUP ----------
@@ -1655,6 +1709,9 @@ public class Command {
                 new HelpField("Member","Editing Member Data",
                         "To edit a member's data, use `!member edit [member] [container] [new-value]`.",
                         new Role[]{Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
+                new HelpField("Member","Changing a User's Nickname",
+                        "To change the nickname of a user, use `!member nick [member] [nickname]`.",
+                        new Role[] {Main.adminIds[0]}, new TextChannel[] {}, new Category[] {}),
 
                 // ---------- IMAGE ----------
                 new HelpField("Image","Verifying an Image",

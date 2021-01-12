@@ -53,7 +53,7 @@ public class ResponseCommands extends Command {
      * @param event THe event
      * @param args The arguments
      */
-    public static void response(GuildMessageReceivedEvent event, String[] args) {
+    public static void response(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !member
         if (args.length < 2) {
             // Create & send the help embed for the member commands
@@ -66,7 +66,9 @@ public class ResponseCommands extends Command {
 
         switch (type) {
             case "create" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.RESPONSE_CREATE, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[] {},
@@ -77,7 +79,9 @@ public class ResponseCommands extends Command {
                 }
             }
             case "delete" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.RESPONSE_DELETE, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[] {},
@@ -88,7 +92,9 @@ public class ResponseCommands extends Command {
                 }
             }
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.RESPONSE_GET, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[] {},
@@ -99,7 +105,9 @@ public class ResponseCommands extends Command {
                 }
             }
             case "list" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.RESPONSE_LIST, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[] {},
@@ -110,7 +118,9 @@ public class ResponseCommands extends Command {
                 }
             }
             case "edit" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.RESPONSE_EDIT, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[] {},

@@ -72,20 +72,24 @@ public class PrivateMessageCommand extends Command {
 
             Main.sendPrivateMessage(event.getAuthor(), b);
 
-        } else if(args[1].equals("request")) {
+        } else if(args[1].equals("request"))
             helpRequest(event, args);
-        }
     }
 
     public static void helpRequest(PrivateMessageReceivedEvent event, String[] args) {
         // Make sure the request command has a problem parameter. Send help message if not
-        if(args.length >= 3) {
-            String problem = Main.compressArray(Arrays.copyOfRange(args, 2, args.length)); // Problem text
+        if(args.length >= 3 || (args.length >= 2 && event.getMessage().getAttachments().size() >= 1)) {
+            // Everything after the mentioned member
+            String problem;
+            if (args.length >= 3)
+                problem = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
+            else
+                problem = "";
 
             // Make sure the problem contains under 2000 characters
             if(problem.length() >= 1000) {
                 EmbedBuilder b = Main.buildEmbed(
-                        ":x: Failure:",
+                        ":x: Failure",
                         "Help Request",
                         Main.RED,
                         new EmbedField[]{
@@ -110,9 +114,6 @@ public class PrivateMessageCommand extends Command {
                     }
             );
 
-            // Get the text channel
-            TextChannel c = Main.DM_HELP_CHANNEL;
-
             // Deal with adding any attachments
             List<Message.Attachment> attachments = event.getMessage().getAttachments();
 
@@ -123,32 +124,23 @@ public class PrivateMessageCommand extends Command {
                         return;
                     }
 
-                    Main.attachAndSend(c, helpEmbed, attachments.get(0));
-                } else if (attachments.size() > 1) {
-                    if(!attachments.get(0).isImage()) {
-                        Main.sendPrivateMessage(event.getAuthor(), "You can only send images!");
-                        return;
-                    }
-
-                    Main.attachAndSend(c, helpEmbed, attachments.get(0));
-                    Main.sendPrivateMessage(event.getAuthor(), "Note, only the first attachment has been sent.");
+                    Main.attachAndSend(Main.DM_HELP_CHANNEL, helpEmbed, attachments.get(0));
                 } else
-                    c.sendMessage(helpEmbed.build()).queue();
+                    Main.DM_HELP_CHANNEL.sendMessage(helpEmbed.build()).queue();
 
             } catch (Exception e) {
-                Main.sendPrivateMessage(event.getAuthor(), "Encountered an unknown error sending your help request");
+                Main.sendPrivateMessage(event.getAuthor(), "Encountered an unknown error while processing your help request.");
                 return;
             }
 
             // Tell the user their help request was sent
             event.getChannel().sendMessage("I have sent your help request. Moderators will *hopefully* get back to you shortly.").queue();
-
         } else
             // Create the help embed for '!help request'
             buildHelpEmbed("Help Request",
                     "requests assistance from moderators",
                     "`!help request [problem]`",
-                    "**[problem]** is the issue you are currently having. Ex. (!help request I keep getting an error)",
+                    "**[problem]** is the issue you are currently having. Ex. (!help request I keep getting an error).",
                     event.getAuthor());
     }
 }

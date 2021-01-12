@@ -33,8 +33,10 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -43,7 +45,6 @@ import java.util.stream.Collectors;
  */
 public class Moderation extends Command {
     public static boolean swearDetection = true;  // If auto swear detection is on or not
-    private static final String swearWordsFile = "/swearWords.txt";
 
     /**
      * Searches through an inputted String and returns whether or not it contains a swear word
@@ -53,23 +54,11 @@ public class Moderation extends Command {
      */
     public static boolean containsSwearWord(String msg) {
         if(!swearDetection) return false;
-        ArrayList<String> swearWords = new ArrayList<>(); // Contains read contents from the swear words file
         List<String> splitMsg = Arrays.stream(msg.split(" ")).collect(Collectors.toList());
 
-        try {
-            Scanner in = new Scanner(new File(Moderation.class.getResource(swearWordsFile).getFile()));
-            while(in.hasNext()) {
-                swearWords.add(in.nextLine()); // Reads each line in the swear words file
-            }
-
-            for(String s : swearWords) {
-                if(splitMsg.contains(s)) {
-                    return true;
-                }
-            }
-        } catch(Exception e) {
-            System.out.println("Error finding " + swearWordsFile + " file");
-        }
+        for(String s : Main.swearWords)
+            if(splitMsg.contains(s))
+                return true;
 
         return false;
     }
@@ -285,10 +274,11 @@ public class Moderation extends Command {
                 modLogSuccess(m,
                         Objects.requireNonNull(event.getMember()),
                         "Ban",
-                        new ArrayList<>(Collections.singletonList(
+                        new EmbedField[]{
                                 new EmbedField("Days",
                                         Integer.toString(days),
-                                        false))),
+                                        false)
+                        },
                         reason,
                         Main.MOD_LOG_CHANNEL
                 );
@@ -439,9 +429,9 @@ public class Moderation extends Command {
 
             boolean targetIsMod = Main.isMod(m);
 
-            if (targetIsMod) {
+            if (targetIsMod)
                 modLogFail(m, "Warn", "You can't warn this user!", event, event.getChannel());
-            } else {
+            else {
                 EmbedBuilder b = Main.buildEmbed(
                         "Warning",
                         "You have received a warning!",
@@ -450,22 +440,18 @@ public class Moderation extends Command {
                                 new EmbedField("Reason", reason, false)
                         });
                 // Send private message
-                Main.sendPrivateMessage(m.getUser(), b);
-                // Success messages
-                modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Warn", null, reason, Main.MOD_LOG_CHANNEL);
-                genericSuccess(event, "Warn", "Warned " + m.getAsMention() + " with \"" + reason + "\".", true);
-                event.getMessage().delete().queue();
+                String finalReason = reason;
+                Main.sendPrivateMessage(m.getUser(), b, s -> {
+                    modLogSuccess(m, Objects.requireNonNull(event.getMember()), "Warn", null, finalReason, Main.MOD_LOG_CHANNEL);
+                    genericSuccess(event, "Warn", "Warned " + m.getAsMention() + " with \"" + finalReason + "\".", true);
+                    event.getMessage().delete().queue();
+                    return null;
+                }, f -> {
+                    genericFail(event, "Warn", "Error sending DM! This is likely due to their DMs being off.", 0);
+                    return null;
+                });
             }
         } else
             individualCommandHelp(CommandType.MOD_WARN, event);
     }
-
-    /*public static void silence(GuildMessageReceivedEvent event, String[] args) {
-        if(!Objects.requireNonNull(event.getMember()).isOwner()) {
-            genericFail(event, "Silence", "You need to be the server owner to use this.");
-            return;
-        }
-
-        a
-    }*/
 }

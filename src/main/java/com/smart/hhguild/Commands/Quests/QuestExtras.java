@@ -42,10 +42,10 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class QuestExtras extends Command {
     /**
@@ -57,7 +57,6 @@ public class QuestExtras extends Command {
     public static void questBuilder(GuildMessageReactionAddEvent event, Message message) {
         // Remove reaction
         MessageReactionHandler.removeReaction(event, message);
-
 
         String reaction = event.getReactionEmote().getName(); // Get the reaction to figure out which actions need to be performed
         MessageEmbed b = message.getEmbeds().get(0);          // Get the first embed in the message in order to get data from it
@@ -91,9 +90,8 @@ public class QuestExtras extends Command {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
             int newPage = Integer.parseInt(splitFooter[1]) - 1;
 
-            if (newPage > 0) {
+            if (newPage > 0)
                 message.editMessage(quest.getAsEmbed(newPage, true).build()).queue();
-            }
 
             // If the emoji is the rightarrow emoji, change the main embed's page to +1
         } else if (reaction.contains("rightarrow")) {
@@ -101,9 +99,8 @@ public class QuestExtras extends Command {
             int newPage = Integer.parseInt(splitFooter[1]) + 1;
             int maxPage = Integer.parseInt(splitFooter[3]);
 
-            if (newPage <= maxPage) {
+            if (newPage <= maxPage)
                 message.editMessage(quest.getAsEmbed(newPage, true).build()).queue();
-            }
 
             // If the emoji is the add emoji, preparing adding
         } else if (reaction.contains("add")) {
@@ -336,7 +333,7 @@ public class QuestExtras extends Command {
 
         if (editor.getEditAction() == Editor.EditAction.QUEST_BASIC_ADD) {
             event.getMessage().delete().queue();
-            event.getMessage().reply("You must select page 2 or 3 to add items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+            event.getChannel().sendMessage(Objects.requireNonNull(event.getMember()).getAsMention() + ", you must select page 2 or 3 to add items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
         }
 
@@ -377,11 +374,11 @@ public class QuestExtras extends Command {
             // Check first parameter
             if (args[0].startsWith("TIME:")) {
                 // Get the date and make sure it is valid
-                time = QuestField.getDate(args[0].replace("TIME:", "") + ":00");
+                time = Main.getDate(args[0].replace("TIME:", "") + ":00");
 
                 // Make sure the time is formatted correctly and hasn't already occurred
                 if (time == null) {
-                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
+                    genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** is an invalid date format, must be in the format **MM/DD/YYYY-HH:MM:SS**.", 10);
                     return;
                 } else if (time.before(new Date())) {
                     genericFail(event, "Quest Field Add", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** has already occurred, so you can't use it...", 10);
@@ -411,11 +408,11 @@ public class QuestExtras extends Command {
                 textStartIndex++;
             } else if (args.length > 1 && args[1].startsWith("TIME:")) {
                 // Get the date and make sure it is valid
-                time = QuestField.getDate(args[1].replace("TIME:", "") + ":00");
+                time = Main.getDate(args[1].replace("TIME:", "") + ":00");
 
                 // Make sure the time is formatted correctly and hasn't already occurred
                 if (time == null) {
-                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
+                    genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** is an invalid date format, must be in the format **MM/DD/YYYY-HH:MM:SS**.", 10);
                     return;
                 } else if (time.before(new Date())) {
                     genericFail(event, "Quest Field Add", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
@@ -512,10 +509,11 @@ public class QuestExtras extends Command {
             // Delete sender's message
             event.getMessage().delete().queueAfter(10, TimeUnit.SECONDS);
 
-            String name = args[0];  // The code's name
+            String name = args[0];      // The code's name
             Integer points;             // The code's point value
             Integer maxSubmits;         // The code's maximum submissions
-            boolean isImage;        // If the code is an image code
+            boolean isImage;            // If the code is an image code
+            Date releaseTime;           // The time the code is released at (Which means it can now be submitted)
 
             Pattern p = Pattern.compile("[_]|[^\\w\\d-]");
             Matcher matcher = p.matcher(name);
@@ -527,7 +525,7 @@ public class QuestExtras extends Command {
             } else if (matcher.find()) {
                 genericFail(event, "Quest Code Add", "The code, " + name + " must not contain any special characters, excluding hyphens.", 10);
                 return;
-            } else if (quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).contains(name)) {
+            } else if (quest.getCodes().stream().anyMatch(code -> code.getCode().equals(name))) {
                 genericFail(event, "Quest Code Add", "The code,`" + name + "` already exists.", 10);
                 return;
             }
@@ -554,9 +552,27 @@ public class QuestExtras extends Command {
                 isImage = false;
             }
 
+            try {
+                if(args.length == 5)
+                    releaseTime = Main.getDate(args[4]);
+                else
+                    throw new Exception();
+
+                // Make sure the time is formatted correctly and hasn't already occurred
+                if (releaseTime == null) {
+                    genericFail(event, "Quest Code Add", "**" + (args[4].length() > 200 ? args[1].substring(0, 200) + "..." : args[4]) + "** is an invalid date format, must be in the format **MM/DD/YYYY-HH:MM:SS**.", 10);
+                    return;
+                } else if (releaseTime.before(new Date())) {
+                    genericFail(event, "Quest Code Add", "**" + (args[4].length() > 200 ? args[1].substring(0, 200) + "..." : args[4]) + "** has already occurred, so you can't use it...", 10);
+                    return;
+                }
+            } catch (Exception e) {
+                releaseTime = null;
+            }
+
             editor.setEditAction(Editor.EditAction.NONE);
             // Add the code
-            quest.addCode(new Code(name, points, maxSubmits, isImage));
+            quest.addCode(new Code(name, points, maxSubmits, isImage, releaseTime));
 
             // Create the success embed
             EmbedBuilder successEmbed = Main.buildEmbed(
@@ -568,7 +584,9 @@ public class QuestExtras extends Command {
                                     "\n- **Name:** " + name +
                                             "\n- **Points:** " + points +
                                             "\n- **Maximum Submissions:** " + maxSubmits +
-                                            "\n- **Is Image Code:** " + Boolean.toString(isImage).toUpperCase(), false)
+                                            "\n- **Is Image Code:** " + Boolean.toString(isImage).toUpperCase() +
+                                            (releaseTime != null ? "\n - **Release Time:** " + releaseTime : "")
+                                    , false)
                     });
 
             // Clear previous message
@@ -601,7 +619,7 @@ public class QuestExtras extends Command {
             return;
         if (editor.getEditAction() == Editor.EditAction.QUEST_BASIC_REMOVE) {
             event.getMessage().delete().queue();
-            event.getMessage().reply("You must select page 2 or 3 to remove items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+            event.getChannel().sendMessage(Objects.requireNonNull(event.getMember()).getAsMention() + ", you must select page 2 or 3 to remove items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
             return;
         }
 
@@ -672,8 +690,6 @@ public class QuestExtras extends Command {
                 return;
             }
 
-            event.getMessage().delete().queue();
-
             // Get the code's name
             String name = args[0];
 
@@ -724,7 +740,7 @@ public class QuestExtras extends Command {
             return;
         if (editor.getEditAction() == Editor.EditAction.QUEST_BASIC_EDIT) {
             event.getMessage().delete().queue();
-            event.getMessage().reply("You must select pages and 2 above to edit items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
+            event.getChannel().sendMessage(Objects.requireNonNull(event.getMember()).getAsMention() + ", you must select pages and 2 above to edit items.").queue(message -> message.delete().queueAfter(5, TimeUnit.SECONDS));
         }
 
         // Get the quest and sync data
@@ -834,7 +850,7 @@ public class QuestExtras extends Command {
         Quest.syncQuestData(newName.toLowerCase()); // Sync quest data for the quest
 
         // Regex for valid name
-        Pattern nameRegex = Pattern.compile("[_]|[^\\w-]|[A-Z_]");
+        Pattern nameRegex = Pattern.compile("[_ ]|[^\\w-]|[A-Z_]");
         Matcher matcher = nameRegex.matcher(newName.toLowerCase());
 
         // Make sure name doesn't have any invalid characters, doesn't already exist, or have more than MAX_QUEST_NAME_SIZE characters
@@ -904,11 +920,11 @@ public class QuestExtras extends Command {
         // Attempt to retrieve the enumerator from the arguments at index 0
         Submissions.submissionMethods submissionMethod;
         try {
-            submissionMethod = Submissions.submissionMethods.valueOf(args[0]);
+            submissionMethod = Submissions.submissionMethods.valueOf(args[0].trim());
         } catch (Exception e) {
             genericFail(event, "Quest Submit Method Edit",
-                    "**" + (args[0].length() > 200 ? args[0].substring(0, 200) : args[0]) + "** does not exist. Please check the submit method embed." +
-                            " to view valid submit methods",
+                    "**" + (args[0].length() > 200 ? args[0].substring(0, 200) : args[0]) + "** does not exist. Please check the submit method embed " +
+                            " to view valid submit methods.",
                     10);
             return;
         }
@@ -968,6 +984,9 @@ public class QuestExtras extends Command {
         if (fieldIndex == null) {
             genericFail(event, "Quest Field Edit", "**" + (args[0].length() > 200 ? args[0].substring(0, 200) + "..." : args[0]) + "** is an invalid index. Make sure it is a positive integer less than or equal to 2,147,483,647.", 10);
             return;
+        } else if (fieldIndex > quest.getQuestFields().size()) {
+            genericFail(event, "Quest Field Edit", "Index is out of bounds.", 10);
+            return;
         }
 
         QuestField questField = quest.getQuestFields().get(fieldIndex);
@@ -980,10 +999,10 @@ public class QuestExtras extends Command {
         // Check first parameter
         if (args[1].startsWith("TIME:")) {
             // Get the date and make sure it is valid
-            time = QuestField.getDate(args[1].replace("TIME:", "") + ":00");
+            time = Main.getDate(args[1].replace("TIME:", "") + ":00");
 
             if (time == null) {
-                genericFail(event, "Quest Field Edit", "**" + args[1] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
+                genericFail(event, "Quest Field Edit", "**" + args[1] + "** is an invalid date format, must be in the format **MM/DD/YYYY-HH:MM:SS**.", 10);
                 return;
             } else if (time.before(new Date())) {
                 genericFail(event, "Quest Field Edit", "**" + (args[1].length() > 200 ? args[1].substring(0, 200) + "..." : args[1]) + "** has already occurred, so you can't use it...", 10);
@@ -1011,10 +1030,10 @@ public class QuestExtras extends Command {
             textStartIndex++;
         } else if (args.length > 2 && args[1].startsWith("TIME:")) {
             // Get the date and make sure it is valid
-            time = QuestField.getDate(args[2].replace("TIME:", "") + ":00");
+            time = Main.getDate(args[2].replace("TIME:", "") + ":00");
 
             if (time == null) {
-                genericFail(event, "Quest Field Edit", "**" + args[2] + "** is an invalid date format, must be in the format **MM/DD//YYYY-HH:MM:SS**.", 10);
+                genericFail(event, "Quest Field Edit", "**" + args[2] + "** is an invalid date format, must be in the format **MM/DD/YYYY-HH:MM:SS**.", 10);
                 return;
             } else if (time.before(new Date())) {
                 genericFail(event, "Quest Field Edit", "**" + (args[2].length() > 200 ? args[2].substring(0, 200) + "..." : args[2]) + "** has already occurred, so you can't use it...", 10);
@@ -1144,10 +1163,15 @@ public class QuestExtras extends Command {
         int pointsIndex = -1;
         int maxSubmitsIndex = -1;
         int imageIndex = -1;
+        int timeIndex = -1;
 
         Code code;
         try {
-            code = quest.getCodes().get(quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).indexOf(args[0]));
+            Optional<Code> optionalCode = quest.getCodes().stream().filter(c -> c.getCode().equals(args[0])).findFirst();
+            if(optionalCode.isEmpty())
+                throw new Exception();
+
+            code = optionalCode.get();
         } catch (Exception e) {
             genericFail(event, "Quest Code Edit", "Code **" + args[0] + "** does not exist.", 10);
             return;
@@ -1156,17 +1180,25 @@ public class QuestExtras extends Command {
         for (int i = 1; i < args.length; i++) {
             String element = args[i];
             if (element.contains("CODE:")) {
-                args[i] = element.replace("CODE:", "");
+                args[i] = element.replace("CODE:", "").trim();
                 nameIndex = i;
             } else if (element.contains("POINTS:")) {
-                args[i] = element.replace("POINTS:", "");
+                args[i] = element.replace("POINTS:", "").trim();
                 pointsIndex = i;
             } else if (element.contains("MAXSUBMITS:")) {
-                args[i] = element.replace("MAXSUBMITS:", "");
+                args[i] = element.replace("MAXSUBMITS:", "").trim();
                 maxSubmitsIndex = i;
             } else if (element.contains("IMAGE:")) {
-                args[i] = element.replace("IMAGE:", "");
+                args[i] = element.replace("IMAGE:", "").trim();
                 imageIndex = i;
+            } else if (element.contains("TIME:")) {
+                args[i] = element.replace("TIME:", "").trim();
+                timeIndex = i;
+            }
+
+            if (args[i].length() == 0) {
+                genericFail(event, "Quest Code Edit", "Argument " + " lacking contents (I.e no name after `CODE:`).", 10);
+                return;
             }
         }
 
@@ -1182,8 +1214,8 @@ public class QuestExtras extends Command {
             } else if (matcher.find()) {
                 genericFail(event, "Quest Code Edit", "The code, " + name + " must not contain any special characters, excluding hyphens.", 10);
                 return;
-            } else if (quest.getCodes().stream().map(Code::getCode).collect(Collectors.toList()).contains(name)) {
-                genericFail(event, "Quest Code Edit", "The code,`" + name + "` already exists.", 10);
+            } else if (quest.getCodes().stream().anyMatch(c -> c.getCode().equals(name))) {
+                genericFail(event, "Quest Code Edit", "The code,`" + name + "`, already exists.", 10);
                 return;
             }
 
@@ -1209,12 +1241,30 @@ public class QuestExtras extends Command {
         }
         if (imageIndex != -1) {
             try {
-                boolean isImage = Boolean.parseBoolean(args[maxSubmitsIndex]);
+                boolean isImage = Boolean.parseBoolean(args[imageIndex]);
                 code.setImage(isImage);
             } catch (Exception e) {
                 genericFail(event.getChannel(), "Quest Code Edit", "IsImage must be a true or false.", 10);
                 return;
             }
+        }
+        if (timeIndex != -1) {
+            Date releaseTime;
+            if(args[timeIndex].equals("0"))
+                releaseTime = null;
+            else {
+                releaseTime = Main.getDate(args[timeIndex]);
+
+                // Make sure the time is formatted correctly and hasn't already occurred
+                if (releaseTime == null) {
+                    genericFail(event, "Quest Code Edit", "**" + (args[4].length() > 200 ? args[1].substring(0, 200) + "..." : args[4]) + "** is an invalid date format, must be in the format **MM/DD/YYYY-HH:MM:SS**.", 10);
+                    return;
+                } else if (releaseTime.before(new Date())) {
+                    genericFail(event, "Quest Code Edit", "**" + (args[4].length() > 200 ? args[1].substring(0, 200) + "..." : args[4]) + "** has already occurred, so you can't use it...", 10);
+                    return;
+                }
+            }
+            code.setReleaseTime(releaseTime);
         }
 
         // Create the success embed
@@ -1227,7 +1277,8 @@ public class QuestExtras extends Command {
                                 (nameIndex != -1 ? "\n- **Name:** " + args[nameIndex] : "") +
                                         (pointsIndex != -1 ? "\n- **Points:** " + args[pointsIndex] : "") +
                                         (maxSubmitsIndex != -1 ? "\n- **Maximum Submissions:** " + args[maxSubmitsIndex] : "") +
-                                        (imageIndex != -1 ? "\n- **Is Image Code:** " + args[imageIndex] : ""), false)
+                                        (imageIndex != -1 ? "\n- **Is Image Code:** " + args[imageIndex] : "") +
+                                        (timeIndex != -1 ? "\n- **Release Time:** " + args[timeIndex] : ""), false)
                 });
 
         // Clear previous message

@@ -47,6 +47,7 @@ public class Trello {
 
     /**
      * Get's the board from the given ID
+     *
      * @param boardId The ID of the board. (Can be found by adding .json to the end of the trello board address and grabbing the first id)
      * @return The found board
      */
@@ -64,7 +65,8 @@ public class Trello {
 
     /**
      * Gets a list from the specified board
-     * @param b The Board
+     *
+     * @param b      The Board
      * @param listId The ID of the list
      * @return The found list object
      */
@@ -75,19 +77,19 @@ public class Trello {
 
     public static void createCard(String title, String user, CardType type) {
         Board b = getBoard(boardId);
-        if(b == null) {
+        if (b == null) {
             System.out.println("Failed to create card (b null)");
             return;
         }
 
         TList list;
         Card c = new Card();
-        if(type == CardType.BUG_FIX) {
+        if (type == CardType.BUG_FIX) {
             list = getList(b, bugListId);
 
             c.setDesc("Bug Report by " + user);
             c.setName(title);
-        } else if(type == CardType.SUGGESTION) {
+        } else if (type == CardType.SUGGESTION) {
             list = getList(b, suggestionsListId);
 
             c.setDesc("Suggestion by " + user);

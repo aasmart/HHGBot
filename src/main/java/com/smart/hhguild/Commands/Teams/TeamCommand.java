@@ -60,8 +60,8 @@ public class TeamCommand extends Command {
      * This method is used for verifying that a team has a valid name. This means no spaces, less than 16 characters, and only lowercase letters/hyphens
      *
      * @param event The event
-     * @param name The text it is checking for validity
-     * @param cmd The name of the command that called it
+     * @param name  The text it is checking for validity
+     * @param cmd   The name of the command that called it
      * @return The inputted name if valid, otherwise null if invalid
      */
     public static String validName(GuildMessageReceivedEvent event, String name, String cmd) {
@@ -85,11 +85,12 @@ public class TeamCommand extends Command {
     /**
      * This method is in charge of switching between the various 'team' commands
      *
-     * @param event The message event
-     * @param args The command's arguments
+     * @param event  The message event
+     * @param args   The command's arguments
      * @param rawMsg The text of the message
+     * @param isHelp True if the command will only return a help embed
      */
-    public static void team(GuildMessageReceivedEvent event, String[] args, String rawMsg) {
+    public static void team(GuildMessageReceivedEvent event, String[] args, String rawMsg, boolean isHelp) {
         // Send an info pane if the user only send !team
         if (args.length < 2) {
             // Create & send the help embed for the team command
@@ -100,15 +101,16 @@ public class TeamCommand extends Command {
 
         String type = args[1].toLowerCase();  // The command type
 
-
         boolean onTeam = Main.isOnTeam(event.getMember());
 
         switch (type) {
             case "create" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_CREATE, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
                         "Team Create")) {
                     teamCreate(event, args);
                 } else {
@@ -116,12 +118,14 @@ public class TeamCommand extends Command {
                 }
             }
             case "request" -> {
-                if(onTeam) {
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_REQUEST, event);
+                else if (onTeam) {
                     genericFail(event, "Team Request", "You can't use this command since you're already on a team", 10);
                 } else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.CONTESTANT_ROLE},
-                        new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
+                        new TextChannel[]{Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
                         "Team Request")) {
                     teamRequest(event, args, rawMsg);
                 } else {
@@ -129,10 +133,12 @@ public class TeamCommand extends Command {
                 }
             }
             case "accept" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_ACCEPT, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAM_COMMANDS_CHANNEL},
                         "Team Accept")) {
                     teamAccept(event, args);
                 } else {
@@ -140,10 +146,12 @@ public class TeamCommand extends Command {
                 }
             }
             case "deny" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_DENY, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAM_COMMANDS_CHANNEL},
                         "Team Deny")) {
                     teamDeny(event, args);
                 } else {
@@ -151,10 +159,12 @@ public class TeamCommand extends Command {
                 }
             }
             case "delete" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_DELETE, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAM_COMMANDS_CHANNEL},
                         "Team Delete")) {
                     teamDelete(event, args);
                 } else {
@@ -163,13 +173,16 @@ public class TeamCommand extends Command {
 
             }
             case "join" -> {
-                if(onTeam) {
+                if (onTeam) {
                     genericFail(event, "Team Request", "You can't use this command since you're already on a team", 10);
                     return;
-                } if (validSendState(
+                }
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_JOIN, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0], Main.CONTESTANT_ROLE},
-                        new TextChannel[] {Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
+                        new Role[]{Main.adminIds[0], Main.CONTESTANT_ROLE},
+                        new TextChannel[]{Main.TEAMS_REQUEST_CHANNEL, Main.TEAM_COMMANDS_CHANNEL},
                         "Team Join")) {
                     teamJoin(event, args);
                 } else {
@@ -177,11 +190,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "kick" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_KICK, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {},
-                        new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{},
+                        new Category[]{Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                         "Team Remove")) {
                     teamKick(event, args);
                 } else {
@@ -189,11 +204,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "add" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_ADD, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {},
-                        new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{},
+                        new Category[]{Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                         "Team Add")) {
                     teamAdd(event, args, true);
                 } else {
@@ -201,11 +218,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "list" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_LIST, event);
+                else if (validSendState(
                         event,
-                        new Role[] {},
-                        new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
-                        new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
+                        new Role[]{},
+                        new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
+                        new Category[]{Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                         "Team List")) {
                     teamList(event, args);
                 } else {
@@ -213,11 +232,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "color" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_COLOR, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {},
-                        new Category[] {Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{},
+                        new Category[]{Main.TEAM_COMMANDS_CATEGORY, Main.TEAMS_CATEGORY},
                         "Team Color")) {
                     teamColor(event, args);
                 } else {
@@ -225,11 +246,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "maxmembers" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_MAX_MEMBERS, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
-                        new Category[] {},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAM_COMMANDS_CHANNEL},
+                        new Category[]{},
                         "Team MaxMembers")) {
                     teamMaxMembers(event, args);
                 } else {
@@ -237,11 +260,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "eliminate" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_ELIMINATE, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
-                        new Category[] {Main.TEAMS_CATEGORY},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAM_COMMANDS_CHANNEL},
+                        new Category[]{Main.TEAMS_CATEGORY},
                         "Team Eliminate")) {
                     teamEliminate(event, args);
                 } else {
@@ -249,11 +274,13 @@ public class TeamCommand extends Command {
                 }
             }
             case "qualify" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.TEAM_QUALIFY, event);
+                else if (validSendState(
                         event,
-                        new Role[] {Main.adminIds[0]},
-                        new TextChannel[] {Main.TEAM_COMMANDS_CHANNEL},
-                        new Category[] {Main.TEAMS_CATEGORY},
+                        new Role[]{Main.adminIds[0]},
+                        new TextChannel[]{Main.TEAM_COMMANDS_CHANNEL},
+                        new Category[]{Main.TEAMS_CATEGORY},
                         "Team Qualify")) {
                     teamQualify(event, args);
                 } else {
@@ -272,7 +299,7 @@ public class TeamCommand extends Command {
      * This command creates a team while bypassing verification steps.
      *
      * @param event The event
-     * @param args The arguments for the command
+     * @param args  The arguments for the command
      */
     public static void teamCreate(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the command has the proper parameters
@@ -281,7 +308,7 @@ public class TeamCommand extends Command {
             try {
                 members.addAll(Main.getMembers(Arrays.copyOfRange(args, 3, args.length)));
             } catch (Exception exception) {
-                genericFail(event,"Team Create", "One or more members lacks data.", 0);
+                genericFail(event, "Team Create", "One or more members lacks data.", 0);
                 exception.printStackTrace();
             }
 
@@ -310,10 +337,10 @@ public class TeamCommand extends Command {
                         // Gets the current list of team requests
                         teamArray = (JSONArray) teamRequests.get("teams");
 
-                        for(Object o : teamArray) {
-                            JSONObject temp = (JSONObject)o;
+                        for (Object o : teamArray) {
+                            JSONObject temp = (JSONObject) o;
 
-                            if(temp.get("name").equals(teamName)) {
+                            if (temp.get("name").equals(teamName)) {
                                 genericFail(event, "Team Create", "There is already a team request with the name: " + teamName + ". Consider using `!team accept/deny " + teamName + "`.", 0);
                                 return;
                             }
@@ -324,7 +351,7 @@ public class TeamCommand extends Command {
 
                     // Create the guild team
                     new Thread(() -> {
-                        if(GuildTeam.createGuildTeam(event, teamName, members)) {
+                        if (GuildTeam.createGuildTeam(event, teamName, members)) {
 
                             // Creates the confirmation message
                             EmbedBuilder b = Main.buildEmbed(
@@ -355,8 +382,8 @@ public class TeamCommand extends Command {
     /**
      * This command requests a team to be created, requiring verification
      *
-     * @param event The event
-     * @param args The arguments for the command
+     * @param event  The event
+     * @param args   The arguments for the command
      * @param rawMsg The text of the message
      */
     @SuppressWarnings("unchecked")
@@ -389,7 +416,8 @@ public class TeamCommand extends Command {
                         }
                     }
 
-                } catch (Exception ignore) { }
+                } catch (Exception ignore) {
+                }
 
                 try {
                     // Checks to see if the teams array already exists, creates it if it doesn't
@@ -416,7 +444,7 @@ public class TeamCommand extends Command {
                             event.getAuthor().getAvatarUrl(),
                             "Type `!team accept [team-name]` or `!team deny [team-name] [reason]` to verify or deny a team request, respectively",
                             Main.BLUE,
-                            new EmbedField[] { new EmbedField("Team Name", "**" + teamName + "**", false)}
+                            new EmbedField[]{new EmbedField("Team Name", "**" + teamName + "**", false)}
                     );
                     Main.TEAM_COMMANDS_CHANNEL.sendMessage(b.build()).queue();
 
@@ -425,7 +453,7 @@ public class TeamCommand extends Command {
                             ":white_check_mark: Success!",
                             event.getMember().getAsMention() + ", your team request for `" + teamName + "` was sent. It will *hopefully* be verified shortly.",
                             Main.GREEN,
-                            new EmbedField[] {}
+                            new EmbedField[]{}
                     );
                     event.getChannel().sendMessage(b.build()).queue();
                 } catch (Exception e) {
@@ -442,7 +470,7 @@ public class TeamCommand extends Command {
      * This command is used for accepting a created team request
      *
      * @param event The event
-     * @param args The arguments for the command
+     * @param args  The arguments for the command
      */
     public static void teamAccept(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the create command has the proper parameters
@@ -466,7 +494,7 @@ public class TeamCommand extends Command {
                     if (team.get("name").equals(teamName)) {
                         // Creates the team & removes the pending request
                         Member member = Main.guild.getMemberById((String) team.get("id"));
-                        if(GuildTeam.createGuildTeam(event, teamName, new ArrayList<>(Collections.singletonList(member)))) {
+                        if (GuildTeam.createGuildTeam(event, teamName, new ArrayList<>(Collections.singletonList(member)))) {
                             // Remove the object from the team request file
                             teamArray.remove(o);
 
@@ -481,7 +509,7 @@ public class TeamCommand extends Command {
                                     member.getUser().getAvatarUrl(),
                                     "Team verified by: " + Objects.requireNonNull(event.getMember()).getAsMention(),
                                     Main.GREEN,
-                                    new EmbedField[] { new EmbedField("Verified Team", "`" + teamName + "`", false)}
+                                    new EmbedField[]{new EmbedField("Verified Team", "`" + teamName + "`", false)}
                             );
                             Main.TEAM_COMMANDS_CHANNEL.sendMessage(b.build()).queue();
 
@@ -489,7 +517,7 @@ public class TeamCommand extends Command {
                                     ":white_check_mark: Team Request Verified!",
                                     "Hey " + member.getAsMention() + ", your team request for `" + teamName + "` was verified!",
                                     Main.GREEN,
-                                    new EmbedField[] {}
+                                    new EmbedField[]{}
                             );
                             Main.TEAMS_REQUEST_CHANNEL.sendMessage(b.build()).queue();
                             return;
@@ -514,7 +542,7 @@ public class TeamCommand extends Command {
      * This command is used for denying a created team request
      *
      * @param event The event
-     * @param args The arguments for the command
+     * @param args  The arguments for the command
      */
     public static void teamDeny(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the create command has the proper parameters
@@ -533,7 +561,7 @@ public class TeamCommand extends Command {
                 // Get the deny reason
                 String denyReason = ResponseCommands.response(Main.compressArray(Arrays.copyOfRange(args, 3, args.length)));
 
-                if(denyReason.length() > 200) {
+                if (denyReason.length() > 200) {
                     genericFail(event, "Team Deny", "**[reason]** can't be longer than 200 characters.", 0);
                     return;
                 }
@@ -558,7 +586,7 @@ public class TeamCommand extends Command {
                                 member.getUser().getAvatarUrl(),
                                 "Team request denied by: " + Objects.requireNonNull(event.getMember()).getAsMention(),
                                 Main.GREEN,
-                                new EmbedField[] { new EmbedField("Denied Team", "`" + teamName + "`", false)}
+                                new EmbedField[]{new EmbedField("Denied Team", "`" + teamName + "`", false)}
                         );
                         Main.TEAM_COMMANDS_CHANNEL.sendMessage(b.build()).queue();
 
@@ -567,7 +595,7 @@ public class TeamCommand extends Command {
                                 ":x: Team Request Denied!",
                                 "Hey " + member.getAsMention() + ", your team request for `" + teamName + "` was denied. Please see **Reason** as to why!",
                                 Main.RED,
-                                new EmbedField[] {
+                                new EmbedField[]{
                                         new EmbedField("Reason", denyReason, false)}
                         );
                         Main.TEAMS_REQUEST_CHANNEL.sendMessage(b.build()).queue();
@@ -575,7 +603,7 @@ public class TeamCommand extends Command {
                     }
                 }
                 // Tell the user if the team was not found
-                genericFail(Main.TEAM_COMMANDS_CHANNEL , "Team Deny", "I couldn't find a team request with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list requests` to see all the requests.", 0);
+                genericFail(Main.TEAM_COMMANDS_CHANNEL, "Team Deny", "I couldn't find a team request with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list requests` to see all the requests.", 0);
 
             } catch (Exception e) {
                 genericFail(Main.TEAM_COMMANDS_CHANNEL, "Team Deny", "Sorry, we encountered an unknown error.", 0);
@@ -592,7 +620,7 @@ public class TeamCommand extends Command {
      * This command is used for deleting a team that exists. It removes it from the leaderboard, teams file, and removes channels/roles
      *
      * @param event The event
-     * @param args The arguments for the command
+     * @param args  The arguments for the command
      */
     public static void teamDelete(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the delete command has the proper parameters
@@ -604,31 +632,32 @@ public class TeamCommand extends Command {
                 if (Main.teamNames.contains(teamName) || teamName.equals("ALL_TEAMS") || teamName.equals("ALL_REQUESTS")) {
                     JSONObject teamReqs = Main.readJSONObject(Main.PENDING_TEAMS_FILE);
 
-                    if(Main.teams.size() == 0 && teamName.equals("ALL_TEAMS")) {
+                    if (Main.teams.size() == 0 && teamName.equals("ALL_TEAMS")) {
                         genericFail(event, "Team Delete", "There are no teams to delete.", 0);
                         return;
-                    } else if(((JSONArray)teamReqs.get("teams")).size() == 0 && teamName.equals("ALL_REQUESTS")) {
+                    } else if (((JSONArray) teamReqs.get("teams")).size() == 0 && teamName.equals("ALL_REQUESTS")) {
                         genericFail(event, "Team Delete", "There are no team requests to delete.", 0);
                         return;
                     }
 
-                        // Creates the message and adds a bunch of stuff to the message
+                    // Creates the message and adds a bunch of stuff to the message
                     event.getChannel().sendMessage(Objects.requireNonNull(event.getMember()).getAsMention() + ", you're about to delete `" + teamName + "`. Once deleted, it can't be undone. " +
-                        "React to this message with :white_check_mark: to confirm, or :x: to cancel. This delete request will delete in 30 seconds.")
-                        .queue(message -> {
-                            // Add the reactions to the message and call finish removal
-                            message.addReaction("U+2705").queue();
-                            message.addReaction("U+274C").queue();
+                            "React to this message with :white_check_mark: to confirm, or :x: to cancel. This delete request will delete in 30 seconds.")
+                            .queue(message -> {
+                                        // Add the reactions to the message and call finish removal
+                                        message.addReaction("U+2705").queue();
+                                        message.addReaction("U+274C").queue();
 
-                            finishDeletion(message, teamName);
-                        }
-                        );
+                                        finishDeletion(message, teamName);
+                                    }
+                            );
                     return;
                 }
 
                 // Tell the user if the team was not found
-                genericFail(event , "Team Delete", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams.", 0);
-            } catch (Exception ignore) { }
+                genericFail(event, "Team Delete", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams.", 0);
+            } catch (Exception ignore) {
+            }
         } else {
             // Create the help embed for '!team delete'
             individualCommandHelp(CommandType.TEAM_DELETE, event);
@@ -639,7 +668,7 @@ public class TeamCommand extends Command {
      * Used by team-less members to join an existing team
      *
      * @param event The event
-     * @param args The command arguments
+     * @param args  The command arguments
      */
     public static void teamJoin(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the command has the proper parameters
@@ -655,7 +684,7 @@ public class TeamCommand extends Command {
                     assert team != null;
                     if (team.getTeamMembers().size() >= Main.MAX_TEAM_SIZE) {
                         // Sends embed if the team already has the max amount of members
-                        genericFail(event , "Team Join", "Sorry, `" + teamName + "` already has the max amount of contestants.", 10);
+                        genericFail(event, "Team Join", "Sorry, `" + teamName + "` already has the max amount of contestants.", 10);
                         return;
                     }
 
@@ -667,18 +696,17 @@ public class TeamCommand extends Command {
                     } catch (Exception e) {
                         // IF THERE IS NO LEADER, ADD THE MEMBER TO THE TEAM
 
-                        // Get the list of members and list of ids
-                        List<GuildMember> members = GuildMember.readMembers();
-                        List<Long> memberIds = members.stream().map(GuildMember::getId).collect(Collectors.toList());
-
                         // Gets the guild member and member that want to join the team
-
                         Member joinerMember = event.getMember();
 
                         assert joinerMember != null;
                         GuildMember joiner;
                         try {
-                             joiner = members.get(memberIds.indexOf(joinerMember.getIdLong()));
+                            Optional<GuildMember> memberOptional = GuildMember.readMembers().stream().filter(m -> m.getId() == joinerMember.getIdLong()).findFirst();
+                            if (memberOptional.isEmpty())
+                                throw new Exception();
+
+                            joiner = memberOptional.get();
                         } catch (Exception ex) {
                             genericFail(event, "Team Create", "You can't do this because you have missing data. Please message the bot.", 0);
                             return;
@@ -710,7 +738,7 @@ public class TeamCommand extends Command {
                             ":white_check_mark: Success!",
                             event.getMember().getAsMention() + ", your request to join `" + teamName + "` was sent. Good luck!",
                             Main.GREEN,
-                            new EmbedField[] {}
+                            new EmbedField[]{}
                     );
                     event.getChannel().sendMessage(b.build()).queue();
                     return;
@@ -731,7 +759,7 @@ public class TeamCommand extends Command {
      * This command is used to remove a player from a team
      *
      * @param event The event
-     * @param args The command's arguments
+     * @param args  The command's arguments
      */
     public static void teamKick(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the create command has the proper parameters
@@ -741,14 +769,14 @@ public class TeamCommand extends Command {
             GuildTeam team = GuildTeam.getTeamByName(teamName);
             Member m = Main.getMember(event, "Team Kick", event.getMessage(), Arrays.toString(Arrays.copyOfRange(args, 3, args.length)));
 
-            if(m == null)
+            if (m == null)
                 return;
 
             // Go through ifs to make sure the team exists and the member is in the team
-            if(team == null)
-                genericFail(event , "Team Kick", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams.", 0);
-            else if(!Main.containsRole(m, Main.guild.getRoleById(team.getRoleId())))
-                genericFail(event , "Team Kick", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`.", 0);
+            if (team == null)
+                genericFail(event, "Team Kick", "I couldn't find a team with the name `" + teamName + "`. Use `!team list` to see all the teams.", 0);
+            else if (!Main.containsRole(m, Main.guild.getRoleById(team.getRoleId())))
+                genericFail(event, "Team Kick", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`.", 0);
             else {
                 Main.guild.removeRoleFromMember(m, Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
                 team.removeMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong())));
@@ -761,7 +789,7 @@ public class TeamCommand extends Command {
                         event.getAuthor().getAvatarUrl(),
                         "Successfully kicked " + m.getAsMention() + " from `" + team.getName() + "`",
                         Main.GREEN,
-                        new EmbedField[] {}
+                        new EmbedField[]{}
                 );
                 event.getChannel().sendMessage(b.build()).queue();
             }
@@ -774,7 +802,7 @@ public class TeamCommand extends Command {
      * This command is used to add a player to a team
      *
      * @param event The event
-     * @param args The command's arguments
+     * @param args  The command's arguments
      * @param retry If true, the method will attempt to run again if the member was already on the team (Due to a bug and to prevent looping)
      */
     public static void teamAdd(GuildMessageReceivedEvent event, String[] args, boolean retry) {
@@ -785,23 +813,24 @@ public class TeamCommand extends Command {
             GuildTeam team = GuildTeam.getTeamByName(teamName);
             Member m = Main.getMember(event, "Team Add", event.getMessage(), Arrays.toString(Arrays.copyOfRange(args, 3, args.length)));
 
-            if(m == null)
+            if (m == null)
                 return;
 
             // Go through ifs to make sure the team exists and the member is not in the team
-            if(team == null)
-                genericFail(event , "Team Add", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
-            else if(Main.containsRole(m, Main.guild.getRoleById(team.getRoleId()))) {
-                if(retry) {
+            if (team == null)
+                genericFail(event, "Team Add", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
+            else if (Main.containsRole(m, Main.guild.getRoleById(team.getRoleId()))) {
+                if (retry) {
                     try {
                         Thread.sleep(3);
                         teamAdd(event, args, false);
                         return;
-                    } catch (Exception ignore) {}
+                    } catch (Exception ignore) {
+                    }
                 }
-                genericFail(event , "Team Add",  m.getAsMention() + " is already in `" + teamName + "`.", 0);
-            } else if(!team.addMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong()))))
-                genericFail(event , "Team Add", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`.", 0);
+                genericFail(event, "Team Add", m.getAsMention() + " is already in `" + teamName + "`.", 0);
+            } else if (!team.addMember(Objects.requireNonNull(GuildMember.getMemberById(GuildMember.readMembers(), m.getIdLong()))))
+                genericFail(event, "Team Add", "I couldn't find " + m.getAsMention() + " in the team `" + teamName + "`.", 0);
             else {
                 GuildTeam.writeTeam(team);
                 Main.guild.addRoleToMember(m.getId(), Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()))).queue();
@@ -812,7 +841,7 @@ public class TeamCommand extends Command {
                         event.getAuthor().getAvatarUrl(),
                         "Successfully added " + m.getAsMention() + " to `" + team.getName() + "`.",
                         Main.GREEN,
-                        new EmbedField[] {}
+                        new EmbedField[]{}
                 );
                 event.getChannel().sendMessage(b.build()).queue();
             }
@@ -828,7 +857,7 @@ public class TeamCommand extends Command {
      */
     public static void teamList(GuildMessageReceivedEvent event, String[] args) {
         // !team list [requests/teams]
-        if(args.length >= 3) {
+        if (args.length >= 3) {
             switch (args[2]) {
                 // If the user requests teams to be listed, send an embed containing the teams
                 // This doesn't use arrow reactions because there can only 50 teams with 16 character names
@@ -855,22 +884,22 @@ public class TeamCommand extends Command {
                     JSONArray requestsArray;
 
                     requestsObj = Main.readJSONObject(Main.PENDING_TEAMS_FILE);
-                    if(requestsObj == null) {
+                    if (requestsObj == null) {
                         event.getChannel().sendMessage("There are currently no team requests.").queue();
                         return;
                     }
 
                     requestsArray = (JSONArray) requestsObj.get("teams");
-                    if(requestsArray == null)
+                    if (requestsArray == null)
                         requestsArray = new JSONArray();
 
                     // Make sure there are team requests
-                    if(requestsArray.size() > 0) {
+                    if (requestsArray.size() > 0) {
                         EmbedBuilder b = listRequestsEmbed(1);
 
                         // Send the embed with the arrow reactions if there is more than 1 page (based on footer)
                         event.getChannel().sendMessage(b.build()).queue(message -> {
-                            if(Integer.parseInt(Objects.requireNonNull(Objects.requireNonNull(b.build().getFooter()).getText()).split(" ")[3]) != 1) {
+                            if (Integer.parseInt(Objects.requireNonNull(Objects.requireNonNull(b.build().getFooter()).getText()).split(" ")[3]) != 1) {
                                 message.addReaction(Main.ARROW_LEFT_EMOJI).queue();
                                 message.addReaction(Main.ARROW_RIGHT_EMOJI).queue();
                             }
@@ -890,7 +919,7 @@ public class TeamCommand extends Command {
      * This command is used to set a team's role color to a hex color
      *
      * @param event The event
-     * @param args The command's arguments
+     * @param args  The command's arguments
      */
     public static void teamColor(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the create command has the proper parameters
@@ -898,17 +927,18 @@ public class TeamCommand extends Command {
             String teamName = args[2];
             GuildTeam team = GuildTeam.getTeamByName(teamName);
 
-            if(team == null)
-                genericFail(event , "Team Color", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
+            if (team == null)
+                genericFail(event, "Team Color", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
             else {
                 try {
+                    args[3] = args[1].contains("#") ? args[3] : "#" + args[3];
                     Role r = Objects.requireNonNull(Main.guild.getRoleById(team.getRoleId()));
                     r.getManager().setColor(Color.decode(args[3])).queue();
                     EmbedBuilder b = Main.buildEmbed(
                             ":white_check_mark: Color Changed!",
                             "Successfully updated the color of team `" + teamName + "` to **" + args[3] + "**.",
                             Color.decode(args[3]),
-                            new EmbedField[] {}
+                            new EmbedField[]{}
                     );
                     event.getChannel().sendMessage(b.build()).queue();
                 } catch (Exception e) {
@@ -925,17 +955,17 @@ public class TeamCommand extends Command {
      * This command is used to change the max amount of members in a team
      *
      * @param event The event
-     * @param args The command's arguments
+     * @param args  The command's arguments
      */
     public static void teamMaxMembers(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the command has the proper parameters
         if (args.length == 3) {
             Integer max = Main.convertInt(args[2]);
 
-            if(max == null || max < 1) {
-                genericFail(event, "Team MaxMembers", "`" + (args[2].length() > 200 ? args[2].substring(0,200) + "..." : args[2]) + "` is an invalid input. It must be an **integer** greater than 0 and less than 2,147,483,647.", 0);
+            if (max == null || max < 1) {
+                genericFail(event, "Team MaxMembers", "`" + (args[2].length() > 200 ? args[2].substring(0, 200) + "..." : args[2]) + "` is an invalid input. It must be an **integer** greater than 0 and less than 2,147,483,647.", 0);
                 return;
-            } else if(max == Main.MAX_TEAM_SIZE) {
+            } else if (max == Main.MAX_TEAM_SIZE) {
                 genericFail(event, "Team MaxMembers", "Max members is already " + Main.MAX_TEAM_SIZE + ".", 0);
                 return;
             }
@@ -953,8 +983,9 @@ public class TeamCommand extends Command {
 
     /**
      * Eliminates a team from the HHG, which means they won't be counted in the leaderboard and they can't send messages in their channel
+     *
      * @param event The event
-     * @param args The command's arguments
+     * @param args  The command's arguments
      */
     public static void teamEliminate(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the qualify command has the proper parameters
@@ -967,8 +998,8 @@ public class TeamCommand extends Command {
                     GuildTeam team = GuildTeam.getTeamByName(teamName);
 
                     assert team != null;
-                    if(!team.isQualified()) {
-                        genericFail(event , "Team Eliminate", "**" + teamName + "** is already eliminated.", 0);
+                    if (!team.isQualified()) {
+                        genericFail(event, "Team Eliminate", "**" + teamName + "** is already eliminated.", 0);
                         return;
                     }
 
@@ -983,15 +1014,16 @@ public class TeamCommand extends Command {
                     channel.getManager().putPermissionOverride(teamRole, 66560L, 2048L).queue();
 
                     // Make the users spectators
-                    for(GuildMember m : team.getTeamMembers()) {
+                    for (GuildMember m : team.getTeamMembers()) {
                         try {
                             Main.guild.addRoleToMember(m.getId(), Main.SPECTATOR_ROLE).queue();
-                        } catch (Exception ignore) {}
+                        } catch (Exception ignore) {
+                        }
                     }
 
                     // Delete the team's powerups
-                    for(int i = PowerUp.activePowerUps.size()-1; i >=0; i--) {
-                        if(PowerUp.activePowerUps.get(i).getSender().getName().equals(team.getName()))
+                    for (int i = PowerUp.activePowerUps.size() - 1; i >= 0; i--) {
+                        if (PowerUp.activePowerUps.get(i).getSender().getName().equals(team.getName()))
                             PowerUp.activePowerUps.remove(i);
                     }
 
@@ -1008,7 +1040,7 @@ public class TeamCommand extends Command {
                 }
 
                 // Tell the user if the team was not found
-                genericFail(event , "Team Eliminate", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
+                genericFail(event, "Team Eliminate", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1020,8 +1052,9 @@ public class TeamCommand extends Command {
     /**
      * Qualifies a team for the HHG, which means they can use their team channel and are counted on the leaderboard. By default, a team is
      * qualified
+     *
      * @param event The event
-     * @param args The command's arguments
+     * @param args  The command's arguments
      */
     public static void teamQualify(GuildMessageReceivedEvent event, String[] args) {
         // Make sure the eliminate command has the proper parameters
@@ -1034,8 +1067,8 @@ public class TeamCommand extends Command {
                     GuildTeam team = GuildTeam.getTeamByName(teamName);
 
                     assert team != null;
-                    if(team.isQualified()) {
-                        genericFail(event , "Team Qualify", "**" + teamName + "** is already qualified.", 0);
+                    if (team.isQualified()) {
+                        genericFail(event, "Team Qualify", "**" + teamName + "** is already qualified.", 0);
                         return;
                     }
 
@@ -1050,10 +1083,11 @@ public class TeamCommand extends Command {
                     channel.getManager().putPermissionOverride(teamRole, 68672L, 0L).queue();
 
                     // Make the users spectators
-                    for(GuildMember m : team.getTeamMembers()) {
+                    for (GuildMember m : team.getTeamMembers()) {
                         try {
                             Main.guild.removeRoleFromMember(m.getId(), Main.SPECTATOR_ROLE).queue();
-                        } catch (Exception ignore) {}
+                        } catch (Exception ignore) {
+                        }
                     }
 
                     GuildTeam.writeTeam(team);
@@ -1065,7 +1099,7 @@ public class TeamCommand extends Command {
                 }
 
                 // Tell the user if the team was not found
-                genericFail(event , "Team Qualify", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
+                genericFail(event, "Team Qualify", "I couldn't find a team with the name `" + (teamName.length() > 200 ? teamName.substring(0, 200) + "..." : teamName) + "`. Use `!team list` to see all the teams.", 0);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1078,6 +1112,7 @@ public class TeamCommand extends Command {
 
     /**
      * This method returns the embed used for listing team requests
+     *
      * @param page The page number
      * @return The created embed
      */
@@ -1091,30 +1126,31 @@ public class TeamCommand extends Command {
 
         List<String> requests = new ArrayList<>();
         // Get the code's names and store them in requests
-        for(Object o : requestsArray)
-            requests.add(((JSONObject)o).get("name").toString());
+        for (Object o : requestsArray)
+            requests.add(((JSONObject) o).get("name").toString());
 
         // Get the comma separated string of requests
         String teamsString = Main.oxfordComma(requests, "and");
 
-        int maxPages = (int)Math.ceil(teamsString.length() / 1000.0);
+        int maxPages = (int) Math.ceil(teamsString.length() / 1000.0);
 
         // The start index of the substring
-        int startIndex = page > 1 ? 1000 * (page-1) - 2: 0;
+        int startIndex = page > 1 ? 1000 * (page - 1) - 2 : 0;
 
         return Main.buildEmbed(
-                    "Team Requests",
-                    "Page " + page +  " of " + maxPages,
-                    "Total Team Requests: " + requestsArray.size(),
-                    Main.BLUE,
-                    new EmbedField[]{
-                            new EmbedField("Team Requests", "`" + (teamsString.length()-startIndex > 1000 ? teamsString.substring(startIndex, 1000 * page-2) + "..." : teamsString.substring(startIndex)) + "`", false)}
+                "Team Requests",
+                "Page " + page + " of " + maxPages,
+                "Total Team Requests: " + requestsArray.size(),
+                Main.BLUE,
+                new EmbedField[]{
+                        new EmbedField("Team Requests", "`" + (teamsString.length() - startIndex > 1000 ? teamsString.substring(startIndex, 1000 * page - 2) + "..." : teamsString.substring(startIndex)) + "`", false)}
         );
     }
 
     /**
      * This method is used for changing the page of team list requests embed using arrow based reactions
-     * @param event The event
+     *
+     * @param event   The event
      * @param message The message containing the list request embed
      */
     public static void requestListPaging(GuildMessageReactionAddEvent event, Message message) {
@@ -1124,20 +1160,20 @@ public class TeamCommand extends Command {
         MessageEmbed b = message.getEmbeds().get(0);
 
         // Determine which action to run depending on the reaction emote
-        if(reaction.contains("leftarrow")) {
+        if (reaction.contains("leftarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
-            int newPage = Integer.parseInt(splitFooter[1])-1;
+            int newPage = Integer.parseInt(splitFooter[1]) - 1;
 
-            if(newPage > 0) {
+            if (newPage > 0) {
                 message.editMessage(listRequestsEmbed(newPage).build()).queue();
             }
 
-        } else if(reaction.contains("rightarrow")) {
+        } else if (reaction.contains("rightarrow")) {
             String[] splitFooter = Objects.requireNonNull(Objects.requireNonNull(b.getFooter()).getText()).split(" ");
-            int newPage = Integer.parseInt(splitFooter[1])+1;
+            int newPage = Integer.parseInt(splitFooter[1]) + 1;
             int maxPage = Integer.parseInt(splitFooter[3]);
 
-            if(newPage <= maxPage) {
+            if (newPage <= maxPage) {
                 message.editMessage(listRequestsEmbed(newPage).build()).queue();
             }
 
@@ -1146,7 +1182,8 @@ public class TeamCommand extends Command {
 
     /**
      * This method is user for finishing the deletion that was called in the teamDelete method. Used to unnest code
-     * @param m The bots team delete message
+     *
+     * @param m        The bots team delete message
      * @param teamName The name of the team queued to be deleted
      */
     @SuppressWarnings("unchecked")
@@ -1154,7 +1191,7 @@ public class TeamCommand extends Command {
         // Read the file for all the pending deletes
         JSONObject pendingFile = Main.readJSONObject(Main.PENDING_DELETIONS_FILE);
 
-        if(pendingFile == null)
+        if (pendingFile == null)
             pendingFile = new JSONObject();
 
         // Create deletion request
@@ -1178,7 +1215,8 @@ public class TeamCommand extends Command {
                 // Delete the main message
                 try {
                     m.delete().complete();
-                } catch (Exception ignore) { }
+                } catch (Exception ignore) {
+                }
 
                 scheduler.shutdown();
             } catch (Exception e) {
@@ -1192,10 +1230,11 @@ public class TeamCommand extends Command {
 
     /**
      * This method is an extension of the method for team deleting and it handles the reaction added to the deletion message
-     * @param event The event
-     * @param message The message with the delete request
+     *
+     * @param event           The event
+     * @param message         The message with the delete request
      * @param pendingRemovals The JSONObject containing all the pending removals
-     * @param teamName The team to delete
+     * @param teamName        The team to delete
      */
     @SuppressWarnings("unchecked")
     public static void teamDelete(GuildMessageReactionAddEvent event, Message message, JSONObject pendingRemovals, Object teamName) {
@@ -1207,7 +1246,7 @@ public class TeamCommand extends Command {
             // If the reactions is the checkmark reaction, prepare deletion
             if (event.getReactionEmote().toString().equals("RE:U+2705")) {
                 // If the team is ALL_REQUESTS, prepare to delete all requests
-                if(teamName.toString().equals("ALL_REQUESTS")) {
+                if (teamName.toString().equals("ALL_REQUESTS")) {
                     // Empty their contents
                     JSONObject temp = new JSONObject();
                     temp.put("teams", new JSONArray());
@@ -1226,16 +1265,17 @@ public class TeamCommand extends Command {
                     );
 
                     event.getChannel().sendMessage(b.build()).queue();
-                // If the team is ALL_TEAMS, prepare to delete all teams
-                } else if(teamName.toString().equals("ALL_TEAMS")) {
-                    new Thread(() ->{
+                    // If the team is ALL_TEAMS, prepare to delete all teams
+                } else if (teamName.toString().equals("ALL_TEAMS")) {
+                    new Thread(() -> {
                         // Read teams and loop through to delete their channels and roles
                         for (int i = Main.teams.size() - 1; i >= 0; i--) {
                             // Deletes all channels and instances
                             try {
                                 Objects.requireNonNull(event.getGuild().getRoleById(Main.teams.get(i).getRoleId())).delete().queue();
                                 Objects.requireNonNull(event.getGuild().getTextChannelById(Main.teams.get(i).getChannelId())).delete().queue();
-                            } catch (Exception ignore) {}
+                            } catch (Exception ignore) {
+                            }
                         }
 
                         // Clear the teams arraylist
@@ -1271,7 +1311,7 @@ public class TeamCommand extends Command {
                         Leaderboard.createLeaderboard();
                     }).start();
 
-                // If none of the above options, prepare to delete a single team
+                    // If none of the above options, prepare to delete a single team
                 } else {
                     // Delete the team
                     ImageCommands.deleteTeamSubmits(teamName.toString());
@@ -1279,8 +1319,8 @@ public class TeamCommand extends Command {
                     ImageCommands.saveSubmits();
 
                     // Delete the team's powerups
-                    for(int i = PowerUp.activePowerUps.size()-1; i >=0; i--) {
-                        if(PowerUp.activePowerUps.get(i).getSender().getName().equals(teamName.toString()))
+                    for (int i = PowerUp.activePowerUps.size() - 1; i >= 0; i--) {
+                        if (PowerUp.activePowerUps.get(i).getSender().getName().equals(teamName.toString()))
                             PowerUp.activePowerUps.remove(i);
                     }
                     PowerUp.writePowerUps();
@@ -1304,7 +1344,8 @@ public class TeamCommand extends Command {
                         objectInput.close();
 
                         coolDowns.remove(teamName.toString());
-                    } catch(Exception ignore) { }
+                    } catch (Exception ignore) {
+                    }
 
                     // Remove from leaderboard file
                     leaderBoard.remove(teamName.toString());
@@ -1337,37 +1378,48 @@ public class TeamCommand extends Command {
 
     /**
      * This message is an extension of team join and it handles the reactions added to the join request
-     * @param event The event
+     *
+     * @param event   The event
      * @param message The message with the join request
      */
     public static void teamJoin(GuildMessageReactionAddEvent event, Message message) {
-        //ArrayList<GuildTeam> teams = GuildTeam.readTeams();
         // Loop through the arraylist of teams to find the matching team
 
-        if(message.getMentionedMembers().size() <= 1)
+        if (message.getMentionedMembers().size() <= 1)
             message.delete().queue();
 
-        for(GuildTeam team : Main.teams) {
+        for (GuildTeam team : Main.teams) {
             // Make sure person accepting is the 'team leader'
-            if(!(team.getTeamMembers().get(0).getId() == event.getMember().getIdLong()) && !Main.isAdmin(event.getMember())) {
+            if (!(team.getTeamMembers().size() > 0))
+                continue;
+            else if (!(team.getTeamMembers().get(0).getId() == event.getMember().getIdLong()) && !Main.isAdmin(event.getMember())) {
                 message.removeReaction(event.getReactionEmote().getEmoji(), event.getUser()).queue();
                 return;
             }
 
             // Checks if the message is in the proper team channel
-            if(team.getChannelId() == event.getChannel().getIdLong()) {
-                if(event.getReactionEmote().toString().equals(Main.CHECK_EMOJI)) {
-                    // Get the list of members and list of ids
-                    List<GuildMember> members = GuildMember.readMembers();
-                    List<Long> memberIds = members.stream().map(GuildMember::getId).collect(Collectors.toList());
-
+            if (team.getChannelId() == event.getChannel().getIdLong()) {
+                if (event.getReactionEmote().toString().equals(Main.CHECK_EMOJI)) {
                     // Gets the guild member and member that want to join the team
-                    GuildMember joiner = members.get(memberIds.indexOf(message.getMentionedMembers().get(1).getIdLong()));
-                    Member joinerMember = event.getGuild().getMemberById(joiner.getId());
+                    Member joinerMember = message.getMentionedMembers().get(1);
+                    GuildMember joiner;
+                    try {
+                        Optional<GuildMember> memberOptional = GuildMember.readMembers().stream().filter(m -> {
+                            assert joinerMember != null;
+                            return m.getId() == joinerMember.getIdLong();
+                        }).findFirst();
+                        if (memberOptional.isEmpty())
+                            throw new Exception();
+
+                        joiner = memberOptional.get();
+                    } catch (Exception ex) {
+                        message.delete().queue();
+                        genericFail(event.getChannel(), "Error", "Failed to find member data for this member.", 0);
+                        return;
+                    }
 
                     // Add them to the team and give them the team role
                     team.addMember(joiner);
-                    assert joinerMember != null;
                     event.getGuild().addRoleToMember(joinerMember, Objects.requireNonNull(event.getGuild().getRoleById(team.getRoleId()))).queue();
 
                     // Welcome user to team
@@ -1378,14 +1430,14 @@ public class TeamCommand extends Command {
 
                     message.delete().queue();
 
-                } else if(event.getReactionEmote().toString().equals(Main.CROSS_EMOJI)) {
+                } else if (event.getReactionEmote().toString().equals(Main.CROSS_EMOJI)) {
                     message.delete().queue();
 
                     EmbedBuilder b = Main.buildEmbed(
                             ":x: Join Denied!",
                             "Sorry " + message.getMentionedMembers().get(1).getAsMention() + ", you weren't admitted into team **" + team.getName() + "**!",
                             Main.RED,
-                            new EmbedField[] {}
+                            new EmbedField[]{}
                     );
 
                     Main.TEAMS_REQUEST_CHANNEL.sendMessage(b.build()).queue();

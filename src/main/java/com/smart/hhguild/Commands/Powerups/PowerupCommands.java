@@ -33,7 +33,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import java.util.concurrent.TimeUnit;
 
 public class PowerupCommands extends Command {
-    public static void powerup(GuildMessageReceivedEvent event, String[] args) {
+    public static void powerup(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !team
         if (args.length < 2) {
             // Create & send the help embed for the team command
@@ -55,7 +55,9 @@ public class PowerupCommands extends Command {
 
         switch (type) {
             case "kamikaze" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POWERUP_KAMIKAZE, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},
@@ -67,7 +69,9 @@ public class PowerupCommands extends Command {
                 }
             }
             case "shield" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POWERUP_SHIELD, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},
@@ -79,7 +83,9 @@ public class PowerupCommands extends Command {
                 }
             }
             case "gift" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POWERUP_GIFT, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},
@@ -91,7 +97,9 @@ public class PowerupCommands extends Command {
                 }
             }
             case "clue" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POWERUP_CLUE, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},
@@ -103,7 +111,9 @@ public class PowerupCommands extends Command {
                 }
             }
             case "vault" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POWERUP_VAULT, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},
@@ -115,7 +125,9 @@ public class PowerupCommands extends Command {
                 }
             }
             case "freeze" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POWERUP_FREEZE, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},

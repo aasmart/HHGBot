@@ -54,9 +54,10 @@ public class ImageCommands extends Command {
      * @param args      The arguments
      * @param shortened If the command is using the shortened type, (i.e !verify). True if the method shouldn't show unknown
      *                  command message
+     * @param isHelp True if the commands will only send help embeds
      * @return True if the command run was successful or not
      */
-    public static boolean image(GuildMessageReceivedEvent event, String[] args, boolean shortened) {
+    public static boolean image(GuildMessageReceivedEvent event, String[] args, boolean shortened, boolean isHelp) {
         // Send an info pane if the user only send !member
         if (args.length < 2) {
             // Create & send the help embed for the member commands
@@ -72,7 +73,9 @@ public class ImageCommands extends Command {
 
         switch (type) {
             case "verify", "accept" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.IMAGE_VERIFY, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
@@ -83,7 +86,9 @@ public class ImageCommands extends Command {
                 }
             }
             case "deny" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.IMAGE_DENY, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
@@ -94,7 +99,9 @@ public class ImageCommands extends Command {
                 }
             }
             case "codes", "code" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.IMAGE_CODES, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
@@ -105,7 +112,9 @@ public class ImageCommands extends Command {
                 }
             }
             case "unchecked" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.IMAGE_UNCHECKED, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},
@@ -116,7 +125,9 @@ public class ImageCommands extends Command {
                 }
             }
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.IMAGE_GET, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[]{Main.IMAGE_SUBMISSIONS_CHANNEL},

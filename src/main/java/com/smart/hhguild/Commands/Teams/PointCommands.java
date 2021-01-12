@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * This class contains the commands for interacting with a team's scores points
  */
 public class PointCommands extends Command {
-    public static void points(GuildMessageReceivedEvent event, String[] args) {
+    public static void points(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !team
         if (args.length < 2) {
             // Create & send the help embed for the team command
@@ -55,7 +55,9 @@ public class PointCommands extends Command {
 
         switch (type) {
             case "set" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POINT_SET, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -67,7 +69,9 @@ public class PointCommands extends Command {
                 }
             }
             case "modify" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POINT_MODIFY, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -79,7 +83,9 @@ public class PointCommands extends Command {
                 }
             }
             case "incorrect" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.POINT_INCORRECT, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},

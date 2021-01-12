@@ -42,7 +42,7 @@ public class GuildedCommands extends Command {
      * @param event The event
      * @param args The arguments
      */
-    public static void guilded(GuildMessageReceivedEvent event, String[] args) {
+    public static void guilded(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !guilded
         if (args.length < 2) {
             // Create & send the help embed for the team command
@@ -55,7 +55,9 @@ public class GuildedCommands extends Command {
 
         switch (type) {
             case "set" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.GUILDED_SET, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -67,7 +69,9 @@ public class GuildedCommands extends Command {
                 }
             }
             case "modify" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.GUILDED_MODIFY, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -79,7 +83,9 @@ public class GuildedCommands extends Command {
                 }
             }
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.GUILDED_GET, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {Main.ADMIN_COMMANDS_CHANNEL},
@@ -91,7 +97,9 @@ public class GuildedCommands extends Command {
                 }
             }
             case "convert" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.GUILDED_CONVERT, event);
+                else if (validSendState(
                         event,
                         new Role[] {},
                         new TextChannel[] {},

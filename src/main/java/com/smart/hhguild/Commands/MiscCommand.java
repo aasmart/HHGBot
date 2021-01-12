@@ -30,23 +30,26 @@ import com.smart.hhguild.Templates.Other.EmbedField;
 import com.smart.hhguild.Trello;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
+import java.awt.image.ImageProducer;
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
- * This class contains commands that don't fit under a certain category -- or there are not enough of them to warrant
+ * This class contains commands that don't fit under a certain category, or there are not enough of them to warrant
  * their own category
  */
 public class MiscCommand extends Command {
@@ -61,14 +64,18 @@ public class MiscCommand extends Command {
             return;
 
         // Displays help pop-up if there are not enough parameters
-        if (args.length >= 3) {
+        if (args.length >= 3 || (args.length >= 2 && event.getMessage().getAttachments().size() >= 1)) {
             Member m = Main.getMember(event, "DM", event.getMessage(), args[1]);   // The member
 
             if (m == null)
                 return;
 
             // Everything after the mentioned member
-            String message = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
+            String message;
+            if (args.length >= 3)
+                message = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
+            else
+                message = "";
 
             // Gets the member from the mentions and throws an error log if the member doesn't exist
             if (message.length() > 1000) {
@@ -85,105 +92,79 @@ public class MiscCommand extends Command {
                 event.getChannel().sendMessage(b.build()).queue();
             }
 
-            try {
-                // Create the private help message
-                EmbedBuilder helpMessage = Main.buildEmbed("Moderator Response",
-                        "If you still need help, use `!help request [problem]`.",
-                        "\"" + message + "\"",
-                        Main.DARK_RED,
-                        new EmbedField[]{}
-                );
+            // Create the private help message
+            EmbedBuilder helpMessage = Main.buildEmbed("Moderator Response",
+                    "If you still need help, use '!help request [problem]'.",
+                    (message.length() == 0 ? "" : "\"" + message + "\""),
+                    Main.DARK_RED,
+                    new EmbedField[]{}
+            );
 
-                // Create mod log message
-                EmbedBuilder modLog = Main.buildEmbed(
-                        ":white_check_mark: Mod Log:",
-                        "Action Type: DM",
-                        Main.GREEN,
-                        new EmbedField[]{
-                                new EmbedField("Moderator", Objects.requireNonNull(event.getMember()).getAsMention(), true),
-                                new EmbedField(true),
-                                new EmbedField("Sent To ", m.getAsMention(), true),
-                                new EmbedField("Message Sent ", message, false),
-                        });
+            // Create mod log message
+            EmbedBuilder modLog = Main.buildEmbed(
+                    ":white_check_mark: Mod Log:",
+                    "Action Type: DM",
+                    Main.GREEN,
+                    new EmbedField[]{
+                            new EmbedField("Moderator", Objects.requireNonNull(event.getMember()).getAsMention(), true),
+                            new EmbedField(true),
+                            new EmbedField("Sent To ", m.getAsMention(), true),
+                            new EmbedField("Message Sent ", message, false),
+                    });
 
-                // Deal with getting any attachments
-                List<Message.Attachment> attachments = event.getMessage().getAttachments();
+            // Deal with getting any attachments
+            List<Message.Attachment> attachments = event.getMessage().getAttachments();
 
-                // Switch between various attachment states
-                if (attachments.size() == 1) {
-                    // Make sure the attachment is an image
-                    if (!attachments.get(0).isImage()) {
-                        genericFail(event, "DM", "You can only send images!", 0);
-                        return;
-                    }
-
-                    // Attempt to send the message
-                    if (Main.sendPrivateMessage(m.getUser(), helpMessage, attachments.get(0)))
-                        Main.attachAndSend(Main.MOD_LOG_CHANNEL, modLog, attachments.get(0));
-                    else
-                        throw new Exception();
-
-                } else if (attachments.size() > 1) {
-                    // Make sure the attachment is an image
-                    if (!attachments.get(0).isImage()) {
-                        genericFail(event, "DM", "You can only send images!", 0);
-                        return;
-                    }
-
-                    // Attempt to send the message
-                    if (Main.sendPrivateMessage(m.getUser(), helpMessage, attachments.get(0)))
-                        Main.attachAndSend(Main.MOD_LOG_CHANNEL, modLog, attachments.get(0));
-                    else
-                        throw new Exception();
-
-                    genericSuccess(event, "DM", "Note, only the first attachment has been sent.", true);
-                } else {
-                    // Attempt to send the message. If it failed to send, throw an error
-                    if(!Main.sendPrivateMessage(m.getUser(), helpMessage))
-                        throw new Exception();
-                    Main.MOD_LOG_CHANNEL.sendMessage(helpMessage.build()).queue();
+            // Switch between various attachment states
+            if (attachments.size() >= 1) {
+                // Make sure the attachment is an image
+                if (!attachments.get(0).isImage()) {
+                    genericFail(event, "DM", "You can only send images!", 0);
+                    return;
                 }
 
-                // Send the basic success message
-                genericSuccess(event, "DM", "**Sent:** " + message, false);
-            } catch (Exception e) {
-                genericFail(event, "DM", "Error sending DM! This is likely due to their DMs being off.", 0);
+                // Attempt to send the message
+                Main.sendPrivateMessage(m.getUser(), helpMessage, attachments.get(0), s -> {
+                    EmbedBuilder b = Main.buildEmbed(
+                            ":white_check_mark: Success",
+                            "DM",
+                            Main.GREEN,
+                            new EmbedField[]{
+                                    new EmbedField("Result",
+                                            "**Sent:** " + message,
+                                            false)
+                            }
+                    );
+                    Main.attachAndSend(event.getChannel(), b, attachments.get(0));
+                    Main.attachAndSend(Main.MOD_LOG_CHANNEL, modLog, attachments.get(0));
+                    return null;
+                }, f -> {
+                    genericFail(event, "DM", "Error sending DM! This is likely due to their DMs being off.", 0);
+                    return null;
+                });
+            } else {
+                // Attempt to send the message. If it failed to send, throw an error
+                Main.sendPrivateMessage(m.getUser(), helpMessage, s -> {
+                    genericSuccess(event, "DM", "**Sent:** " + message, false);
+                    Main.MOD_LOG_CHANNEL.sendMessage(helpMessage.build()).queue();
+                    return null;
+                }, f -> {
+                    genericFail(event, "DM", "Error sending DM! This is likely due to their DMs being off.", 0);
+                    return null;
+                });
             }
+
+            // Send the basic success message
         } else
             individualCommandHelp(CommandType.MISC_DM, event);
-
-
     }
 
-    public static void toggleRemainingCodes(GuildMessageReceivedEvent event, String[] args) {
-        if (!validSendState(event, new Role[]{Main.adminIds[0], Main.adminIds[1]}, new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL}, "Remaining Codes"))
-            return;
-
-        if (args.length != 2 || !(args[1].equalsIgnoreCase("on") || args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("get"))) {
-            individualCommandHelp(CommandType.MISC_TOGGLE_REMAINING_CODES, event);
-            return;
-        }
-
-        if (args[1].equalsIgnoreCase("get")) {
-            event.getChannel()
-                    .sendMessage("Remaining Codes is currently **" + (Main.numRemainingCodes ? "ON**" : "OFF**."))
-                    .queue(message -> message.delete().queueAfter(10, TimeUnit.SECONDS));
-            return;
-        }
-
-        try {
-            if ((args[1].equalsIgnoreCase("on") && Main.numRemainingCodes) || (args[1].equalsIgnoreCase("off") && !Main.numRemainingCodes)) {
-                genericFail(event, "Remaining Codes", "Remaining Codes is already **" + args[1].toUpperCase() + "**.", 5);
-            } else {
-                Main.numRemainingCodes = args[1].equalsIgnoreCase("on");
-                genericSuccess(event, "Remaining Codes", "Changed Remaining Codes to **" + args[1].toUpperCase() + "**.", false);
-                GuildStartupHandler.writeProperties();
-            }
-        } catch (Exception e) {
-            genericFail(event, "Remaining Codes", "Unknown Error!", 5);
-        }
-    }
-
+    /**
+     * This method is for the !send command which allows a user to send a message with the bot
+     *
+     * @param event The event
+     * @param args The arguments
+     */
     public static void send(GuildMessageReceivedEvent event, String[] args) {
         if (!validSendState(event, new Role[]{Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]}, new TextChannel[]{}, "Send"))
             return;
@@ -225,6 +206,12 @@ public class MiscCommand extends Command {
         }
     }
 
+    /**
+     * This method is for the !edit command, which allows a user to edit a message sent by the bot
+     *
+     * @param event The event
+     * @param args The argument
+     */
     public static void edit(GuildMessageReceivedEvent event, String[] args) {
         if (!validSendState(event, new Role[]{Main.adminIds[0], Main.adminIds[1], Main.adminIds[2]}, new TextChannel[]{}, "Send"))
             return;
@@ -279,19 +266,20 @@ public class MiscCommand extends Command {
             individualCommandHelp(CommandType.MISC_EDIT, event);
     }
 
+    /**
+     * This method is for the !message command, which allows teams to communicate via sending messages to each other's
+     * channels
+     *
+     * @param event The event
+     * @param args The arguments
+     */
     public static void message(GuildMessageReceivedEvent event, String[] args) {
-        if (!validSendState(event, new Role[]{Main.adminIds[0], Main.adminIds[1], Main.adminIds[2], Main.CONTESTANT_ROLE}, new TextChannel[]{}, "Message"))
+        if (!validSendState(event, new Role[]{Main.adminIds[0], Main.adminIds[1], Main.adminIds[2], Main.CONTESTANT_ROLE}, new TextChannel[]{}, new Category[]{Main.TEAMS_CATEGORY}, "Message"))
             return;
 
         // !message [team] [message]
         if (args.length >= 3) {
             GuildTeam team = GuildTeam.getTeamByName(args[1]);
-            List<Long> channels = Main.teams.stream().map(GuildTeam::getChannelId).collect(Collectors.toList());
-
-            if (!channels.contains(event.getChannel().getIdLong())) {
-                genericFail(event, "Message", "You can only use `!message` in your team channel.", 5);
-                return;
-            }
 
             if (team != null) {
                 if (team.getName().equals(event.getChannel().getName())) {
@@ -308,56 +296,17 @@ public class MiscCommand extends Command {
                 genericSuccess(event, "Message Sent!", "Sent message to " + team.getName() + ".", false);
             } else
                 genericFail(event, "Message", "I couldn't find a team with the name **" + args[1] + "**.", 0);
+
         } else
             individualCommandHelp(CommandType.MISC_MESSAGE, event);
-    }
-
-    public static void nickname(GuildMessageReceivedEvent event, String[] args) {
-        // !nick [member] [nickname]
-        if (!validSendState(event, new Role[]{Main.adminIds[0]}, new TextChannel[]{}, "Nick"))
-            return;
-
-        if (args.length >= 3) {
-            Member m = Main.getMember(event, "Nick", event.getMessage(), args[1]);
-            if (m == null)
-                return;
-
-            String nickname = Main.compressArray(Arrays.copyOfRange(args, 2, args.length));
-
-            if (nickname.length() < 2 || nickname.length() > 32) {
-                genericFail(event, "Nick", "Nickname must contain between 2 and 32 characters.", 10);
-            }
-
-            try {
-                // Get the guild member from file and update its nickname
-                Main.guild.modifyNickname(m, nickname).queue();
-
-                List<GuildMember> members = GuildMember.readMembers();
-
-                GuildMember guildMember = members.get(members.stream().map(GuildMember::getId).collect(Collectors.toList()).indexOf(m.getIdLong()));
-                // Make sure member has data
-                if (guildMember == null) {
-                    event.getMessage().reply("Member lacks GuildMember data. The user must message the bot to have GuildMember data.").queue();
-                    return;
-                }
-                guildMember.setName(nickname);
-
-                GuildMember.writeMember(guildMember);
-
-                GuildTeam.reloadTeams();
-                genericSuccess(event, "Nickname Changed!", "Updated " + m.getAsMention() + "'s nickname to **" + nickname + "**.", false);
-            } catch (Exception e) {
-                genericFail(event, "Nick", "Can't modify the nickname of this user.", 0);
-            }
-        } else
-            individualCommandHelp(CommandType.MISC_NICK, event);
     }
 
     /**
      * Allows members to send suggestions for guild-related things using '!suggest'. This interacts with Trello to create a
      * "suggestions card" on the Trello board to allow for easy management of suggestions. See the 'Trello' class
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     public static void suggest(GuildMessageReceivedEvent event, String[] args) {
         if (!validSendState(event, new Role[]{}, new TextChannel[]{Main.SUGGESTIONS_CHANNEL}, "Suggest"))
@@ -410,8 +359,9 @@ public class MiscCommand extends Command {
     /**
      * Allows members to send bug reports for guild-related things using '!bug'. This interacts with Trello to create a
      * "bug card" on the Trello board to allow for easy management of bugs. See the 'Trello' class
+     *
      * @param event The event
-     * @param args The arguments
+     * @param args  The arguments
      */
     public static void bug(GuildMessageReceivedEvent event, String[] args) {
         if (!validSendState(event, new Role[]{}, new TextChannel[]{Main.BUG_CHANNEL}, "Bug"))
@@ -473,7 +423,40 @@ public class MiscCommand extends Command {
         }
     }
 
+    /**
+     * Takes a hex code and output a 100x100 image for that color
+     *
+     * @param event The event
+     * @param args The arguments
+     */
+    public static void color(GuildMessageReceivedEvent event, String[] args) {
+        if(!validSendState(event, new Role[]{Main.adminIds[0]}, new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL, Main.TEAM_COMMANDS_CHANNEL}, new Category[] {Main.TEAMS_CATEGORY}, "Color"))
+            return;
+
+        if(args.length >= 2) {
+            try {
+                args[1] = args[1].contains("#") ? args[1] : "#" + args[1];
+                Color color = Color.decode(args[1]);
+
+                BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+
+                Graphics2D graphics = (Graphics2D) image.getGraphics();
+                graphics.setColor(color);
+                graphics.fillRect(0, 0, 100, 100);
+
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                ImageIO.write(image, "png", outputStream);
+                byte[] bytes = outputStream.toByteArray();
+                event.getChannel().sendMessage("Color for **" + args[1] + "**.").addFile(bytes, "color.png").queue();
+            } catch (Exception e) {
+                genericFail(event, "Color", "**Failed to create image:** " + e.getMessage(), 10);
+            }
+        } else
+            individualCommandHelp(CommandType.MISC_COLOR, event);
+    }
+
     public static void chess(GuildMessageReceivedEvent event) {
+        event.getMessage().delete().queue();
         event.getChannel().sendMessage(
                 ":chess_pawn: Gather round, gather round. " + Objects.requireNonNull(event.getMember()).getAsMention() + " has requested a game of chess. " +
                         "Shall you ignore their request or settle down for a game of chess? The decision is for your erudition. " +

@@ -58,7 +58,6 @@ public class Leaderboard implements Comparable {
         JSONObject leaderboardObject = Main.readJSONObject(Main.LEADERBOARD_FILE);
 
         // Get the names of all qualified teams
-        //List<String> qualifiedTeams = GuildTeam.readTeams().stream().filter(GuildTeam::isQualified).map(GuildTeam::getName).collect(Collectors.toList());
         List<String> qualifiedTeams = Main.teams.stream().filter(GuildTeam::isQualified).map(GuildTeam::getName).collect(Collectors.toList());
 
         // Get each team's scores

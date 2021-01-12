@@ -240,6 +240,9 @@ public class Quest implements Serializable {
 
             // Loop through the quest's codes and and them to jsonCode, which is then added to validCodes
             for(Code c : quest.codes) {
+                if(c.getReleaseTime() != null)
+                    continue;
+
                 JSONObject jsonCode = new JSONObject();
 
                 // Create all variables in code
@@ -270,10 +273,12 @@ public class Quest implements Serializable {
      */
     public void check() {
         //System.out.println("Checking @ " + LocalDateTime.now());
-        for(QuestField field : questFields) {
+        for(QuestField field : questFields)
             if(field.isTime())
                 field.sendMessage();
-        }
+        for(Code c : codes)
+            if(c.isTime())
+                c.release();
     }
 
     /**
@@ -319,8 +324,8 @@ public class Quest implements Serializable {
      */
     public EmbedBuilder getAsEmbed(int page, boolean editing) {
         final int MAX_PAGE_FIELDS = 10;
-        int totalFields = codes.size() + questFields.size();
-        int addedFields = 6;
+        int addedFields = 0;
+        int totalFields = codes.size() + questFields.size() + 6;
 
         int totalPages = totalFields > MAX_PAGE_FIELDS ? (int)Math.ceil(totalFields/(double)MAX_PAGE_FIELDS): 1;
 
@@ -349,6 +354,7 @@ public class Quest implements Serializable {
             b.addField("Show Number of Remaining Codes", String.valueOf(numRemainingCodes).toUpperCase(), false);
             b.addField("Clue", clue, false);
             b.addField("Loaded", String.valueOf(isRunning()).toUpperCase(), false);
+            addedFields += 6;
         }
 
         // Add the quest fields to embed. The amount depend on the page and MAX_PAGE_FIELDS
@@ -360,7 +366,7 @@ public class Quest implements Serializable {
 
             String text = field.getText();
             b.addField(
-                    "Quest Field " + (addedFields-2 + MAX_PAGE_FIELDS * (page - 1)),
+                    "Quest Field " + (addedFields - (page == 1 ? 6 : 0) + MAX_PAGE_FIELDS * (page - 1)),
                     (field.getTime() != null ? "**Send Time:** " + field.getTime() : "") + (field.getChannel() != null ? " **Channel:** " + field.getChannel().getName() : "") + "\n**Contents:** " + (text.length() > 256 ? text.substring(0, 256) + "..." : text),
                     false
             );
@@ -370,7 +376,8 @@ public class Quest implements Serializable {
 
         // Add the codes based on the current amount in the embed, the page, and MAX_PAGE_FIELDS
         try {
-            for (int i = MAX_PAGE_FIELDS * (page - (questFields.size() / MAX_PAGE_FIELDS) - 1); i < codes.size(); i++) {
+            int startingIndex = (int)(MAX_PAGE_FIELDS * ((page-1) - ((questFields.size()+6) / (double)MAX_PAGE_FIELDS)));
+            for (int i = (Math.max(startingIndex, 0)); i < codes.size(); i++) {
                 Code code = codes.get(i);
                 // If the max amount of embeds is reached, return
                 if (addedFields == MAX_PAGE_FIELDS)
@@ -378,7 +385,10 @@ public class Quest implements Serializable {
 
                 b.addField(
                         "Code: " + code.getCode(),
-                        ("**Points:** " + code.getPoints()) + (" | **Max Submits:** " + code.getMaxSubmits()) + (" | **Is Image Code:** " + Boolean.toString(code.isImage()).toUpperCase()),
+                        ("**Points:** " + code.getPoints()) +
+                                (" | **Max Submits:** " + code.getMaxSubmits()) +
+                                (" | **Is Image Code:** " + Boolean.toString(code.isImage()).toUpperCase()) +
+                                (code.getReleaseTime() != null ? " | **Release Time:** " + code.getReleaseTime() : ""),
                         false
                 );
 
@@ -469,13 +479,15 @@ public class Quest implements Serializable {
                             "and a code will be created",
                     false);
             b.addField("Code Syntax",
-                    "`+[name] [points] [max-submits] <is-image-code>`",
+                    "`+[name] [points] [max-submits] <is-image-code> <release-time>`",
                     false);
             b.addField("Syntax Info",
                     "**[name]** is the name of the code and must be unique. At max, it can only contain 200 alphanumeric characters, including hyphens and underscores." +
                             "\n**[points]** is the value of a code and must be an integer." +
                             "\n**[max-submits]** is the maximum amount of times the code can be submitted and must be an integer greater than 0." +
-                            "\n**<is-image-code>** is optional. If true, the code can only be used for images and false if not.",
+                            "\n**<is-image-code>** is optional. If true, the code can only be used for images and false if not." +
+                            "\n**<release-time>** is optional. This is the time at which the code is added as a valid code. This must be in the format " +
+                            "`MM/dd/yyyy-HH:mm` in military time. */yyyy* can be omitted or MM/dd/yyyy can be replaced with tomorrow. Will default to 0 if omitted.",
                     false);
         }
 
@@ -613,7 +625,7 @@ public class Quest implements Serializable {
                             "and a code will be edited.",
                     false);
             b.addField("Code Edit Syntax",
-                    "`~[code-name] CODE:[new-code] POINTS:[new-point-value] MAXSUBMITS:[new-max-submits] IMAGE:[is-image-code]`",
+                    "`~[code-name] CODE:[new-code] POINTS:[new-point-value] MAXSUBMITS:[new-max-submits] IMAGE:[is-image-code] TIME:[release-time]`",
                     false);
             b.addField("Syntax Info",
                     "**[code-name]** is the name of the code you want to edit." +
@@ -621,6 +633,8 @@ public class Quest implements Serializable {
                             "\n**[new-point-value]** is an integer and must be preceded by `CHANNEL:`." +
                             "\n**[new-max-submits]** is a positive integer greater than 0 and must be preceded by `MAXSUBMITS:`." +
                             "\n**[is-image-code]** is a true or false value for if the code can only be used for images or not. Must be preceded by `IMAGE:`." +
+                            "\n**[release-time]** is the time the code is released, which means it can be submitted. This must be in the format " +
+                            "`MM/dd/yyyy-HH:mm` in military time. */yyyy* can be omitted or MM/dd/yyyy can be replaced with tomorrow. Use **0** to remove time." +
                             "\n**NOTE:** All above fields, except [codename], are optional, but you need at least one. All positions can be swapped.",
                     false);
         } else if(page == 4) {

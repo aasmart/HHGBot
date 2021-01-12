@@ -38,6 +38,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class GuildStartupHandler extends ListenerAdapter {
@@ -133,6 +134,16 @@ public class GuildStartupHandler extends ListenerAdapter {
                 objectOutput.close();
                 outputStream.close();
             } catch (Exception ignore) {}
+        }
+
+        // Swear Words
+        Main.swearWords = new ArrayList<>();
+        try {
+            Scanner in = new Scanner(new File(GuildStartupHandler.class.getResource(Main.swearWordsFile).getFile()));
+            while(in.hasNext())
+                Main.swearWords.add(in.nextLine()); // Reads each line in the swear words file
+        } catch(Exception e) {
+            System.out.println(e.getMessage() + ": Error reading " + Main.swearWordsFile + " file");
         }
 
         PowerUp.loadPowerups();

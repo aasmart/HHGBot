@@ -22,19 +22,26 @@
 
 package com.smart.hhguild.Templates.Quests;
 
+import com.smart.hhguild.Main;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.io.Serializable;
+import java.util.Date;
 
 public class Code implements Serializable {
     private String code;
     private int points;
     private int maxSubmits;
     private boolean isImage;
+    private Date releaseTime;
 
-    public Code(String code, int points, int maxSubmits, boolean isImage) {
+    public Code(String code, int points, int maxSubmits, boolean isImage, Date releaseTime) {
         this.code = code;
         this.points = points;
         this.maxSubmits = maxSubmits;
         this.isImage = isImage;
+        this.releaseTime = releaseTime;
     }
 
     /**
@@ -85,11 +92,46 @@ public class Code implements Serializable {
         this.maxSubmits = maxSubmits;
     }
 
+    /**
+     * Gets if the code is an image code or not
+     * @return True if the code is an image code
+     */
     public boolean isImage() {
         return isImage;
     }
 
     public void setImage(boolean image) {
         isImage = image;
+    }
+
+    public Date getReleaseTime() {
+        return releaseTime;
+    }
+
+    public void setReleaseTime(Date releaseTime) {
+        this.releaseTime = releaseTime;
+    }
+
+    public boolean isTime() {
+        return Main.canRelease(releaseTime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void release() {
+        JSONObject codes = Main.readJSONObject(Main.VALID_CODES_FILE);
+        JSONArray validCodes = (JSONArray) codes.get("codes");
+
+        JSONObject jsonCode = new JSONObject();
+
+        // Create all variables in code
+        jsonCode.put("code", getCode());
+        jsonCode.put("points", getPoints());
+        jsonCode.put("maxsubmits", getMaxSubmits());
+        jsonCode.put("submits", 0);
+        jsonCode.put("submitters", new JSONArray());
+        jsonCode.put("isImage", isImage());
+
+        validCodes.add(jsonCode);
+        Main.writeJSONObjectToFile(codes, Main.VALID_CODES_FILE);
     }
 }

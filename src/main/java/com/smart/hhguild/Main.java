@@ -22,6 +22,10 @@
 
 package com.smart.hhguild;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.smart.hhguild.Commands.Command;
 import com.smart.hhguild.EventHandlers.*;
 import com.smart.hhguild.Submissions.Submissions;
@@ -46,12 +50,14 @@ import javax.security.auth.login.LoginException;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Main extends ListenerAdapter implements EventListener {
@@ -130,11 +136,13 @@ public class Main extends ListenerAdapter implements EventListener {
     public static final File PENDING_IMAGES = new File(GUILD_FOLDER + "pendingImages.txt");
     public static final File RESPONSES = new File(GUILD_FOLDER + "responses.txt");
     public static final File BOT_TOKEN_FILE = new File(GUILD_FOLDER + "bot-token.secret");
+    public static final String swearWordsFile = "/swearWords.txt";
 
     // Regex
     public static final String EMAIL_REGEX = "(\\d{2})([a-z]{1,6})([a-z]{2})(@haslett.k12.mi.us)?";
 
     // Arraylist caches
+    public static ArrayList<String> swearWords;
     public static List<String> teamNames;
     public static List<GuildTeam> teams;
     public static ArrayList<String> suggestCooldown;
@@ -432,12 +440,29 @@ public class Main extends ListenerAdapter implements EventListener {
      *
      * @param u        The user to send the private message to
      * @param contents The embed to send
-     * @return True if the DM was sent successfully
      */
-    public static boolean sendPrivateMessage(User u, EmbedBuilder contents) {
-        AtomicBoolean sent = new AtomicBoolean(false);
-        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents.build()).queue(success -> sent.set(false), throwable -> sent.set(true)));
-        return sent.get();
+    public static void sendPrivateMessage(User u, EmbedBuilder contents) {
+        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents.build()).queue(success -> {
+        }, throwable -> {
+            EmbedBuilder b = Main.buildEmbed(":x: Failed Direct Message",
+                    "Failed to message " + u.getAsMention() + ". Please attempt to contact them " +
+                            "to resolve this issue.",
+                    Main.RED,
+                    new EmbedField[]{});
+            Main.BOT_LOGS_CHANNEL.sendMessage(b.build()).queue();
+        }));
+    }
+
+    /**
+     * Sends a private message to the given user
+     *
+     * @param u        The user to send the private message to
+     * @param contents The embed to send
+     * @param success The function to run if sending the DM succeeds
+     * @param failure The function to run if sending the DM fails
+     */
+    public static void sendPrivateMessage(User u, EmbedBuilder contents, Function<Void, Void> success, Function<Void, Void> failure) {
+        u.openPrivateChannel().queue(channel -> channel.sendMessage(contents.build()).queue(s -> success.apply(null), throwable -> failure.apply(null)));
     }
 
     /**
@@ -446,23 +471,19 @@ public class Main extends ListenerAdapter implements EventListener {
      * @param u          The user to send the private message to
      * @param contents   The embed to send
      * @param attachment The file attachment to send with the message
-     * @return Tru if the message was sent successfully
      */
-    public static boolean sendPrivateMessage(User u, EmbedBuilder contents, Message.Attachment attachment) {
-        AtomicBoolean sent = new AtomicBoolean(false);
+    public static void sendPrivateMessage(User u, EmbedBuilder contents, Message.Attachment attachment, Function<Void, Void> success, Function<Void, Void> failure) {
         contents.setImage("attachment://attachment.png");
 
         // Get the InputStream and read the bytes
         attachment.retrieveInputStream().thenAccept(in -> {
             // Send the private message containing the embed and image
             u.openPrivateChannel().flatMap(channel -> channel.sendMessage(contents.build()).addFile(in, "attachment.png"))
-                    .queue(success -> sent.set(true), throwable -> sent.set(false));
+                    .queue(s -> success.apply(null), throwable -> failure.apply(null));
         }).exceptionally(t -> { // handle failure
             t.printStackTrace();
             return null;
-        }).isDone();
-
-        return sent.get();
+        });
     }
 
     /**
@@ -494,9 +515,14 @@ public class Main extends ListenerAdapter implements EventListener {
     public static void writeJSONObjectToFile(JSONObject o, File file) {
         PrintWriter pw = null;
         try {
+            // Make JSON string pretty
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            JsonElement je = JsonParser.parseString(o.toJSONString());
+            String prettyJsonString = gson.toJson(je);
+
             // Write the codes to file
             pw = new PrintWriter(file);
-            pw.write(o.toJSONString());
+            pw.write(prettyJsonString);
 
             pw.flush();
             pw.close();
@@ -610,9 +636,10 @@ public class Main extends ListenerAdapter implements EventListener {
      * @param m The member to check
      * @return The found editor, null if it couldn't find an editor
      */
+    @SuppressWarnings("all")
     public static Editor getEditor(Member m) {
         try {
-            return editors.get(editors.stream().map(editor -> editor.getEditor().getIdLong()).collect(Collectors.toList()).indexOf(m.getIdLong()));
+            return editors.stream().filter(editor -> editor.getEditor().getIdLong() == m.getIdLong()).findFirst().get();
         } catch (Exception e) {
             return null;
         }
@@ -765,5 +792,62 @@ public class Main extends ListenerAdapter implements EventListener {
         }
 
         return val;
+    }
+
+    /**
+     * Takes a string date and attempts to format it to MM/dd/yyyy-HH:mm:ss
+     * @param date The date to format
+     * @return The formatted date, null if it couldn't format it
+     */
+    public static Date getDate(String date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy-HH:mm");
+        try {
+            return formatter.parse(date);
+        } catch (Exception ignore) { }
+
+        try {
+            if(date.substring(0, date.indexOf("-")).equalsIgnoreCase("tomorrow")) {
+                Calendar c = Calendar.getInstance();
+                c.setTime(new Date());
+
+                c.add(Calendar.HOUR_OF_DAY, 24);
+
+                date = c.get(Calendar.MONTH)+1 + "/" +
+                        c.get(Calendar.DAY_OF_MONTH) +
+                        "/" + c.get(Calendar.YEAR) +
+                        date.substring(date.indexOf("-"));
+
+                return formatter.parse(date);
+            }
+        } catch (Exception ignore) { }
+        try {
+            date = date.substring(0, date.indexOf("-")) + "/" + LocalDateTime.now().getYear() + date.substring(date.indexOf("-"));
+            return formatter.parse(date);
+        } catch (Exception ignore) { }
+        return null;
+    }
+
+    public static boolean canRelease(Date time) {
+        try {
+            if(time == null)
+                return false;
+            // The current date
+            Calendar now = Calendar.getInstance();
+            now.setTime(new Date());
+
+            // The field's date
+            Calendar field = Calendar.getInstance();
+            field.setTime(time);
+
+            if(now.get(Calendar.YEAR) == field.get(Calendar.YEAR) &&
+                    now.get(Calendar.HOUR) == field.get(Calendar.HOUR) &&
+                    now.get(Calendar.MINUTE) == field.get(Calendar.MINUTE) &&
+                    now.get(Calendar.DAY_OF_YEAR) == field.get(Calendar.DAY_OF_YEAR)) {
+                return true;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return false;
     }
 }

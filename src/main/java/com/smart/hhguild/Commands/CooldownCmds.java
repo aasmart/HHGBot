@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class CooldownCmds extends Command {
-    public static void cooldown(GuildMessageReceivedEvent event, String[] args) {
+    public static void cooldown(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !team
         if (args.length < 2) {
             // Create & send the help embed for the cooldown command
@@ -55,7 +55,9 @@ public class CooldownCmds extends Command {
 
         switch (type) {
             case "set" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.COOLDOWN_SET, event);
+                else if (validSendState(
                         event,
                         new Role[]{Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
@@ -67,7 +69,9 @@ public class CooldownCmds extends Command {
                 }
             }
             case "remove" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.COOLDOWN_REMOVE, event);
+                else if (validSendState(
                         event,
                         new Role[]{Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
@@ -79,7 +83,9 @@ public class CooldownCmds extends Command {
                 }
             }
             case "modify" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.COOLDOWN_MODIFY, event);
+                else if (validSendState(
                         event,
                         new Role[]{Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
@@ -91,7 +97,9 @@ public class CooldownCmds extends Command {
                 }
             }
             case "incorrect" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.COOLDOWN_INCORRECT, event);
+                else if (validSendState(
                         event,
                         new Role[]{Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},
@@ -103,7 +111,9 @@ public class CooldownCmds extends Command {
                 }
             }
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.COOLDOWN_GET, event);
+                else if (validSendState(
                         event,
                         new Role[]{Main.adminIds[0], Main.adminIds[1]},
                         new TextChannel[]{Main.ADMIN_COMMANDS_CHANNEL},

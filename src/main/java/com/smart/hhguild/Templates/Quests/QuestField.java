@@ -27,8 +27,6 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -111,28 +109,7 @@ public class QuestField implements Serializable {
      * @return True if the current time equals the quest field's time
      */
     public boolean isTime() {
-        try {
-            if(time == null)
-                return false;
-            // The current date
-            Calendar now = Calendar.getInstance();
-            now.setTime(new Date());
-
-            // The field's date
-            Calendar field = Calendar.getInstance();
-            field.setTime(time);
-
-            if(now.get(Calendar.YEAR) == field.get(Calendar.YEAR) &&
-                    now.get(Calendar.HOUR) == field.get(Calendar.HOUR) &&
-                    now.get(Calendar.MINUTE) == field.get(Calendar.MINUTE) &&
-                    now.get(Calendar.DAY_OF_YEAR) == field.get(Calendar.DAY_OF_YEAR)
-                    /*now.get(Calendar.SECOND) == field.get(Calendar.SECOND)*/) {
-                return true;
-            }
-        } catch (Exception e) {
-            return false;
-        }
-        return false;
+        return Main.canRelease(time);
     }
 
     /**
@@ -144,40 +121,6 @@ public class QuestField implements Serializable {
             assert c != null;
             c.sendMessage(text).queue();
         } catch (Exception ignore) {}
-    }
-
-    /**
-     * Takes a string date and attempts to format it to MM/dd/yyyy-HH:mm:ss
-     * @param date The date to format
-     * @return The formatted date, null if it couldn't format it
-     */
-    public static Date getDate(String date) {
-        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy-HH:mm:ss");
-        try {
-            return formatter.parse(date);
-        } catch (Exception ignore) { }
-
-        try {
-            if(date.substring(0, date.indexOf("-")).equalsIgnoreCase("tomorrow")) {
-                Calendar c = Calendar.getInstance();
-                c.setTime(new Date());
-
-                c.add(Calendar.HOUR_OF_DAY, 24);
-
-                date = c.get(Calendar.MONTH)+1 + "/" +
-                        c.get(Calendar.DAY_OF_MONTH) +
-                        "/" + c.get(Calendar.YEAR) +
-                        date.substring(date.indexOf("-"));
-
-                return formatter.parse(date);
-            }
-        } catch (Exception ignore) { }
-
-        try {
-            date = date.substring(0, 5) + "/" + LocalDateTime.now().getYear() + date.substring(5);
-            return formatter.parse(date);
-        } catch (Exception ignore) { }
-        return null;
     }
 
     @Override

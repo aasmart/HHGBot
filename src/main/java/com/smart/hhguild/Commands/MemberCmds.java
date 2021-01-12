@@ -37,6 +37,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
  * This class contains commands for interacting with GuildMembers (Not basic Discord Member).
  */
 public class MemberCmds extends Command {
-    public static void member(GuildMessageReceivedEvent event, String[] args) {
+    public static void member(GuildMessageReceivedEvent event, String[] args, boolean isHelp) {
         // Send an info pane if the user only send !member
         if (args.length < 2) {
             // Create & send the help embed for the member commands
@@ -59,7 +60,9 @@ public class MemberCmds extends Command {
 
         switch (type) {
             case "get" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.MEMBER_GET, event);
+                else if (validSendState(
                         event,
                         Main.adminIds,
                         new TextChannel[] {},
@@ -70,7 +73,9 @@ public class MemberCmds extends Command {
                 }
             }
             case "regenerate" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.MEMBER_REGENERATE, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0]},
                         new TextChannel[] {},
@@ -81,7 +86,9 @@ public class MemberCmds extends Command {
                 }
             }
             case "change" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.MEMBER_CHANGE, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0]},
                         new TextChannel[] {},
@@ -92,12 +99,27 @@ public class MemberCmds extends Command {
                 }
             }
             case "edit" -> {
-                if (validSendState(
+                if(isHelp)
+                    individualCommandHelp(CommandType.MEMBER_EDIT, event);
+                else if (validSendState(
                         event,
                         new Role[] {Main.adminIds[0]},
                         new TextChannel[] {},
                         "Member Edit")) {
                     memberEdit(event, args);
+                } else {
+                    event.getMessage().delete().queue();
+                }
+            }
+            case "nick", "nickname" -> {
+                if(isHelp)
+                    individualCommandHelp(CommandType.MEMBER_NICK, event);
+                else if (validSendState(
+                        event,
+                        new Role[] {Main.adminIds[0]},
+                        new TextChannel[] {},
+                        "Member Nick")) {
+                    memberNick(event, args);
                 } else {
                     event.getMessage().delete().queue();
                 }
@@ -350,5 +372,53 @@ public class MemberCmds extends Command {
             }
         } else
             individualCommandHelp(CommandType.MEMBER_EDIT, event);
+    }
+
+    /**
+     * This method is for the !member nickname/nick command, which allows users to change the nicknames of other user's,
+     * so long as the user
+     *
+     * @param event The event
+     * @param args The arguments
+     */
+    public static void memberNick(GuildMessageReceivedEvent event, String[] args) {
+        // !member nick [member] [nickname]
+        if (!validSendState(event, new Role[]{Main.adminIds[0]}, new TextChannel[]{}, "Member Nick"))
+            return;
+
+        if (args.length >= 4) {
+            Member m = Main.getMember(event, "Member Nick", event.getMessage(), args[2]);
+            if (m == null)
+                return;
+
+            String nickname = Main.compressArray(Arrays.copyOfRange(args, 3, args.length));
+
+            if (nickname.length() < 2 || nickname.length() > 32)
+                genericFail(event, "Member Nick", "Nickname must contain between 2 and 32 characters.", 10);
+
+            try {
+                // Get the guild member from file and update its nickname
+                Main.guild.modifyNickname(m, nickname).queue();
+
+                // Get the member
+                GuildMember guildMember;
+                Optional<GuildMember> optionalGuildMember = GuildMember.readMembers().stream().filter(member -> member.getId() == m.getIdLong()).findFirst();
+                if (optionalGuildMember.isEmpty()) {
+                    event.getMessage().reply("Member lacks GuildMember data. The user must message the bot to have GuildMember data.").queue();
+                    return;
+                } else
+                    guildMember = optionalGuildMember.get();
+
+                guildMember.setName(nickname);
+
+                GuildMember.writeMember(guildMember);
+
+                GuildTeam.reloadTeams();
+                genericSuccess(event, "Nickname Changed!", "Updated " + m.getAsMention() + "'s nickname to **" + nickname + "**.", false);
+            } catch (Exception e) {
+                genericFail(event, "Member Nick", "Can't modify the nickname of this user.", 0);
+            }
+        } else
+            individualCommandHelp(CommandType.MEMBER_NICK, event);
     }
 }
